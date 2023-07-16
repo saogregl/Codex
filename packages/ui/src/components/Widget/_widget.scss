@@ -1,0 +1,59 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--widget-wrapper {
+  background-color: theme.$layer-02;
+  //Add box shadow for dark background color
+  box-shadow: 0px 1px 3px 1px rgba(9, 30, 66, 0.25);
+  text-align: justify;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: spacing.$spacing-09;
+
+  margin-bottom: spacing.$spacing-09;
+  //Make shadow deeper on hover
+  // &:hover {
+  //   box-shadow: 0px 2px 4px 4px rgba(9, 30, 66, 0.25);
+  // }
+  .#{$sipePrefix}--widget-main-content {
+    padding: spacing.$spacing-04;
+  }
+}
+
+.#{$sipePrefix}--widget-header {
+  background-color: theme.$layer-01;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: spacing.$spacing-05;
+
+  height: 48px;
+  min-height: 48px;
+  width: 100%;
+  border-bottom: 1px solid theme.$border-subtle-01;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
+}
+
+.cds--btn--tertiary {
+  border: none !important;
+}
+
+.#{$sipePrefix}--widget-main-title {
+  @include type.type-style("heading-compact-01");
+  color: theme.$text-primary;
+  margin-right: 1rem;
+}
+
+.#{$sipePrefix}--widget-secondary-title {
+  @include type.type-style("label-01");
+  color: theme.$text-secondary;
+}

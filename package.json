@@ -7,17 +7,19 @@
     "apps/*"
   ],
   "scripts": {
-    "docs": "doctoc --title '**Table of content**' README.md",
-    "clean": "pnpm run -r clean",
-    "build": "pnpm run -r build",
-    "test": "pnpm run -r test",
-    "lint": "eslint --ext js,ts,tsx ."
+		"prep": "pnpm gen:prisma && pnpm codegen",
+		"build": "turbo run build",
+		"gen:migrations": "cd core && cargo prisma migrate dev",
+		"gen:prisma": "cd core && cargo prisma generate",
+		"desktop": "pnpm --filter @codex/desktop --",
+    "dev": "turbo run dev --parallel",
+    "ui": "pnpm --filter @sd/ui -- "
   },
   "devDependencies": {
     "@nighttrax/eslint-config-tsx": "~12.0.0-alpha.2",
     "doctoc": "~2.2.0",
     "eslint": "~8.45.0",
     "eslint-plugin-import": "~2.27.0",
-    "typescript": "~4.9.0"
+    "typescript": "^5.1.6"
   }
 }

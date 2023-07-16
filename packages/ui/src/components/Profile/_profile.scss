@@ -1,0 +1,43 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/motion";
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--profile-container {
+  position: fixed;
+  z-index: 2;
+  top: spacing.$spacing-09;
+  right: 0;
+  overflow: auto;
+  min-width: 16rem;
+  max-width: 16rem;
+  min-height: 11.5rem;
+  max-height: 11.5rem;
+  background-color: theme.$background;
+  color: theme.$text-primary;
+  transition: all motion.$duration-fast-02 ease-in-out;
+}
+
+.#{$sipePrefix}--profile-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.#{$sipePrefix}--profile-header {
+  align-items: center;
+  justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  padding: spacing.$spacing-03 spacing.$spacing-05 spacing.$spacing-05;
+  border-bottom: 1px solid theme.$layer-02;
+  background-color: theme.$background;
+  .#{$sipePrefix}--profile-name {
+    @include type.type-style("heading-compact-01");
+    p {
+      @include type.type-style("label-01");
+      color: theme.$text-secondary;
+    }
+  }
+}

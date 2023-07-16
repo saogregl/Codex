@@ -1,0 +1,70 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--kanban-issue {
+  background-color: theme.$layer-01;
+  padding: spacing.$spacing-02;
+  box-shadow: 0px 1px 2px 0px rgba(9, 30, 66, 0.25);
+  margin: 5px;
+  //border-radius: 3px;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+
+.#{$sipePrefix}--kanban-tag-container {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+}
+
+.#{$sipePrefix}--kanban-issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: spacing.$spacing-03;
+}
+
+.#{$sipePrefix}--kanban-issue-chip {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  background-color: theme.$layer-accent-01;
+  color: theme.$text-primary;
+  text-align: center;
+  line-height: spacing.$spacing-07;
+}
+
+//This container needs to appear in front of everything else
+.kanban--overflowMenu-container {
+  position: relative;
+  left: 330px; 
+}
+
+.#{$sipePrefix}--kanban-issue-title {
+  padding: spacing.$spacing-03;
+  p {
+    @include type.type-style('expressive-heading-01');
+    color: theme.$text-primary;
+  }
+}
+
+.#{$sipePrefix}--kanban-issue-content {
+  padding: spacing.$spacing-03;
+  @include type.type-style("body-compact-01");
+  color: theme.$text-secondary;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+
+
+}
+.#{$sipePrefix}--kanban-issue-footbar {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+}

@@ -1,0 +1,25 @@
+[package]
+name = "codex-core"
+version = "0.0.0"
+description = "The core that powers Codex."
+authors = ["you"]
+license = { workspace = true }
+repository = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+rspc = { workspace = true, features = ["tauri"] }
+prisma-client-rust = { workspace = true }
+specta = { workspace = true }
+tokio = { workspace = true, features = [
+	"sync",
+	"rt-multi-thread",
+	"io-util",
+	"macros",
+	"time",
+	"process",
+] }
+serde = { version = "1.0.171", features = ["derive"] }
+chrono = { version = "0.4.25", features = ["serde"] }
+serde_json = "1.0.103"
+codex-prisma = { path = "../crates/prisma" }

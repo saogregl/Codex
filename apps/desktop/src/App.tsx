@@ -1,36 +1,62 @@
-import { Button } from "@codex/components/button";
-import { meaningOfLife } from "@codex/foo";
-import React, { useState } from "react";
-import "./App.css";
+import { useState } from "react";
+import { createClient } from "@rspc/client";
+import { TauriTransport } from "@rspc/tauri";
+import { useEffect } from "react";
+import type { Procedures } from "../web/src/bindings"; // These were the bindings exported from your Rust code!
 
-const App = () => {
-  const [count, setCount] = useState(meaningOfLife);
+import {
+  // @ts-ignore
+  Button,
+} from "@carbon/react";
+
+import { CreateProject } from "@codex/ui/src/components/Flow/CreateProject";
+import { useCreateProject } from "@codex/ui/src/components/Flow/CreateProject";
+
+function App() {
+  const client = createClient<Procedures>({
+    transport: new TauriTransport(),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    errors,
+    open,
+    setOpen,
+    hasSubmitError,
+    setHasSubmitError,
+    reset,
+    clearErrors
+  } = useCreateProject();
+  const [workspaceActivities, setWorkspaceActivities] = useState("");
+
+  useEffect(() => {
+    client.query(["tasks.getAllProjectActivities"]).then((res) => {
+      setWorkspaceActivities(JSON.stringify(res));
+    });
+  }, []);
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="container">
+      <Button onClick={() => setOpen(!open)}>
+        {open ? "Close CreateTearsheet" : "Open CreateTearsheet"}
+      </Button>
+
+      <div style={{ display: "flex", padding: "64px", margin: "64px" }}>
+        <CreateProject
+          register={register}
+          handleSubmit={handleSubmit}
+          errors={errors}
+          open={open}
+          setOpen={setOpen}
+          hasSubmitError={hasSubmitError}
+          setHasSubmitError={setHasSubmitError}
+          reset={reset}
+          clearErrors={clearErrors}
+        />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <Button />
-        <button type="button" onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </div>
   );
-};
+}
 
 export default App;

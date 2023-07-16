@@ -1,0 +1,47 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+$sipePrefix: "sipe";
+
+
+
+.#{$sipePrefix}--issue-modal-title-input {
+    @include type.type-style("heading-04");
+    background-color: white;
+    border: 1px solid transparent;
+    width: 100%;
+
+    &:hover {
+        border: 1px solid rgba(175, 175, 175);
+        border-radius: 3px;
+    }
+
+}
+
+.#{$sipePrefix}--issue-modal-description-input {
+    @include type.type-style("body-01");
+    background-color: white;
+    border: 1px solid transparent;
+    width: 100%;
+
+    &:hover {
+        border: 1px solid rgba(175, 175, 175);
+        border-radius: 3px;
+    }
+
+}
+
+.#{$sipePrefix}--created-in-text {
+    @include type.type-style("helper-text-01");
+    color: theme.$text-secondary;
+    position: absolute;
+    display: flex;
+    bottom: 0; 
+
+
+
+}
+
+
+

@@ -1,0 +1,97 @@
+@use "@carbon/react" with (
+  $font-path: "@ibm/plex",
+  $use-flexbox-grid: true
+
+);
+
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/motion";
+@use '@carbon/react/scss/grid/flexbox';
+
+@use "@carbon/ibm-products/css/index-without-carbon.css";
+
+@use "./routes/Home/home";
+
+@use "@codex/ui/components/Datagrid/datagrid"; 
+@use "@codex/ui/components/SuiteHeader/layout";
+@use "@codex/ui/components/SuiteHeader/SuiteHeaderAppSwitcher/suite-header-app-switcher";
+@use "@codex/ui/components/DashboardWidget/dashboardWidget";
+@use "@codex/ui/components/Kanban/Kanban";
+@use "@codex/ui/components/Kanban/Column/column";
+@use "@codex/ui/components/Kanban/Issue/issue";
+@use "@codex/ui/components/Kanban/IssueModal/Modal";
+@use "@codex/ui/components/Player/player";
+@use "@codex/ui/components/FilterFlyout/filterFlyout";
+@use "@codex/ui/routes/Project/project";
+@use "@codex/ui/components/Project/ProjectViewer/ProjectViewer";
+@use "@codex/ui/components/Profile/profile";
+@use "@codex/ui/components/Kanban/AddIssue/addIssueButton";
+@use "@codex/ui/components/Manager/Calendar/calendarStrip";
+@use "@codex/ui/components/Manager/row/row";
+@use "@codex/ui/components/ICA/ICA";
+
+@import "@carbon/charts/styles.css";
+
+$sipePrefix: "sipe";
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include theme.theme(themes.$g90);
+  }
+}
+
+.titlebar-button {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:root {
+  border-radius: 10px !important;
+  background: theme.$background;
+
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: theme.$background;
+  color: theme.$text-primary;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  border-radius: 10px !important;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+
+.#{$sipePrefix}--main-content {
+  width: 100vw;
+  height: 100%;
+  background-color: theme.$background;
+  overflow: hidden;
+}
+
+.#{$sipePrefix}--main-content-wrapper {
+  padding-top: spacing.$spacing-05;
+  background: theme.$background;
+  padding-left: 0;
+  transition: all motion.$duration-fast-02 cubic-bezier(0.2, 0, 1, 0.9);
+  height: calc(100vh - 180px);
+  width: 100%;
+}
+.c4p--side-panel__overlay{
+  z-index: 8000;
+}
+svg.folder-pictogram {
+  fill: black;
+  width: 64px;
+  height: 64px;
+}

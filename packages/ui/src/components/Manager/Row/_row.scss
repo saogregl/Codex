@@ -1,0 +1,33 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--row-container {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid black;
+}
+
+.#{$sipePrefix}--row-header {
+  p {
+    @include type.type-style("expressive-heading-01");
+    color: theme.$text-secondary;
+  }
+}
+
+.#{$sipePrefix}--row-header-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  border-right: 1px solid theme.$text-secondary;
+}
+
+.#{$sipePrefix}--row-viewport-container {
+  display: flex;
+  width: 100%;
+  background-image: radial-gradient(gray 5%, transparent 0);
+  background-size: 40px 40px;
+  background-position: -19px -19px;
+}

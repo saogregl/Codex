@@ -1,0 +1,50 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--addIssue-container {
+  background-color: theme.$layer-01;
+  padding: 0 spacing.$spacing-02 0 spacing.$spacing-02;
+  box-shadow: 0px 1px 2px 0px rgba(9, 30, 66, 0.25);
+  margin: 0 5px 0 5px;
+  display: flex; 
+
+  //If the container is hidden, then hide all elements inside it
+    &.#{$sipePrefix}--addIssue-container--hidden {
+        * {
+            visibility: hidden;
+        }
+    }
+}
+
+.#{$sipePrefix}--addIssue-container-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: spacing.$spacing-02;
+    * {
+        margin:  spacing.$spacing-01 0 spacing.$spacing-01 0;
+    }
+  }
+  
+  .#{$sipePrefix}--kanban-add-button-container {
+    * {
+        width: 100% !important;
+        max-width: 100% !important;
+        align-items: center !important;
+        justify-content: center !important;
+        display: flex !important;
+        padding: 0 !important;
+    }
+  }
+
+  .#{$sipePrefix}--kanban-add-button-content {
+    width: 100% !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }

@@ -1,0 +1,126 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+
+$sipePrefix: "sipe";
+
+
+
+.#{$sipePrefix}_ICA__label {
+    @include type.type-style("label-01");
+    display: block;
+    margin: 0;
+    color: theme.$text-secondary;
+}
+
+.#{$sipePrefix}_ICA__value {
+    @include type.type-style("productive-heading-04");
+
+    margin-bottom: 0;
+}
+
+.#{$sipePrefix}_ICA__total {
+    @include type.type-style("body-short-01");
+}
+
+.#{$sipePrefix}_ICA__total,
+.#{$sipePrefix}_ICA__percentage-mark {
+    margin-top: auto;
+    margin-bottom: spacing.$spacing-02;
+}
+
+.#{$sipePrefix}_ICA__info {
+    vertical-align: top;
+}
+
+.#{$sipePrefix}_ICA__trend {
+    margin-top: spacing.$spacing-03;
+    vertical-align: top;
+}
+
+.#{$sipePrefix}_ICA__row {
+    display: flex;
+    align-items: center;
+
+    .circular-progress {
+        margin-right: spacing.$spacing-04;
+    }
+}
+
+.#{$sipePrefix}_ICA__tooltip {
+    .cds--popover * {
+        z-index: 999999;
+    }
+
+
+    overflow: visible;
+    /* Set the overflow property to visible */
+
+
+}
+
+
+.#{$sipePrefix}_ICA__percentage {
+    @include type.type-style("productive-heading-04");
+}
+
+.#{$sipePrefix}_ICA__percentage-mark {
+    @include type.type-style("body-short-01");
+}
+
+// Lg Styling
+.#{$sipePrefix}_ICA--lg .#{$sipePrefix}_ICA {
+
+    .#{$sipePrefix}_ICA__value,
+    .#{$sipePrefix}_ICA__percentage {
+        @include type.type-style("productive-heading-06");
+    }
+
+    .#{$sipePrefix}_ICA__total,
+    .#{$sipePrefix}_ICA__percentage-mark {
+        @include type.type-style("productive-heading-03");
+    }
+}
+
+//  Styling
+.#{$sipePrefix}_ICA--xl .#{$sipePrefix}_ICA {
+
+    &:hover {
+        cursor: pointer;
+
+    }
+
+    .#{$sipePrefix}_ICA__label {
+        @include type.type-style("body-short-01");
+    }
+
+    .#{$sipePrefix}_ICA__value,
+    .#{$sipePrefix}_ICA__percentage {
+        @include type.type-style("productive-heading-07");
+    }
+
+    .#{$sipePrefix}_ICA__total,
+    .#{$sipePrefix}_ICA__percentage-mark {
+        @include type.type-style("productive-heading-04");
+    }
+
+    .#{$sipePrefix}_ICA__trend {
+        margin-top: spacing.$spacing-04;
+    }
+}
+
+
+.#{$sipePrefix}_ICA {
+    padding: spacing.$spacing-04;
+
+    .cds--popover * {
+        z-index: 999999;
+    }
+
+    &:hover {
+        background-color: theme.$layer-hover-01;
+        cursor: pointer;
+
+    }
+}

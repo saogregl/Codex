@@ -1,0 +1,39 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/motion";
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--header-subtitle {
+  border-left: 1px solid theme.$layer-accent-01;
+  padding-left: spacing.$spacing-05;
+  margin-left: spacing.$spacing-05;
+  color: #c6c6c6;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.28572;
+  letter-spacing: 0.16px;
+  user-select: none;
+}
+
+.#{$sipePrefix}--header-searchBar {
+  display: flex;
+  width: 400px;
+  @media (max-width: 1050px) {
+      width: 200px;
+  }
+  
+}
+
+.#{$sipePrefix}--content {
+  padding-top: spacing.$spacing-09;
+  padding-left: spacing.$spacing-09;
+  transition: all motion.$duration-fast-02 cubic-bezier(0.2, 0, 1, 0.9);
+  height: 100vh;
+  width: 100vw;
+
+  &.#{$sipePrefix}--side-nav--expanded {
+    padding-left: calc(spacing.$spacing-09 + 256px - 48px);
+  }
+}

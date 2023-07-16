@@ -1,0 +1,16 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+
+$sipePrefix: "sipe";
+
+
+
+.#{$sipePrefix}--player-header {
+  display: flex;
+  flex-direction: column;
+  height: 48px;
+  padding: spacing.$spacing-04;
+  width: 100%;
+  border-bottom: 1px solid #f4f4f4;
+}

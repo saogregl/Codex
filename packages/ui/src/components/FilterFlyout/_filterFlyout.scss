@@ -1,0 +1,82 @@
+@use "@carbon/styles/scss/theme" as *;
+@use "@carbon/styles/scss/spacing" as *;
+@use "@carbon/styles/scss/type" as *;
+@use "@carbon/layout" as *;
+
+$sipePrefix: "sipe";
+$carbonPrefix: "cds";
+
+.#{$sipePrefix}-filter-flyout__container {
+  position: relative;
+}
+
+.#{$sipePrefix}-filter-flyout {
+  position: absolute;
+  top: calc(48px + 7px);
+  right: 48px;
+  display: none;
+  width: rem(642px);
+  background-color: $layer-02;
+  box-shadow: 0 1px rem(8px) 0 rgba(0, 0, 0, 0.25);
+}
+
+.#{$sipePrefix}-filter-flyout__action-set { 
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
+.#{$sipePrefix}-filter-flyout--open {
+  position: fixed; // This is to make the flyout stay in place when scrolling
+  display: flex;
+}
+
+.#{$sipePrefix}-filter-flyout--batch {
+  min-height: rem(346px);
+  grid-template-rows: 1fr rem(48px);
+}
+
+.#{$sipePrefix}-filter-flyout--instant {
+  min-height: rem(282px);
+  grid-template-rows: 1fr;
+}
+
+.#{$sipePrefix}-filter-flyout__inner-container {
+  padding: $spacing-05 $spacing-05 $spacing-09 $spacing-05;
+}
+
+// .#{$sipePrefix}-filter-flyout__inner-container::before {
+//   position: absolute;
+//   top: rem(-7px);
+//   right: 1px;
+//   display: block;
+//   width: rem(46px);
+//   height: rem(15px);
+//   background-color: $layer-02;
+//   content: "";
+// }
+
+.#{$sipePrefix}-filter-flyout__title {
+  display: block;
+  @include type-style("heading-compact-01");
+
+  margin-bottom: $spacing-06;
+}
+
+.#{$sipePrefix}-filter-flyout__filters {
+  display: grid;
+  gap: rem(16px) rem(32px);
+  grid-template-columns: 1fr 1fr;
+}
+
+// Carbon overrides
+.#{$sipePrefix}-filter-flyout__trigger--open.#{$carbonPrefix}--btn.#{$carbonPrefix}--btn--icon-only {
+  position: relative;
+  background-color: $layer-02;
+  box-shadow: 0 1px rem(8px) 0 rgba(0, 0, 0, 0.25);
+}
+
+.#{$sipePrefix}-filter-flyout .#{$carbonPrefix}--fieldset {
+  margin-bottom: 0;
+}
