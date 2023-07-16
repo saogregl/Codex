@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "react/jsx-runtime.js": [
+        "node_modules/react/jsx-runtime"
+      ]
+    },
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "vite.config.ts"
+  ]
+}

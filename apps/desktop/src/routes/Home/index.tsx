@@ -6,9 +6,9 @@ import { Theme, Tab, Tabs, TabList, TabPanels, TabPanel, Button } from "@carbon/
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import { Edit, TrashCan } from "@carbon/icons-react"
-import { AreaChartExample } from '@codex/ui/src/components/ChartTest'
-import DataGridComponent from '@codex/ui/src/components/Datagrid/DataGridComponent';
-import { ICA } from '@codex/ui/src/components/ICA';
+import { AreaChartExample } from '../../components/ChartTest'
+import DataGridComponent from '../../components/Datagrid/DataGridComponent';
+import { ICA } from '../../components/ICA';
 type Props = {}
 
 const index = (props: Props) => {
@@ -139,7 +139,7 @@ const index = (props: Props) => {
           navigation={
             <Tabs
               selectedIndex={selectedTab}
-              onChange={(e: { selectedIndex: React.SetStateAction<number>; }) => setSelectedTab(e.selectedIndex)}
+              onChange={(e) => setSelectedTab(e.selectedIndex)}
             >
               <TabList aria-label="Opções de navegação">
                 <Tab

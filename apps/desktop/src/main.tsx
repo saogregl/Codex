@@ -11,7 +11,7 @@ pkg.component.Toolbar = true;
 pkg.component.ToolbarGroup = true;
 pkg.component.ToolbarButton = true;
 
-import { SuiteHeader } from "@codex/ui/src/components";
+import SuiteHeader from "./components/SuiteHeader";  
 import {
   Home,
 } from "./routes";

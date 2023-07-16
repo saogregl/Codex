@@ -9,8 +9,8 @@ import {
   Button,
 } from "@carbon/react";
 
-import { CreateProject } from "@codex/ui/src/components/Flow/CreateProject";
-import { useCreateProject } from "@codex/ui/src/components/Flow/CreateProject";
+import { CreateProject } from "./components/Flow/CreateProject";
+import { useCreateProject } from "./components/Flow/CreateProject";
 
 function App() {
   const client = createClient<Procedures>({

@@ -4,10 +4,10 @@ datasource db {
 }
  
 generator client {
-    // Corresponds to the cargo alias created earlier
-    provider      = "cargo prisma"
-    // The location to generate the client. Is relative to the position of the schema
-    output        = "../src/prisma.rs"
+    provider    = "cargo prisma"
+    output      = "../../crates/prisma/src/prisma"
+    module_path = "codex_prisma::prisma"
+    client_format = "folder"
 }
  
 model User {

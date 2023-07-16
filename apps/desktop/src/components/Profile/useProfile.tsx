@@ -11,20 +11,20 @@ export const useProfile = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const previousState = usePreviousValue({ open });
-  const userProfile = useStore();
+  // const userProfile = useStore();
 
   const handleSignout = async () => {
-    await supabase.auth.signOut().then(({ error }) => {
-      if (error) {
-        console.log(error);
-        return;
-      } else {
-        // @ts-ignore-next-line
+    // await supabase.auth.signOut().then(({ error }) => {
+    //   if (error) {
+    //     console.log(error);
+    //     return;
+    //   } else {
+    //     // @ts-ignore-next-line
 
-        userProfile.invalidateCurrentSession();
-        navigate("/");
-      }
-    });
+    //     userProfile.invalidateCurrentSession();
+    //     navigate("/");
+    //   }
+    // });
   };
 
   useClickOutside(ref, () => {
@@ -59,7 +59,7 @@ export const useProfile = () => {
     isOpen,
     shouldRender,
     expandProfile,
-    userProfile,
+    // userProfile,
     handleSignout,
     setShouldRender,
   };

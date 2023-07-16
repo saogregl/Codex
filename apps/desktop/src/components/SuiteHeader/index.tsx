@@ -88,25 +88,25 @@ const layout = () => {
   const { minimizeRef, maximizeRef, CloseRef } = useCustomHeader();
 
 
-  useEffect(() => {
-    const getSession = async () => {
-      // @ts-ignore-next-line
-      if (!userStore.currentSession) {
-        await supabase.auth.getSession().then(({ data, error }) => {
-          // @ts-ignore-next-line
+  // useEffect(() => {
+  //   const getSession = async () => {
+  //     // @ts-ignore-next-line
+  //     if (!userStore.currentSession) {
+  //       await supabase.auth.getSession().then(({ data, error }) => {
+  //         // @ts-ignore-next-line
 
-          userStore.setCurrentSession(data);
-          if (error) {
-            navigate("/");
-          }
-          if (data.session === null) {
-            navigate("/");
-          }
-        });
-      }
-    };
-    getSession();
-  }, []);
+  //         userStore.setCurrentSession(data);
+  //         if (error) {
+  //           navigate("/");
+  //         }
+  //         if (data.session === null) {
+  //           navigate("/");
+  //         }
+  //       });
+  //     }
+  //   };
+  //   getSession();
+  // }, []);
 
 
   const expandSidenav = useCallback(() => {
@@ -256,7 +256,7 @@ const layout = () => {
             <SideNavLink
               isActive={!activeMenu}
               renderIcon={Home}
-              href="/Dashboard/Home"
+              href="/home"
             >
               Home
             </SideNavLink>

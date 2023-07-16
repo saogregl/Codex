@@ -3,7 +3,8 @@ import { settings } from "../../constants/settings";
 import classnames from "classnames";
 import { useProfile } from "./useProfile";
 import {   // @ts-ignore
-  HeaderGlobalAction, Button } from "@carbon/react";
+  HeaderGlobalAction, Button
+} from "@carbon/react";
 import ProfileContent from "./ProfileContent";
 
 type Props = {};
@@ -14,22 +15,12 @@ const Profile = () => {
     isOpen,
     shouldRender,
     expandProfile,
-    userProfile,
+    // userProfile,
     handleSignout,
     setShouldRender,
   } = useProfile();
-  const fullName =
-    // @ts-ignore-next-line
-
-    userProfile.userSession.session.user.user_metadata?.first_name +
-    " " +
-    // @ts-ignore-next-line
-
-    userProfile.userSession.session.user.user_metadata?.last_name;
-
-  // @ts-ignore-next-line
-
-  const platform = userProfile.userSession.session.user.user_metadata?.platform;
+  const fullName ="User Name"; // userProfile.userSession.session.user.user_metadata?.full_name || "
+  const platform = "Plataforma";
 
   return (
     <HeaderGlobalAction aria-label="Perfil" onClick={expandProfile}>
@@ -52,7 +43,7 @@ const Profile = () => {
               platform={platform}
               // @ts-ignore-next-line
 
-              email={userProfile.userSession.session.user.email}
+              email={"email@jacto.com.br"}
               onLogout={handleSignout}
             />
           </div>
