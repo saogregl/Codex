@@ -1,5 +1,5 @@
 {
-  "name": "@nighttrax/vite-example",
+  "name": "@codex/vite-example",
   "description": "Example of using Vite in a TS monorepo",
   "private": true,
   "version": "1.0.0",
@@ -11,8 +11,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@nighttrax/components": "*",
-    "@nighttrax/foo": "*",
+    "@codex/components": "*",
+    "@codex/foo": "*",
     "react": "~18.2.0",
     "react-dom": "~18.2.0"
   },

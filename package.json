@@ -1,6 +1,6 @@
 {
-  "name": "ts-monorepo",
-  "description": "Template for setting up a TypeScript monorepo",
+  "name": "codex",
+  "description": "Codex is a software to manage knowledge and information.",
   "private": true,
   "workspaces": [
     "packages/*",
