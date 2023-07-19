@@ -30,11 +30,6 @@ function App() {
   } = useCreateProject();
   const [workspaceActivities, setWorkspaceActivities] = useState("");
 
-  useEffect(() => {
-    client.query(["tasks.getAllProjectActivities"]).then((res) => {
-      setWorkspaceActivities(JSON.stringify(res));
-    });
-  }, []);
 
   return (
     <div className="container">

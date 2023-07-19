@@ -18,15 +18,10 @@
 @use "./components/SuiteHeader/layout";
 @use "./components/SuiteHeader/SuiteHeaderAppSwitcher/suite-header-app-switcher";
 @use "./components/DashboardWidget/dashboardWidget";
-@use "./components/Kanban/Kanban";
-@use "./components/Kanban/Column/column";
-@use "./components/Kanban/Issue/issue";
-@use "./components/Kanban/IssueModal/Modal";
 @use "./components/Player/player";
 @use "./components/FilterFlyout/filterFlyout";
 @use "./components/Project/ProjectViewer/ProjectViewer";
 @use "./components/Profile/profile";
-@use "./components/Kanban/AddIssue/addIssueButton";
 @use "./components/Manager/Calendar/calendarStrip";
 @use "./components/Manager/row/row";
 @use "./components/ICA/ICA";

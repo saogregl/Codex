@@ -53,7 +53,6 @@ const LoginForm = (props: Props) => {
               <h2>Login</h2>
               {error && (
                 <InlineNotification
-                  actionButtonLabel="Action"
                   aria-label="closes notification"
                   onCloseButtonClick={() => setError(null)}
                   statusIconDescription="notification"

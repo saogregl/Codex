@@ -2,48 +2,13 @@
 
 export type Procedures = {
     queries: 
-        { key: "projects.getProjects", input: never, result: Project[] } | 
-        { key: "projects.getProjectsFromWorkspace", input: GetArgs, result: Project[] } | 
-        { key: "tasks.getAllProjectActivities", input: never, result: ProjectActivities[] } | 
-        { key: "tasks.getListsFromProject", input: GetArgs, result: ProjectLists[] } | 
-        { key: "tasks.getTaskByID", input: GetTaskByIDArgs, result: ProjectActivities | null } | 
-        { key: "tasks.getTasksFromList", input: GetTaskFromListArgs, result: ProjectActivities[] } | 
-        { key: "version", input: never, result: string } | 
-        { key: "workspaces.getWorkspaces", input: never, result: Workspace[] },
+        { key: "tasks.getAllUsers", input: never, result: User[] } | 
+        { key: "version", input: never, result: string },
     mutations: 
-        { key: "tasks.EditTaskByID", input: EditTaskByIDArgs, result: ProjectActivities } | 
-        { key: "tasks.MoveTaskByID", input: MoveTaskByIDArgs, result: ProjectActivities } | 
-        { key: "tasks.MoveTaskByIDAndUpdateBoard", input: MoveTaskByIDArgs, result: null } | 
-        { key: "tasks.addNewTaskToColumn", input: AddTaskToColumnArgs, result: ProjectActivities } | 
-        { key: "tasks.createNewTask", input: CreateNewTaskArgs, result: ProjectActivities } | 
-        { key: "tasks.deleteTaskByID", input: DeleteTaskByIDArgs, result: null },
+        { key: "tasks.createNewUser", input: CreateNewUserParam, result: User },
     subscriptions: never
 };
 
-export type GetTaskByIDArgs = { task_id: string }
+export type CreateNewUserParam = { id: string; name: string }
 
-export type MoveTaskByIDArgs = { task_id: string; list_id: string; position: number }
-
-export type MoveTaskByIDArgs = { task_id: string; list_id: string; position: number }
-
-export type GetArgs = { workspace_id: string }
-
-export type DeleteTaskByIDArgs = { task_id: string }
-
-export type CreateNewTaskArgs = { Project_id: number; list_id: string; title: string; description: string; status: string; position: number }
-
-export type Project = { id: number; created_at: string | null; name: string | null; platform: string | null; order_type: string | null; workspace_id: string | null }
-
-export type GetTaskFromListArgs = { list_id: string }
-
-export type AddTaskToColumnArgs = { Project_id: number; list_id: string; title: string; description: string; status: string }
-
-export type GetArgs = { project_id: number }
-
-export type Workspace = { id: string; created_at: string | null; workspace_name: string | null; workspace_description: string | null; workspace_workflow: string | null }
-
-export type ProjectActivities = { createdAt: string | null; projectID: number | null; title: string | null; description: string | null; status: string | null; priority: string | null; id: string; assigned: string | null; createdBy: string | null; position: number | null; orderType: string | null; taskListID: string | null }
-
-export type EditTaskByIDArgs = { Project_id: number; task_id: string; title: string; description: string; due_date: string | null; priority: string | null; status: string | null }
-
-export type ProjectLists = { created_at: string | null; title: string | null; position: number | null; projectID: number | null; listID: string }
+export type User = { id: string; displayName: string }

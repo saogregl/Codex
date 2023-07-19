@@ -11,7 +11,7 @@ pkg.component.Toolbar = true;
 pkg.component.ToolbarGroup = true;
 pkg.component.ToolbarButton = true;
 
-import SuiteHeader from "./components/SuiteHeader";  
+import SuiteHeader from "./components/SuiteHeader";
 import {
   Home,
 } from "./routes";
@@ -26,6 +26,27 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/home",
+        element: <Home />,
+      },
+      {
+        path: "/data",
+        element: <Home />,
+      },
+
+      {
+        path: "/projects",
+        element: <Home />,
+      },
+      {
+        path: "/projects/all",
+        element: <Home />,
+      },
+      {
+        path: "/catalogs",
+        element: <Home />,
+      },
+      {
+        path: "/catalogs/all",
         element: <Home />,
       },
     ],

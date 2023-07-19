@@ -12,7 +12,7 @@ pub struct Ctx {
 
 pub type Router = rspc::Router<Ctx>;
 
-pub(crate) fn new() -> Arc<Router> {
+pub fn new() -> Arc<Router> {
     let r = Router::new()
         .config(Config::new().export_ts_bindings(
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../web/src/bindings.ts"),

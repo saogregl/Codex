@@ -13,6 +13,7 @@ import { handleSpecificKeyDown } from '../../../utils/componentsUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { useProjectContextStore } from '../../../Stores/workspaceStore';
 import rspc from '../../../lib/query';
+import { workspaces as getWorkspacesData } from '../constants/workspaces';
 
 const defaultValues = {
   customApplications: [],
@@ -112,13 +113,6 @@ const MultiWorkspaceSuiteHeaderAppSwitcher = ({
 
   const projectContextStore = useProjectContextStore();
 
-  const { data: getProjectsData, isLoading: getProjectsLoading, error: getProjectsError } = rspc.useQuery([
-    "projects.getProjects"
-  ]);
-
-  const { data: getWorkspacesData, isLoading: getWorkspacesLoading, error: getWorkspacesError } = rspc.useQuery([
-    "workspaces.getWorkspaces"
-  ]);
 
 
 

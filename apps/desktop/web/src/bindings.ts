@@ -36,11 +36,7 @@ export type GetArgs = { project_id: number }
 
 export type MoveTaskByIDArgs = { task_id: string; list_id: string; position: number }
 
-export type MoveTaskByIDArgs = { task_id: string; list_id: string; position: number }
-
 export type GetTaskFromListArgs = { list_id: string }
-
-export type GetArgs = { workspace_id: string }
 
 export type CreateNewTaskArgs = { Project_id: number; list_id: string; title: string; description: string; status: string; position: number }
 

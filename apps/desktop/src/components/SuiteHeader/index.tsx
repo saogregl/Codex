@@ -7,6 +7,7 @@ import {
   Notification,
   Switcher as SwitcherIcon,
   Home,
+  Db2Database
 } from "@carbon/icons-react";
 import {
   ChromeCloseIcon,
@@ -46,7 +47,10 @@ import {
 
   SideNavLink,
   // @ts-ignore
-
+  SideNavMenu,
+  // @ts-ignore
+  SideNavMenuItem,
+  // @ts-ignore
   HeaderPanel,
   Search,
   Dropdown,
@@ -74,6 +78,10 @@ const layout = () => {
   const userStore = useStore();
   const appSwitcherRef = useRef(null);
 
+
+
+
+
   useEffect(() => {
     //Check which menu is active comparing the location with the routes
     const activeMenu = Apps.find((route) => {
@@ -82,7 +90,7 @@ const layout = () => {
 
     setActiveMenu(activeMenu?.ItemName);
 
-    // Google Analytics
+    console.log(location.pathname)
   }, [location]);
 
   const { minimizeRef, maximizeRef, CloseRef } = useCustomHeader();
@@ -151,7 +159,7 @@ const layout = () => {
                 alignItems: "center",
               }}
             >
-              Sistema de integração
+              Codex
             </div>
           </span>
         </HeaderName>
@@ -251,28 +259,48 @@ const layout = () => {
           isRail
           expanded={isSideNavExpanded}
           onOverlayClick={expandSidenav}
+          // isPersistent={false}
         >
           <SideNavItems>
             <SideNavLink
-              isActive={!activeMenu}
+              isActive={activeMenu ? false : location.pathname == "/home"}
               renderIcon={Home}
               href="/home"
+              large
             >
               Home
             </SideNavLink>
             <SideNavDivider />
+            <SideNavLink
+              isActive={activeMenu ? false : location.pathname == "/data"}
+              renderIcon={Db2Database}
+              href="/data"
+              large
+            >
+              Dados
+            </SideNavLink>
+
 
             {Apps.map((route) => {
               return (
                 // Make menu active when clicked on
-                <SideNavLink
+                <SideNavMenu
                   renderIcon={route.icon}
                   key={route.ItemName}
                   href={route.href}
-                  isActive={route.ItemName == activeMenu}
+                  isActive={activeMenu ? false : location.pathname == route.href}
+                  title={route.ItemName}
+                  large
                 >
-                  {route.ItemName}
-                </SideNavLink>
+                  {route.children?.map((child) => {
+                    return (
+                      <SideNavMenuItem href={child.href}>
+                        {/* {child.icon && child.icon()} */}
+                        {child.ItemName}
+                      </SideNavMenuItem>
+                    );
+                  })}
+                </SideNavMenu >
               );
             })}
           </SideNavItems>

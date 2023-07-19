@@ -1,7 +1,6 @@
 /* eslint-disable no-script-url */
 
 import React from 'react';
-import PropTypes from 'prop-types';
   // @ts-ignore
 
 import { ButtonSkeleton, SkeletonText } from '@carbon/react';
@@ -12,9 +11,6 @@ const defaultProps = {
   testId: 'suite-header-app-switcher',
 };
 
-const propTypes = {
-  testId: PropTypes.string,
-};
 
 const SuiteHeaderAppSwitcherLoading = ({ testId }) => {
   const baseClassName = `${settings.iotPrefix}--suite-header-app-switcher`;
@@ -35,6 +31,5 @@ const SuiteHeaderAppSwitcherLoading = ({ testId }) => {
 };
 
 SuiteHeaderAppSwitcherLoading.defaultProps = defaultProps;
-SuiteHeaderAppSwitcherLoading.propTypes = propTypes;
 
 export default SuiteHeaderAppSwitcherLoading;

@@ -1,0 +1,65 @@
+{
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "devPath": "http://localhost:8080",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "Codex",
+    "version": "0.0.1"
+  },
+  "tauri": {
+    "allowlist": {
+      "fs": {
+        "scope": [
+          "$RESOURCE/*"
+        ]
+      },
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.sipe.dev",
+      "longDescription": "",
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all"
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "theme": "Dark",
+        "width": 1280,
+        "height": 720,
+        "resizable": true,
+        "title": "Sistema de Integração",
+        "decorations": false
+      }
+    ]
+  }
+}
