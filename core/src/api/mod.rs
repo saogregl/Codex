@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use crate::prisma;
+use crate::{prisma, LibraryManager};
 use rspc::Config;
 pub use rspc::RouterBuilder;
 use std::path::PathBuf;
-
 mod tasks;
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
 }
+// pub manager: Arc<LibraryManager>,
 
 pub type Router = rspc::Router<Ctx>;
 

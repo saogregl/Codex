@@ -1,132 +1,129 @@
 datasource db {
-    provider = "sqlite"
-    url      = "file:dev.db"
+  provider = "sqlite"
+  url      = "file:dev.db"
 }
- 
+
 generator client {
-    provider    = "cargo prisma"
-    output      = "../../crates/prisma/src/prisma.rs"
-    module_path = "codex_prisma::prisma"
+  provider    = "cargo prisma"
+  output      = "../../crates/prisma/src/prisma.rs"
+  module_path = "codex_prisma::prisma"
 }
- 
+
 model User {
-    id          String  @id
-    displayName String
+  id          String @id
+  displayName String
 }
 
 /// @shared(id: pub_id)
 model FilePath {
-    id     Int   @id @default(autoincrement())
-    pub_id Bytes @unique
+  id     Int   @id @default(autoincrement())
+  pub_id Bytes @unique
 
-    is_dir Boolean?
+  is_dir Boolean?
 
+  // the name and extension, MUST have 'COLLATE NOCASE' in migration
+  name      String?
+  extension String?
 
-    // the name and extension, MUST have 'COLLATE NOCASE' in migration
-    name      String?
-    extension String?
+  size_in_bytes_bytes Bytes?
 
-    size_in_bytes_bytes Bytes?
+  // the unique Object for this file path
+  object_id Int?
+  object    Object? @relation(fields: [object_id], references: [id], onDelete: Restrict)
 
-    // the unique Object for this file path
-    object_id Int?
-    object    Object? @relation(fields: [object_id], references: [id], onDelete: Restrict)
+  key_id Int? // replacement for encryption
 
-    key_id Int? // replacement for encryption
-
-    date_created  DateTime?
-    date_modified DateTime?
-    date_indexed  DateTime?
+  date_created  DateTime?
+  date_modified DateTime?
+  date_indexed  DateTime?
 }
 
 /// @shared(id: pub_id)
 model Object {
-    id     Int   @id @default(autoincrement())
-    pub_id Bytes @unique
-    // Enum: sd_file_ext::kind::ObjectKind
-    kind   Int?
+  id     Int   @id @default(autoincrement())
+  pub_id Bytes @unique
+  // Enum: sd_file_ext::kind::ObjectKind
+  kind   Int?
 
-    key_id        Int?
-    // handy ways to mark an object
-    hidden        Boolean?
-    favorite      Boolean?
-    important     Boolean?
-    note          String?
-    date_created  DateTime?
-    date_accessed DateTime?
+  key_id        Int?
+  // handy ways to mark an object
+  hidden        Boolean?
+  favorite      Boolean?
+  important     Boolean?
+  note          String?
+  date_created  DateTime?
+  date_accessed DateTime?
 
-    tags       TagOnObject[]
-    labels     LabelOnObject[]
-    file_paths FilePath[]
-    media_data MediaData?
-    @@map("object")
+  tags       TagOnObject[]
+  labels     LabelOnObject[]
+  file_paths FilePath[]
+  Library    Library?        @relation(fields: [libraryId], references: [id])
+  libraryId  Int?
+
+  @@map("object")
 }
 
-model MediaData {
-    id                      Int     @id
-    pixel_width             Int?
-    pixel_height            Int?
-    longitude               Float?
-    latitude                Float?
-    fps                     Int?
-    capture_device_make     String? // eg: "Apple"
-    capture_device_model    String? // eg: "iPhone 12"
-    capture_device_software String? // eg: "12.1.1"
-    duration_seconds        Int?
-    codecs                  String? // eg: "h264,acc"
-    streams                 Int?
+model Library {
+  id              Int       @id @default(autoincrement())
+  pub_id          Bytes     @unique
+  name            String?
+  // Enum: ???
+  redundancy_goal Int?
+  date_created    DateTime?
+  date_modified   DateTime?
+  objects         Object[]
 
-    object Object? @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    @@map("media_data")
+  @@map("library")
 }
 
 //// Tag ////
 
 /// @shared(id: pub_id)
 model Tag {
-    id     Int     @id @default(autoincrement())
-    pub_id Bytes   @unique
-    name   String?
-    color  String?
-    // Enum: ??
-    redundancy_goal Int?
-    date_created  DateTime?
-    date_modified DateTime?
-    tag_objects TagOnObject[]
+  id              Int           @id @default(autoincrement())
+  pub_id          Bytes         @unique
+  name            String?
+  color           String?
+  // Enum: ??
+  redundancy_goal Int?
+  date_created    DateTime?
+  date_modified   DateTime?
+  tag_objects     TagOnObject[]
 
-    @@map("tag")
+  @@map("tag")
 }
 
 /// @relation(item: tag, group: object)
 model TagOnObject {
-    tag_id Int
-    tag    Tag @relation(fields: [tag_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    object_id Int
-    object    Object @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    @@id([tag_id, object_id])
-    @@map("tag_on_object")
+  tag_id    Int
+  tag       Tag    @relation(fields: [tag_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  object_id Int
+  object    Object @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tag_id, object_id])
+  @@map("tag_on_object")
 }
 
 //// Label ////
 
 model Label {
-    id            Int      @id @default(autoincrement())
-    pub_id        Bytes    @unique
-    name          String?
-    date_created  DateTime @default(now())
-    date_modified DateTime @default(now())
-    label_objects LabelOnObject[]
-    @@map("label")
+  id            Int             @id @default(autoincrement())
+  pub_id        Bytes           @unique
+  name          String?
+  date_created  DateTime        @default(now())
+  date_modified DateTime        @default(now())
+  label_objects LabelOnObject[]
+
+  @@map("label")
 }
 
 model LabelOnObject {
-    date_created DateTime @default(now())
-    label_id Int
-    label    Label @relation(fields: [label_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    object_id Int
-    object    Object @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    @@id([label_id, object_id])
-    @@map("label_on_object")
+  date_created DateTime @default(now())
+  label_id     Int
+  label        Label    @relation(fields: [label_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  object_id    Int
+  object       Object   @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([label_id, object_id])
+  @@map("label_on_object")
 }
-
-
