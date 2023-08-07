@@ -5,6 +5,7 @@ use crate::fs_utils::{extension_to_object_type, get_all_files_dir, get_extension
 use crate::library::LocalLibrary;
 use crate::search::Searcher;
 use codex_prisma::prisma::{library, PrismaClient};
+use log::{info, warn, debug, error};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use uuid::{uuid, Uuid};
 
@@ -22,6 +23,15 @@ impl LibraryManager {
         //load libraries:
         let loaded_libs = db.library().find_many(vec![]).exec().await.unwrap();
 
+        let _logger = env_logger::builder()
+            .target(env_logger::Target::Stdout)
+            .init();
+
+        error!("Loaded {} libraries", loaded_libs.len());
+        //Log the libraries that were loaded
+        error!("Loaded libraries: {:?}", loaded_libs);
+        println!("Loaded libraries: {:?}", loaded_libs);
+
         for library in loaded_libs {
             let uuid_lib = Uuid::parse_str(&library.uuid).unwrap();
             let mut library = LocalLibrary::new(
@@ -33,6 +43,8 @@ impl LibraryManager {
             .await;
             libraries.push(library.unwrap());
         }
+
+        error!("The library manager has loaded {:?} libraries", libraries);
 
         Self {
             db,

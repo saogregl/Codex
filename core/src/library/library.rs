@@ -14,6 +14,7 @@ use crate::{
 use super::Library;
 use chrono::{TimeZone, Utc};
 use codex_prisma::prisma::{self, library, location, PrismaClient};
+use log::error;
 use rayon::prelude::*;
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -108,11 +109,14 @@ impl LocalLibrary {
 
         //To create new library objects, refer to the libraryManager.
 
+        // Double check that the library exists in the database.
         let library = db
             .library()
             .find_unique(prisma::library::uuid::equals(id.to_string()))
             .exec()
             .await?;
+
+        error!("Loaded library: {:?}", library); 
 
         if library.is_none() {
             return Err("Library not found".into());
@@ -207,10 +211,15 @@ impl LocalLibrary {
     }
 
     pub async fn index_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
+        error!("Indexing objects for library: {}", self.name); 
         let (changed_files, new_files, deleted_files) = self.check_for_changes().await?;
+        error!("Changed files: {:?}", changed_files);
+        error!("New files: {:?}", new_files);
+        error!("Deleted files: {:?}", deleted_files);
 
         // If there are no changes, we don't need to do anything.
         if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
+            
             return Ok(());
         }
 
