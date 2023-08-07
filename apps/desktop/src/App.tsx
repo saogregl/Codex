@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createClient } from "@rspc/client";
 import { TauriTransport } from "@rspc/tauri";
 import { useEffect } from "react";
-import type { Procedures } from "../web/src/bindings"; // These were the bindings exported from your Rust code!
+import type { Procedures } from "../../../web/src/bindings"; // These were the bindings exported from your Rust code!
 
 import {
   // @ts-ignore

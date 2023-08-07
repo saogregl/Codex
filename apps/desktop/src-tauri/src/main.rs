@@ -5,10 +5,10 @@
 
 use window_shadows::set_shadow;
 
+use codex_core::api;
+use codex_prisma::prisma;
 use dotenv::dotenv;
 use std::sync::Arc;
-use codex_prisma::prisma;
-use codex_core::api;
 
 use tauri::Manager;
 
@@ -18,7 +18,7 @@ pub async fn main() {
     #[cfg(any(windows, target_os = "macos"))]
     let client = Arc::new(prisma::new_client().await.unwrap());
     let router = api::new();
-    let manager = Arc::new(codex_core::LibraryManager::new());
+    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await);
 
     tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {

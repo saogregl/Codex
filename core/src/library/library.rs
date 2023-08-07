@@ -124,6 +124,9 @@ impl LocalLibrary {
             description,
             db,
         };
+
+        library.index_objects().await?;
+
         Ok(Arc::new(library))
     }
 
@@ -319,7 +322,6 @@ impl LocalLibrary {
             );
 
             let parse_result = parsing::parse_for_object(&obj_helper);
-
         });
 
         for object in objects {

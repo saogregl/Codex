@@ -14,6 +14,7 @@ pkg.component.ToolbarButton = true;
 import SuiteHeader from "./components/SuiteHeader";
 import {
   Home,
+  Data,
 } from "./routes";
 
 import App from "./App";
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/data",
-        element: <Home />,
+        element: <Data />,
       },
 
       {

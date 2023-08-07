@@ -6,6 +6,7 @@ use crate::library::LocalLibrary;
 use crate::search::Searcher;
 use codex_prisma::prisma::{library, PrismaClient};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+use uuid::{uuid, Uuid};
 
 pub struct LibraryManager {
     pub db: Arc<PrismaClient>,
@@ -16,24 +17,21 @@ pub struct LibraryManager {
 
 impl LibraryManager {
     pub async fn new(db: Arc<PrismaClient>) -> Self {
-        let libraries = Vec::new();
+        let mut libraries = Vec::new();
 
         //load libraries:
-        let libraries = db
-            .library()
-            .find_many(vec![])
-            .select(library::select!({uuid name path}))
-            .exec()
-            .await
-            .unwrap();
-        for library in libraries {
-            let library = Arc::new(LocalLibrary::new(
-                library.uuid.expect("every library has a uuid"),
-                library.name.expect("every library has a name"),
-                library.name.expect("every library has a name"),
+        let loaded_libs = db.library().find_many(vec![]).exec().await.unwrap();
+
+        for library in loaded_libs {
+            let uuid_lib = Uuid::parse_str(&library.uuid).unwrap();
+            let mut library = LocalLibrary::new(
+                uuid_lib,
+                library.name.clone().expect("every library has a name"),
+                Some(library.name.expect("every library has a name")),
                 db.clone(),
-            ));
-            libraries.push(library);
+            )
+            .await;
+            libraries.push(library.unwrap());
         }
 
         Self {
