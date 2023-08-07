@@ -54,24 +54,3 @@ pub fn extension_to_object_type(extension: &str) -> ObjectType {
     }
 }
 
-pub fn get_all_objects(lib: &LocalLibrary) -> Vec<Object> {
-    let mut objects = Vec::new();
-
-    for file in get_all_files_dir(&lib.path.clone()) {
-
-        let file_path = format!("{}/{}", lib.path.clone(), file.clone());
-        let metadata = get_metadata(&file_path).unwrap();
-        let extension = get_extension(&file_path);
-        let object = Object::new(
-            0,
-            file.clone(),
-            extension.clone(),
-            file_path.clone(),
-            extension_to_object_type(extension.as_str()),
-            metadata,
-            false,
-        );
-        objects.push(object);
-    }
-    objects
-}

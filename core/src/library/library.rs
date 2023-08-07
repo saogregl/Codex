@@ -88,14 +88,14 @@ use codex_prisma::prisma::object;
 //   }
 
 #[derive(Debug, Clone)]
-pub struct DecentralizedLibrary {
+pub struct LocalLibrary {
     pub id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub db: Arc<PrismaClient>,
 }
 
-impl DecentralizedLibrary {
+impl LocalLibrary {
     pub async fn new(
         id: Uuid,
         name: String,
@@ -118,7 +118,7 @@ impl DecentralizedLibrary {
             return Err("Library not found".into());
         }
 
-        let mut library = DecentralizedLibrary {
+        let mut library = LocalLibrary {
             id,
             name,
             description,

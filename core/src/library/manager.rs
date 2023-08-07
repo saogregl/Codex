@@ -3,20 +3,41 @@ use std::sync::Arc;
 
 use crate::fs_utils::{extension_to_object_type, get_all_files_dir, get_extension, get_metadata};
 use crate::library::LocalLibrary;
-use crate::object::{Object, ObjectType};
 use crate::search::Searcher;
+use codex_prisma::prisma::{library, PrismaClient};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 
 pub struct LibraryManager {
+    pub db: Arc<PrismaClient>,
     pub libraries: Vec<Arc<LocalLibrary>>,
     handle: Vec<tokio::task::JoinHandle<Result<(), notify::Error>>>,
     searcher: Searcher,
 }
 
 impl LibraryManager {
-    pub fn new() -> Self {
+    pub async fn new(db: Arc<PrismaClient>) -> Self {
         let libraries = Vec::new();
+
+        //load libraries:
+        let libraries = db
+            .library()
+            .find_many(vec![])
+            .select(library::select!({uuid name path}))
+            .exec()
+            .await
+            .unwrap();
+        for library in libraries {
+            let library = Arc::new(LocalLibrary::new(
+                library.uuid.expect("every library has a uuid"),
+                library.name.expect("every library has a name"),
+                library.name.expect("every library has a name"),
+                db.clone(),
+            ));
+            libraries.push(library);
+        }
+
         Self {
+            db,
             libraries,
             handle: Vec::new(),
             searcher: Searcher::new("./index"),
@@ -28,21 +49,25 @@ impl LibraryManager {
         Ok(())
     }
 
-    pub fn index(&mut self) -> Result<(), Box<dyn std::error::Error>> { 
+    pub fn index(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let _ = self.searcher.index(&mut self.libraries);
         Ok(())
     }
 
     pub fn add_library(&mut self, lib: Arc<LocalLibrary>) {
         self.libraries.push(lib);
-        
     }
 
-    pub fn watch_libraries(&mut self) -> Result<(), notify::Error> {
+    pub async fn watch_libraries(&mut self) -> Result<(), notify::Error> {
         for lib in &self.libraries {
             let lib_clone = Arc::clone(lib); // Clone the Arc<Library>
-            self.handle
-                .push(tokio::task::spawn(Self::watch(lib_clone.path.clone())));
+
+            let locations = lib.get_locations().await.unwrap();
+
+            for location in locations {
+                self.handle
+                    .push(tokio::task::spawn(Self::watch(location.clone())));
+            }
         }
         Ok(())
     }

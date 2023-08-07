@@ -1,9 +1,9 @@
 // Re-export LocalLibrary and CloudLibrary from their respective files
-pub use self::local_library::LocalLibrary;
-
+pub use self::library::LocalLibrary;
+pub use self::manager::LibraryManager;
 // Include sub-modules
-mod local_library;
-mod decentralized_library;
+mod library;
+mod manager;
 
 
 pub trait Library {

@@ -18,11 +18,13 @@ pub async fn main() {
     #[cfg(any(windows, target_os = "macos"))]
     let client = Arc::new(prisma::new_client().await.unwrap());
     let router = api::new();
+    let manager = Arc::new(codex_core::LibraryManager::new());
 
     tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {
             api::Ctx {
                 client: Arc::clone(&client),
+                manager: Arc::clone(&manager),
             }
         }))
         .setup(move |app| {

@@ -10,7 +10,7 @@ impl Parser<Vec<u8>> for PdfParser {
     fn parse(&self, object: &CodexObject) -> Result<(), Vec<u8>> {
         //get absolute path of pdf file
         let path = PathBuf::from(&object.path.path);
-        let parsed_folder = format!("./Articles/parsed/{}", object.get_name());
+        let parsed_folder = format!("./parsed/{}", object.get_name());
         let mut parsed_path = PathBuf::from(&parsed_folder);
         parsed_path.set_extension("txt");
 

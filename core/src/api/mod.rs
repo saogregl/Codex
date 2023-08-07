@@ -4,12 +4,12 @@ use crate::{prisma, LibraryManager};
 use rspc::Config;
 pub use rspc::RouterBuilder;
 use std::path::PathBuf;
+mod library;
 mod tasks;
-mod library; 
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
+    pub manager: Arc<LibraryManager>,
 }
-// pub manager: Arc<LibraryManager>,
 
 pub type Router = rspc::Router<Ctx>;
 
@@ -20,6 +20,7 @@ pub fn new() -> Arc<Router> {
         ))
         .query("version", |t| t(|_, _: ()| env!("CARGO_PKG_VERSION")))
         .merge("tasks.", tasks::mount())
+        .merge("library.", library::mount())
         .build()
         .arced();
     r

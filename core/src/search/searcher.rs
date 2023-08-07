@@ -43,6 +43,7 @@ impl Searcher {
         let text_options = TextOptions::default()
             .set_indexing_options(text_indexing)
             .set_stored();
+        
 
         let mut schema_builder = Schema::builder();
         let title = schema_builder.add_text_field("title", TEXT | STORED);
@@ -86,7 +87,7 @@ impl Searcher {
         }
     }
 
-    pub fn index(
+    pub async fn index(
         &mut self,
         libs: &mut Vec<Arc<LocalLibrary>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -95,19 +96,20 @@ impl Searcher {
         let mut index_writer = self.index.writer(200_000_000).unwrap();
 
         for lib in libs {
-            let objects = lib.get_all_objects();
+
+            let objects = lib.get_objects(lib.id.to_string()).await.unwrap();
             for object in objects {
                 let mut doc = Document::default();
     
                 // Load text for documents:
-                let path = PathBuf::from(&lib.path).join("parsed").join(&object.get_name());
+                let path = PathBuf::from(object.path.expect("every object has a path"));
                 let mut text_path = path.clone();
                 text_path.set_extension("txt");
     
                 println!("Trying to load text: {:?}", text_path);
     
                 if let Ok(text) = std::fs::read_to_string(text_path) {
-                    doc.add_text(self.title, &object.get_name());
+                    doc.add_text(self.title, &object.obj_name.unwrap());
                     doc.add_text(self.body, &text);
                     index_writer.add_document(doc)?;
                 }
