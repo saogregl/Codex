@@ -5,14 +5,20 @@ use std::{
     time::SystemTime,
 };
 
+use crate::{
+    fs_utils::extension_to_object_type,
+    object::{Object, ObjectType},
+    parsing, thumbnail,
+};
+
 use super::Library;
 use chrono::{TimeZone, Utc};
-use codex_prisma::prisma::{self, library, PrismaClient, location};
+use codex_prisma::prisma::{self, library, location, PrismaClient};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use uuid::Uuid;
 
-use codex_prisma::prisma::{file_path, object};
+use codex_prisma::prisma::object;
 
 //A decentralized library is a library that doesn't depend on a specific path and can have files from multiple paths.
 //this is useful for libraries that are stored in the cloud, like Google Drive, Dropbox, etc.
@@ -96,10 +102,12 @@ impl DecentralizedLibrary {
         description: Option<String>,
         db: Arc<PrismaClient>,
     ) -> Result<Arc<Self>, Box<dyn std::error::Error>> {
-
         //This library is not meant to be used to create new library objects.
         //It's meant to be used to load existing library objects from the database.
         //If the library doesn't exist in the database, we'll return an error.
+
+        //To create new library objects, refer to the libraryManager.
+
         let library = db
             .library()
             .find_unique(prisma::library::uuid::equals(id.to_string()))
@@ -126,9 +134,12 @@ impl DecentralizedLibrary {
 
         self.db
             .location()
-            .create(path.to_string(), vec![location::library::connect(
-                library::uuid::equals(this_library_id.clone()),
-            )])
+            .create(
+                path.to_string(),
+                vec![location::library::connect(library::uuid::equals(
+                    this_library_id.clone(),
+                ))],
+            )
             .exec()
             .await?;
 
@@ -151,27 +162,21 @@ impl DecentralizedLibrary {
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
             let extension = file.extension().unwrap().to_str().unwrap();
-            let file_path = self
+            let object = self
                 .db
-                .file_path()
+                .object()
                 .create(vec![
-                    file_path::uuid::set(Uuid::new_v4().to_string()),
-                    file_path::name::set(Some(file_name.to_string())),
-                    file_path::extension::set(Some(extension.to_string())),
-                    file_path::date_modified::set(Some(
+                    object::uuid::set(Uuid::new_v4().to_string()),
+                    object::obj_name::set(Some(file_name.to_string())),
+                    object::path::set(Some(file_path.to_string())),
+                    object::extension::set(Some(extension.to_string())),
+                    object::indexed::set(Some(false)),
+                    object::date_modified::set(Some(
                         Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
                             .unwrap()
                             .into(),
                     )),
-                ])
-                .exec()
-                .await?;
-            self.db
-                .object()
-                .create(vec![
-                    object::uuid::set(Uuid::new_v4().to_string()),
                     object::library::connect(library::uuid::equals(this_library_id.clone())),
-                    object::file_path::connect(file_path::uuid::equals(file_path.uuid)),
                 ])
                 .exec()
                 .await?;
@@ -199,9 +204,6 @@ impl DecentralizedLibrary {
     }
 
     pub async fn index_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let library = self.get_library().await?;
-        let library_uuid = &library.uuid;
-
         let (changed_files, new_files, deleted_files) = self.check_for_changes().await?;
 
         // If there are no changes, we don't need to do anything.
@@ -209,31 +211,26 @@ impl DecentralizedLibrary {
             return Ok(());
         }
 
+        let library = self.get_library().await?;
+        let library_uuid = &library.uuid;
+
         // If there are changes, we'll update the library.
         // We'll start by deleting the deleted files.
         for file in deleted_files {
             self.db
-                .file_path()
-                .delete(file_path::uuid::equals(file.uuid))
+                .object()
+                .delete(object::uuid::equals(file.uuid))
                 .exec()
                 .await?;
         }
 
         // We'll then update the changed files.
         for file in changed_files {
-            let file = self
-                .db
-                .file_path()
-                .find_unique(file_path::uuid::equals(file.uuid))
-                .exec()
-                .await?
-                .ok_or("File not found")?;
-
             self.db
-                .file_path()
+                .object()
                 .update(
-                    file_path::uuid::equals(file.uuid),
-                    vec![file_path::date_modified::set(Some(Utc::now().into()))],
+                    object::uuid::equals(file.uuid),
+                    vec![object::date_modified::set(Some(Utc::now().into()))],
                 )
                 .exec()
                 .await?;
@@ -249,14 +246,15 @@ impl DecentralizedLibrary {
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
             let extension = file.extension().unwrap().to_str().unwrap();
-            let file_path = self
+            let object = self
                 .db
-                .file_path()
+                .object()
                 .create(vec![
-                    file_path::uuid::set(Uuid::new_v4().to_string()),
-                    file_path::name::set(Some(file_name.to_string())),
-                    file_path::extension::set(Some(extension.to_string())),
-                    file_path::date_modified::set(Some(
+                    object::uuid::set(Uuid::new_v4().to_string()),
+                    object::obj_name::set(Some(file_name.to_string())),
+                    object::path::set(Some(file_path.to_string())),
+                    object::extension::set(Some(extension.to_string())),
+                    object::date_modified::set(Some(
                         Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
                             .unwrap()
                             .into(),
@@ -264,13 +262,73 @@ impl DecentralizedLibrary {
                 ])
                 .exec()
                 .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn generate_thumbnails(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let objects = self.get_objects(self.id.to_string()).await?;
+
+        for object in objects {
+            // Find location of object
+            let path = PathBuf::from(&object.path.clone().expect("every object needs a path"));
+
+            //Look for thumbnails in the thumbnails folder:
+            let thumbnails_folder = "./thumbnails".to_string();
+            let mut thumbnail_path = PathBuf::from(&thumbnails_folder);
+            thumbnail_path.push(&object.path.expect("every object needs a path"));
+            thumbnail_path.set_extension("jpg");
+
+            if std::path::Path::new(&thumbnail_path).exists() {
+                println!("Thumbnail already created at: {:?}", thumbnail_path);
+                continue;
+            }
+
+            thumbnail::generate_thumbnail(&object.obj_name.unwrap(), path)?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn parse_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
+        //When parsing, we should check if the object is already parsed.
+        //Parsing should write the library structure, including objects to the database file.
+
+        //First, we find all objects in the path and create the objects.
+        let objects = self.get_objects(self.id.to_string()).await?;
+
+        println!("Parsing objects for library: {}", self.name);
+        objects.par_iter().for_each(|obj| {
+            let path = PathBuf::from(&obj.path.clone().unwrap());
+            let mut text_path = PathBuf::from(&obj.path.clone().unwrap());
+            text_path.set_extension("txt");
+
+            if std::path::Path::new(&text_path).exists() {
+                println!("File already created at: {:?}", text_path);
+                return;
+            }
+            let obj_helper: Object = Object::new(
+                obj.id.clone(),
+                obj.obj_name.clone().unwrap(),
+                obj.extension.clone().unwrap(),
+                obj.obj_name.clone().unwrap(),
+                extension_to_object_type(&obj.extension.clone().unwrap()),
+                std::fs::metadata(&obj.obj_name.clone().unwrap()).unwrap(),
+                false,
+            );
+
+            let parse_result = parsing::parse_for_object(&obj_helper);
+
+        });
+
+        for object in objects {
             self.db
                 .object()
-                .create(vec![
-                    object::uuid::set(Uuid::new_v4().to_string()),
-                    object::library::connect(library::uuid::equals(library_uuid.to_string())),
-                    object::file_path::connect(file_path::uuid::equals(file_path.uuid)),
-                ])
+                .update(
+                    object::uuid::equals(object.uuid),
+                    vec![object::indexed::set(Some(true))],
+                )
                 .exec()
                 .await?;
         }
@@ -312,16 +370,14 @@ impl DecentralizedLibrary {
 
     pub async fn check_for_changes(
         &self,
-    ) -> Result<
-        (Vec<file_path::Data>, Vec<PathBuf>, Vec<file_path::Data>),
-        Box<dyn std::error::Error>,
-    > {
+    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<object::Data>), Box<dyn std::error::Error>>
+    {
         let mut changed_files = Vec::new();
         let mut new_files = Vec::new();
         let mut deleted_files = Vec::new();
 
         // Fetch all file paths from the library. Those are technically objects.
-        let db_file_paths = self.db.file_path().find_many(vec![]).exec().await?;
+        let db_objects = self.db.object().find_many(vec![]).exec().await?;
 
         // Collect file paths from the file system
         let mut fs_file_paths = Vec::new();
@@ -336,21 +392,24 @@ impl DecentralizedLibrary {
             }
         }
         // Check for new and deleted files
-        let db_file_paths_set: HashSet<PathBuf> = db_file_paths
+        let db_objects_set: HashSet<PathBuf> = db_objects
             .iter()
-            .map(|fp| Path::new(fp.name.as_ref().unwrap()).to_path_buf())
+            .map(|fp| Path::new(&fp.path.as_ref().unwrap()).to_path_buf())
             .collect();
         let fs_file_paths_set: HashSet<PathBuf> = fs_file_paths.into_iter().collect();
 
-        for new_file in fs_file_paths_set.difference(&db_file_paths_set) {
+        for new_file in fs_file_paths_set.difference(&db_objects_set) {
             new_files.push(new_file.clone());
         }
 
-        for db_file_path in db_file_paths.iter() {
-            let path_name = &db_file_path.name.as_ref().unwrap();
+        for db_object_file_path in db_objects.iter() {
+            let path_name = &db_object_file_path
+                .path
+                .as_ref()
+                .expect("every object needs a path");
             let path = Path::new(path_name);
-            if !db_file_paths_set.contains(&path.to_path_buf()) {
-                deleted_files.push(db_file_path.clone());
+            if !db_objects_set.contains(&path.to_path_buf()) {
+                deleted_files.push(db_object_file_path.clone());
                 continue;
             }
 
@@ -360,13 +419,13 @@ impl DecentralizedLibrary {
                 .modified()?
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
-            let db_modified_time = db_file_path
+            let db_modified_time = db_object_file_path
                 .date_modified
                 .map(|d| d.timestamp())
                 .unwrap_or(0);
 
             if fs_modified_time != db_modified_time as u64 {
-                changed_files.push(db_file_path.clone());
+                changed_files.push(db_object_file_path.clone());
             }
         }
 

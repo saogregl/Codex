@@ -14,33 +14,6 @@ model User {
   displayName String
 }
 
-/// @shared(id: pub_id)
-model FilePath {
-  id   Int    @id @default(autoincrement())
-  uuid String @unique @default(uuid())
-
-  is_dir Boolean?
-
-  // the name and extension, MUST have 'COLLATE NOCASE' in migration
-  name      String?
-  extension String?
-
-  path_relative_to_location String?
-
-  size_in_bytes_bytes Bytes?
-
-  // the unique Object for this file path
-  Object_id Int?    @unique
-  Object    Object? @relation(fields: [Object_id], references: [id], onDelete: SetNull)
-
-  date_created  DateTime?
-  date_modified DateTime?
-  date_indexed  DateTime?
-
-  @@map("file_path")
-}
-
-/// @shared(id: pub_id)
 model Object {
   id   Int    @id @default(autoincrement())
   uuid String @unique @default(uuid())
@@ -55,11 +28,18 @@ model Object {
   important     Boolean?
   note          String?
   date_created  DateTime? @default(now())
-  date_accessed DateTime?
+  date_modified DateTime?
+
+  //path 
+  path          String?
+  extension     String?
+  relative_path String? // relative to the location
+
+  //So it can be searched 
+  indexed Boolean?
 
   tags      TagOnObject[]
   labels    LabelOnObject[]
-  file_path FilePath?
   Library   Library?        @relation(fields: [libraryId], references: [id])
   libraryId Int?
 
