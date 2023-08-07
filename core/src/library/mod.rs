@@ -3,6 +3,7 @@ pub use self::local_library::LocalLibrary;
 
 // Include sub-modules
 mod local_library;
+mod decentralized_library;
 
 
 pub trait Library {

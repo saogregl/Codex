@@ -16,8 +16,8 @@ model User {
 
 /// @shared(id: pub_id)
 model FilePath {
-  id     Int   @id @default(autoincrement())
-  pub_id Bytes @unique
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
 
   is_dir Boolean?
 
@@ -25,53 +25,81 @@ model FilePath {
   name      String?
   extension String?
 
+  path_relative_to_location String?
+
   size_in_bytes_bytes Bytes?
 
   // the unique Object for this file path
-  object_id Int?
-  object    Object? @relation(fields: [object_id], references: [id], onDelete: Restrict)
-
-  key_id Int? // replacement for encryption
+  Object_id Int?    @unique
+  Object    Object? @relation(fields: [Object_id], references: [id], onDelete: SetNull)
 
   date_created  DateTime?
   date_modified DateTime?
   date_indexed  DateTime?
+
+  @@map("file_path")
 }
 
 /// @shared(id: pub_id)
 model Object {
-  id     Int   @id @default(autoincrement())
-  pub_id Bytes @unique
-  // Enum: sd_file_ext::kind::ObjectKind
-  kind   Int?
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
 
-  key_id        Int?
-  // handy ways to mark an object
+  obj_name String?
+  // Enum: sd_file_ext::kind::ObjectKind
+  kind     Int?
+
+  // handy ways to mark an Object
   hidden        Boolean?
   favorite      Boolean?
   important     Boolean?
   note          String?
-  date_created  DateTime?
+  date_created  DateTime? @default(now())
   date_accessed DateTime?
 
-  tags       TagOnObject[]
-  labels     LabelOnObject[]
-  file_paths FilePath[]
-  Library    Library?        @relation(fields: [libraryId], references: [id])
-  libraryId  Int?
+  tags      TagOnObject[]
+  labels    LabelOnObject[]
+  file_path FilePath?
+  Library   Library?        @relation(fields: [libraryId], references: [id])
+  libraryId Int?
 
-  @@map("object")
+  @@map("Object")
+}
+
+model Location {
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  name                   String?
+  path                   String
+  total_capacity         Int?
+  available_capacity     Int?
+  is_archived            Boolean?
+  generate_preview_media Boolean?
+  hidden                 Boolean?
+  date_created           DateTime?
+
+  instance_id Int?
+  Library     Library? @relation(fields: [libraryId], references: [id])
+  libraryId   Int?
+
+  // instance    Instance? @relation(fields: [instance_id], references: [id]) // TODO: Enabling this breaks migration 7's `update_many` in `library/config.rs`
+  @@map("location")
 }
 
 model Library {
   id              Int       @id @default(autoincrement())
-  pub_id          Bytes     @unique
+  uuid            String    @unique @default(uuid())
   name            String?
   // Enum: ???
   redundancy_goal Int?
   date_created    DateTime?
   date_modified   DateTime?
-  objects         Object[]
+
+  // the library can contain multiple locations. 
+  locations Location[]
+
+  Objects Object[]
 
   @@map("library")
 }
@@ -88,20 +116,20 @@ model Tag {
   redundancy_goal Int?
   date_created    DateTime?
   date_modified   DateTime?
-  tag_objects     TagOnObject[]
+  tag_Objects     TagOnObject[]
 
   @@map("tag")
 }
 
-/// @relation(item: tag, group: object)
+/// @relation(item: tag, group: Object)
 model TagOnObject {
   tag_id    Int
   tag       Tag    @relation(fields: [tag_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  object_id Int
-  object    Object @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Object_id Int
+  Object    Object @relation(fields: [Object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tag_id, object_id])
-  @@map("tag_on_object")
+  @@id([tag_id, Object_id])
+  @@map("tag_on_Object")
 }
 
 //// Label ////
@@ -112,7 +140,7 @@ model Label {
   name          String?
   date_created  DateTime        @default(now())
   date_modified DateTime        @default(now())
-  label_objects LabelOnObject[]
+  label_Objects LabelOnObject[]
 
   @@map("label")
 }
@@ -121,9 +149,9 @@ model LabelOnObject {
   date_created DateTime @default(now())
   label_id     Int
   label        Label    @relation(fields: [label_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  object_id    Int
-  object       Object   @relation(fields: [object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Object_id    Int
+  Object       Object   @relation(fields: [Object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([label_id, object_id])
-  @@map("label_on_object")
+  @@id([label_id, Object_id])
+  @@map("label_on_Object")
 }

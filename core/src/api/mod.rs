@@ -5,6 +5,7 @@ use rspc::Config;
 pub use rspc::RouterBuilder;
 use std::path::PathBuf;
 mod tasks;
+mod library; 
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
 }
