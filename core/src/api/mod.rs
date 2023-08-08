@@ -5,6 +5,7 @@ use rspc::Config;
 pub use rspc::RouterBuilder;
 use std::path::PathBuf;
 mod library;
+mod search;
 mod tasks;
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
@@ -21,6 +22,7 @@ pub fn new() -> Arc<Router> {
         .query("version", |t| t(|_, _: ()| env!("CARGO_PKG_VERSION")))
         .merge("tasks.", tasks::mount())
         .merge("library.", library::mount())
+        .merge("search.", search::mount())
         .build()
         .arced();
     r

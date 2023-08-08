@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use codex_prisma::prisma::{object, location};
+use codex_prisma::prisma::{location, object};
 use log::info;
 use tantivy::{
     query::QueryParser,
@@ -111,6 +111,11 @@ impl Searcher {
                     .unwrap();
 
                 for object in objects {
+                    if object.indexed.unwrap() {
+                        info!("Object already indexed: {:?}", object.obj_name.unwrap());
+                        continue;
+                    }
+
                     let mut doc = Document::default();
 
                     // Load text for documents:
@@ -124,8 +129,6 @@ impl Searcher {
                     ]
                     .iter()
                     .collect();
-                        
-
 
                     let mut text_path = text_path.clone();
                     text_path.set_extension("txt");
@@ -136,6 +139,17 @@ impl Searcher {
                         doc.add_text(self.title, &object.obj_name.clone().unwrap());
                         doc.add_text(self.body, &text);
                         index_writer.add_document(doc)?;
+
+                        lib.db
+                            .object()
+                            .update(
+                                object::uuid::equals(object.uuid),
+                                vec![object::indexed::set(Some(true))],
+                            )
+                            .exec()
+                            .await
+                            .unwrap();
+
                         info!("Indexed object: {:?}", object.obj_name.unwrap());
                     }
                 }
@@ -147,10 +161,14 @@ impl Searcher {
         Ok(())
     }
 
-    pub fn search(&self, query: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn search(&self, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let query = self.query_parser.parse_query(query)?;
         let searcher = self.index.reader()?.searcher();
         let top_docs = searcher.search(&query, &tantivy::collector::TopDocs::with_limit(10))?;
+
+        //retrieve docs from searcher
+
+        let mut query_result: Vec<String> = Vec::new();
 
         for (_score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
@@ -159,10 +177,10 @@ impl Searcher {
                 .unwrap()
                 .as_text()
                 .unwrap();
-            info!("test search returned: {}", title);
+            query_result.push(title.to_string());
         }
 
-        Ok(())
+        return Ok(query_result);
     }
 
     pub fn set_compressor(&mut self, compressor: &str) {

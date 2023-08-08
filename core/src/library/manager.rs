@@ -1,13 +1,12 @@
 use std::path::Path;
 use std::sync::Arc;
 
-
 use crate::library::LocalLibrary;
 use crate::search::Searcher;
-use codex_prisma::prisma::{PrismaClient};
-use log::{info};
+use codex_prisma::prisma::PrismaClient;
+use log::info;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
-use uuid::{Uuid};
+use uuid::Uuid;
 
 pub struct LibraryManager {
     pub db: Arc<PrismaClient>,
@@ -43,21 +42,20 @@ impl LibraryManager {
             .await;
 
             let _parsed = library.as_ref().unwrap().parse_objects().await.unwrap();
-            let _thumbnailed = library.as_ref().unwrap().generate_thumbnails().await.unwrap();
-
+            let _thumbnailed = library
+                .as_ref()
+                .unwrap()
+                .generate_thumbnails()
+                .await
+                .unwrap();
 
             libraries.push(library.unwrap());
-
         }
 
         info!("The library manager has loaded {:?} libraries", libraries);
 
-
-        let mut searcher = Searcher::new("./index"); 
+        let mut searcher = Searcher::new("./index");
         searcher.index(&mut libraries).await.unwrap();
-
-        searcher.search("test").unwrap();
-        searcher.search("plano safra").unwrap();
 
         Self {
             db,
@@ -67,9 +65,9 @@ impl LibraryManager {
         }
     }
 
-    pub fn search(&self, query: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let _ = self.searcher.search(query);
-        Ok(())
+    pub async fn search(&self, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let search_result: Vec<String> = self.searcher.search(query).await?;
+        Ok(search_result)
     }
 
     pub fn index(&mut self) -> Result<(), Box<dyn std::error::Error>> {
