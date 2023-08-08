@@ -1,4 +1,4 @@
-use notify::{Config, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, Error, Event, RecommendedWatcher, Watcher};
 use std::{path::Path, sync::mpsc::Receiver, time::Duration};
 
 use crate::library::{Library, LocalLibrary};
@@ -16,7 +16,7 @@ impl LibraryWatcher {
         let (tx, rx) = std::sync::mpsc::channel();
         const POLLING_TIMEOUT: Duration = Duration::from_secs(1);
 
-        let mut watcher =
+        let watcher =
             RecommendedWatcher::new(tx, Config::default().with_poll_interval(POLLING_TIMEOUT))?;
 
         Ok(Self {
@@ -28,7 +28,7 @@ impl LibraryWatcher {
     }
 
     pub async fn watch(&mut self) -> notify::Result<()> {
-        let path: &Path = Path::new(&self.path);
+        let _path: &Path = Path::new(&self.path);
 
         Ok(())
     }

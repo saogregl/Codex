@@ -1,11 +1,13 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
+use codex_prisma::prisma::{object, location};
+use log::info;
 use tantivy::{
     query::QueryParser,
-    schema::{
-        Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, FAST, INDEXED, STORED,
-        TEXT,
-    },
+    schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, STORED, TEXT},
     store::{Compressor, ZstdCompressor},
     Document,
     // tokenizer::TextAnalyzer,
@@ -40,10 +42,9 @@ impl Searcher {
             .set_tokenizer("default")
             .set_index_option(IndexRecordOption::Basic);
 
-        let text_options = TextOptions::default()
+        let _text_options = TextOptions::default()
             .set_indexing_options(text_indexing)
             .set_stored();
-        
 
         let mut schema_builder = Schema::builder();
         let title = schema_builder.add_text_field("title", TEXT | STORED);
@@ -57,7 +58,7 @@ impl Searcher {
 
         // open or create index
         let index_dir = index_dir.as_ref();
-        let mut index = Index::open_in_dir(index_dir).unwrap_or_else(|err| {
+        let index = Index::open_in_dir(index_dir).unwrap_or_else(|err| {
             if let TantivyError::OpenDirectoryError(_) | TantivyError::OpenReadError(_) = err {
                 std::fs::create_dir_all(index_dir).expect("create index directory");
                 Index::create_in_dir(index_dir, schema.clone()).unwrap()
@@ -96,22 +97,47 @@ impl Searcher {
         let mut index_writer = self.index.writer(200_000_000).unwrap();
 
         for lib in libs {
+            let locations = lib.db.location().find_many(vec![]).exec().await.unwrap();
 
-            let objects = lib.get_objects(lib.id.to_string()).await.unwrap();
-            for object in objects {
-                let mut doc = Document::default();
-    
-                // Load text for documents:
-                let path = PathBuf::from(object.path.expect("every object has a path"));
-                let mut text_path = path.clone();
-                text_path.set_extension("txt");
-    
-                println!("Trying to load text: {:?}", text_path);
-    
-                if let Ok(text) = std::fs::read_to_string(text_path) {
-                    doc.add_text(self.title, &object.obj_name.unwrap());
-                    doc.add_text(self.body, &text);
-                    index_writer.add_document(doc)?;
+            for location in locations {
+                let objects = lib
+                    .db
+                    .object()
+                    .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                        location.uuid,
+                    )])])
+                    .exec()
+                    .await
+                    .unwrap();
+
+                for object in objects {
+                    let mut doc = Document::default();
+
+                    // Load text for documents:
+                    //The text should be in the location of the object, in a folder called parsed
+                    //The text should have the same name as the object, but with a txt extension
+
+                    let text_path: PathBuf = [
+                        location.path.clone(),
+                        "parsed".to_string(),
+                        object.obj_name.clone().expect("every object needs a name"),
+                    ]
+                    .iter()
+                    .collect();
+                        
+
+
+                    let mut text_path = text_path.clone();
+                    text_path.set_extension("txt");
+
+                    info!("Trying to load text: {:?}", text_path);
+
+                    if let Ok(text) = std::fs::read_to_string(text_path) {
+                        doc.add_text(self.title, &object.obj_name.clone().unwrap());
+                        doc.add_text(self.body, &text);
+                        index_writer.add_document(doc)?;
+                        info!("Indexed object: {:?}", object.obj_name.unwrap());
+                    }
                 }
             }
         }
@@ -128,8 +154,12 @@ impl Searcher {
 
         for (_score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
-            let title = retrieved_doc.get_first(self.title).unwrap().as_text().unwrap();
-            println!("Title: {}", title);
+            let title = retrieved_doc
+                .get_first(self.title)
+                .unwrap()
+                .as_text()
+                .unwrap();
+            info!("test search returned: {}", title);
         }
 
         Ok(())

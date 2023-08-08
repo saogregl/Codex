@@ -1,13 +1,13 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::fs_utils::{extension_to_object_type, get_all_files_dir, get_extension, get_metadata};
+
 use crate::library::LocalLibrary;
 use crate::search::Searcher;
-use codex_prisma::prisma::{library, PrismaClient};
-use log::{info, warn, debug, error};
+use codex_prisma::prisma::{PrismaClient};
+use log::{info};
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
-use uuid::{uuid, Uuid};
+use uuid::{Uuid};
 
 pub struct LibraryManager {
     pub db: Arc<PrismaClient>,
@@ -34,17 +34,30 @@ impl LibraryManager {
 
         for library in loaded_libs {
             let uuid_lib = Uuid::parse_str(&library.uuid).unwrap();
-            let mut library = LocalLibrary::new(
+            let library = LocalLibrary::new(
                 uuid_lib,
                 library.name.clone().expect("every library has a name"),
                 Some(library.name.expect("every library has a name")),
                 db.clone(),
             )
             .await;
+
+            let _parsed = library.as_ref().unwrap().parse_objects().await.unwrap();
+            let _thumbnailed = library.as_ref().unwrap().generate_thumbnails().await.unwrap();
+
+
             libraries.push(library.unwrap());
+
         }
 
         info!("The library manager has loaded {:?} libraries", libraries);
+
+
+        let mut searcher = Searcher::new("./index"); 
+        searcher.index(&mut libraries).await.unwrap();
+
+        searcher.search("test").unwrap();
+        searcher.search("plano safra").unwrap();
 
         Self {
             db,
@@ -70,7 +83,7 @@ impl LibraryManager {
 
     pub async fn watch_libraries(&mut self) -> Result<(), notify::Error> {
         for lib in &self.libraries {
-            let lib_clone = Arc::clone(lib); // Clone the Arc<Library>
+            let _lib_clone = Arc::clone(lib); // Clone the Arc<Library>
 
             let locations = lib.get_locations().await.unwrap();
 

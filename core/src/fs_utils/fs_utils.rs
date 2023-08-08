@@ -1,20 +1,25 @@
 use std::{fs, path::PathBuf};
 
-use crate::{object::{ObjectType, Object}, library::Library};
-use crate::LocalLibrary;
 
+use crate::{
+    library::Library,
+    object::{ObjectType},
+};
 
 pub fn get_all_files_dir(file_path: &str) -> Vec<String> {
     let mut files = Vec::new();
     let paths = fs::read_dir(file_path).unwrap();
     for path in paths {
         let path = path.unwrap().path();
-        //TODO: Make parsed and thumbnails into ignored directories by default. 
-        if path.is_dir() && path.to_str().unwrap() != "parsed" && path.to_str().unwrap() != "thumbnails" {
+        //TODO: Make parsed and thumbnails into ignored directories by default.
+        if path.is_dir()
+            && path.to_str().unwrap() != "parsed"
+            && path.to_str().unwrap() != "thumbnails"
+        {
             println!("Path: {:?}", path);
             // files.append(&mut get_all_files_dir(path.to_str().unwrap()));
         } else {
-            //get file name: 
+            //get file name:
             let filename = path.file_name().unwrap().to_str().unwrap().to_string();
             files.push(filename);
         }

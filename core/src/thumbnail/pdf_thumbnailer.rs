@@ -35,10 +35,13 @@ impl Thumbnailer for PdfThumbnailer {
         None
     }
     fn generate_thumbnail(&self, name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        //Call pdfToText executable (assume it is in path) to generate text file
-        let thumbnails_folder = format!("./thumbnails/{}", name);
-        let mut thumbnail_path = PathBuf::from(&thumbnails_folder);
-        thumbnail_path.set_extension("");
+        //Call pdftoppm executable (assume it is in path) to generate text file
+
+        let file_path = path.clone().join(name);
+        
+        let mut thumbnail_path_prefix = path.clone().join("thumbnails").join(name);
+        thumbnail_path_prefix.set_extension("");
+
 
         Command::new("pdftoppm")
             .args([
@@ -50,8 +53,8 @@ impl Thumbnailer for PdfThumbnailer {
                 "-jpeg",
                 "-jpegopt",
                 "quality=90",
-                path.to_str().unwrap(),
-                thumbnail_path.to_str().unwrap(),
+                file_path.to_str().unwrap(),
+                thumbnail_path_prefix.to_str().unwrap(),
             ])
             .output()
             .unwrap();

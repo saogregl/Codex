@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     fs_utils::{extension_to_object_type, extract_location_path},
-    object::{Object, ObjectType},
+    object::Object,
     parsing, thumbnail,
 };
 
@@ -122,7 +122,7 @@ impl LocalLibrary {
             return Err("Library not found".into());
         }
 
-        let mut library = LocalLibrary {
+        let library = LocalLibrary {
             id,
             name,
             description,
@@ -170,7 +170,7 @@ impl LocalLibrary {
                 .duration_since(SystemTime::UNIX_EPOCH)?
                 .as_secs();
             let extension = file.extension().unwrap().to_str().unwrap();
-            let object = self
+            let _object = self
                 .db
                 .object()
                 .create(
@@ -227,14 +227,18 @@ impl LocalLibrary {
         }
 
         let library = self.get_library().await?;
-        let library_uuid = &library.uuid;
+        let _library_uuid = &library.uuid;
 
         // If there are changes, we'll update the library.
         // We'll start by deleting the deleted files.
+
+        //TODO: Clean this up later: 
         for file in deleted_files {
             self.db
                 .object()
-                .delete(object::uuid::equals(file.uuid))
+                .delete_many(vec![object::path::equals(Some(
+                    file.to_str().unwrap().to_string(),
+                ))])
                 .exec()
                 .await?;
         }
@@ -293,7 +297,7 @@ impl LocalLibrary {
                         .as_secs();
                     let extension = file.extension().unwrap().to_str().unwrap();
 
-                    let object = self
+                    let _object = self
                         .db
                         .object()
                         .create(
@@ -322,68 +326,82 @@ impl LocalLibrary {
     }
 
     pub async fn generate_thumbnails(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let objects = self.get_objects(self.id.to_string()).await?;
+        let locations = self
+            .db
+            .location()
+            .find_many(vec![location::library::is(vec![
+                prisma::library::uuid::equals(self.id.to_string()),
+            ])])
+            .exec()
+            .await?;
 
-        for object in objects {
-            // Find location of object
-            let path = PathBuf::from(&object.path.clone().expect("every object needs a path"));
+        for location in locations {
+            let objects = self
+                .db
+                .object()
+                .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                    location.uuid,
+                )])])
+                .exec()
+                .await?;
 
-            //Look for thumbnails in the thumbnails folder:
-            let thumbnails_folder = "./thumbnails".to_string();
-            let mut thumbnail_path = PathBuf::from(&thumbnails_folder);
-            thumbnail_path.push(&object.path.expect("every object needs a path"));
-            thumbnail_path.set_extension("jpg");
+            //The thumbnail path should be in the parent location of the object but in a folder called "thumbnails"
+            //If the folder doesn't exist, we should create it.
+            //If the thumbnail already exists, we should skip it.
+            //If the thumbnail doesn't exist, we should create it.
 
-            if std::path::Path::new(&thumbnail_path).exists() {
-                println!("Thumbnail already created at: {:?}", thumbnail_path);
-                continue;
-            }
+            //Find the parent location of the object:
+            let location_path = PathBuf::from(&location.path.clone());
 
-            thumbnail::generate_thumbnail(&object.obj_name.unwrap(), path)?;
+
+            objects.par_iter().for_each(|object| {
+                let mut path = location_path.clone(); // Clone the common path
+
+                let _ = thumbnail::generate_thumbnail(&object.obj_name.clone().unwrap(), path.clone());
+            });
         }
 
         Ok(())
     }
 
     pub async fn parse_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
-        //When parsing, we should check if the object is already parsed.
-        //Parsing should write the library structure, including objects to the database file.
+        let locations = self
+            .db
+            .location()
+            .find_many(vec![location::library::is(vec![
+                prisma::library::uuid::equals(self.id.to_string()),
+            ])])
+            .exec()
+            .await?;
 
-        //First, we find all objects in the path and create the objects.
-        let objects = self.get_objects(self.id.to_string()).await?;
-
-        println!("Parsing objects for library: {}", self.name);
-        objects.par_iter().for_each(|obj| {
-            let path = PathBuf::from(&obj.path.clone().unwrap());
-            let mut text_path = PathBuf::from(&obj.path.clone().unwrap());
-            text_path.set_extension("txt");
-
-            if std::path::Path::new(&text_path).exists() {
-                println!("File already created at: {:?}", text_path);
-                return;
-            }
-            let obj_helper: Object = Object::new(
-                obj.id.clone(),
-                obj.obj_name.clone().unwrap(),
-                obj.extension.clone().unwrap(),
-                obj.obj_name.clone().unwrap(),
-                extension_to_object_type(&obj.extension.clone().unwrap()),
-                std::fs::metadata(&obj.obj_name.clone().unwrap()).unwrap(),
-                false,
-            );
-
-            let parse_result = parsing::parse_for_object(&obj_helper);
-        });
-
-        for object in objects {
-            self.db
+        for location in locations {
+            let objects = self
+                .db
                 .object()
-                .update(
-                    object::uuid::equals(object.uuid),
-                    vec![object::indexed::set(Some(true))],
-                )
+                .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                    location.uuid,
+                )])])
                 .exec()
                 .await?;
+            let directory = PathBuf::from(&location.path.clone());
+
+            objects.par_iter().for_each(|object| {
+                let text_path: PathBuf = [
+                    location.path.clone(),
+                    "parsed".to_string(),
+                    object.obj_name.clone().expect("every object needs a name"),
+                ]
+                .iter()
+                .collect();
+
+                if std::path::Path::new(&text_path).exists() {
+                    println!("File already created at: {:?}", text_path);
+                    return;
+                }
+
+                let _parse_result =
+                    parsing::parse_file(object.obj_name.clone().unwrap(), directory.clone());
+            });
         }
 
         Ok(())
@@ -423,8 +441,7 @@ impl LocalLibrary {
 
     pub async fn check_for_changes(
         &self,
-    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<object::Data>), Box<dyn std::error::Error>>
-    {
+    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), Box<dyn std::error::Error>> {
         let mut changed_files = Vec::new();
         let mut new_files = Vec::new();
         let mut deleted_files = Vec::new();
@@ -444,6 +461,16 @@ impl LocalLibrary {
                 }
             }
         }
+
+        info!(
+            "Found {:?} files in the library",
+            db_objects
+                .iter()
+                .map(|fp| fp.path.as_ref().unwrap())
+                .collect::<Vec<&String>>()
+        );
+        info!("Found {:?} files in the file system", fs_file_paths);
+
         // Check for new and deleted files
         let db_objects_set: HashSet<PathBuf> = db_objects
             .iter()
@@ -455,31 +482,8 @@ impl LocalLibrary {
             new_files.push(new_file.clone());
         }
 
-        for db_object_file_path in db_objects.iter() {
-            let path_name = &db_object_file_path
-                .path
-                .as_ref()
-                .expect("every object needs a path");
-            let path = Path::new(path_name);
-            if !db_objects_set.contains(&path.to_path_buf()) {
-                deleted_files.push(db_object_file_path.clone());
-                continue;
-            }
-
-            // Check for modifications to existing files
-            let metadata = fs::metadata(&path)?;
-            let fs_modified_time = metadata
-                .modified()?
-                .duration_since(SystemTime::UNIX_EPOCH)?
-                .as_secs();
-            let db_modified_time = db_object_file_path
-                .date_modified
-                .map(|d| d.timestamp())
-                .unwrap_or(0);
-
-            if fs_modified_time != db_modified_time as u64 {
-                changed_files.push(db_object_file_path.clone());
-            }
+        for deleted_file in db_objects_set.difference(&fs_file_paths_set) {
+            deleted_files.push(deleted_file.clone());
         }
 
         Ok((changed_files, new_files, deleted_files))

@@ -1,4 +1,6 @@
-use std::{path::PathBuf, error::Error};
+use std::{path::PathBuf};
+
+use log::info;
 
 // Re-export PDF, PowerPoint, and Excel parsers from their respective files
 pub use self::pdf_thumbnailer::PdfThumbnailer;
@@ -25,14 +27,14 @@ pub trait Thumbnailer {
 struct ImageThumbnailer;
 impl Thumbnailer for ImageThumbnailer {
     fn generate_thumbnail_object(&self, object: &mut Object) -> Option<(Object, Vec<u8>)> {
-        println!("Generating thumbnail for image: {}", object.get_name());
+        info!("Generating thumbnail for image: {}", object.get_name());
         // Implementation for generating image thumbnails
         // ...
         // Assuming thumbnail_data is a Vec<u8> containing the thumbnail
         None
     }
-    fn generate_thumbnail(&self, name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Generating thumbnail for image: {}", name);
+    fn generate_thumbnail(&self, name: &str, _path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+        info!("Generating thumbnail for image: {}", name);
         // Implementation for generating image thumbnails
         // ...
         Ok(())
@@ -48,7 +50,7 @@ impl Thumbnailer for VideoThumbnailer {
         // ...
         None
     }
-    fn generate_thumbnail(&self, name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    fn generate_thumbnail(&self, name: &str, _path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         println!("Generating thumbnail for video: {}", name);
         // ...
         Ok(())
@@ -86,8 +88,19 @@ pub fn generate_thumbnail_for_object(object: &mut Object) -> Option<(Object, Vec
 
 pub fn generate_thumbnail(name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
-    let extension = path.extension().unwrap().to_str().unwrap();
+    //Name is a string like document_name.extension. We need to extract the extension to determine the object type
+
+    let name_path = PathBuf::from(name);
+    
+    // Extract the extension using the `extension` method
+    let extension = name_path.extension()
+        .and_then(|os_str| os_str.to_str())
+        .ok_or("No extension found in name")?;
+
+
     let obj_type = extension_to_object_type(extension);
+
+    info!("Generating thumbnail for object: {:?}, {:?} and saving on path {:?} inside thumbnails folder", obj_type, name, path);
 
     match obj_type {
         ObjectType::Image => {
