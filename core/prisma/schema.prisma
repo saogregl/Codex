@@ -38,10 +38,13 @@ model Object {
   //So it can be searched 
   indexed Boolean?
 
-  tags      TagOnObject[]
-  labels    LabelOnObject[]
-  Library   Library?        @relation(fields: [libraryId], references: [id])
-  libraryId Int?
+  tags       TagOnObject[]
+  labels     LabelOnObject[]
+  //Every object belongs to a location and every location belongs to a library
+  Library    Library         @relation(fields: [libraryId], references: [uuid])
+  libraryId  String
+  Locations  Location        @relation(fields: [locationId], references: [uuid])
+  locationId String
 
   @@map("Object")
 }
@@ -62,6 +65,7 @@ model Location {
   instance_id Int?
   Library     Library? @relation(fields: [libraryId], references: [id])
   libraryId   Int?
+  Object      Object[]
 
   // instance    Instance? @relation(fields: [instance_id], references: [id]) // TODO: Enabling this breaks migration 7's `update_many` in `library/config.rs`
   @@map("location")

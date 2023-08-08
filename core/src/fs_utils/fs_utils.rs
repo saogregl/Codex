@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use crate::{object::{ObjectType, Object}, library::Library};
 use crate::LocalLibrary;
@@ -54,3 +54,9 @@ pub fn extension_to_object_type(extension: &str) -> ObjectType {
     }
 }
 
+pub fn extract_location_path(path: PathBuf) -> Option<String> {
+    path.parent()
+        .map(|parent_path| parent_path.to_str())
+        .flatten()
+        .map(|str_path| str_path.to_string())
+}

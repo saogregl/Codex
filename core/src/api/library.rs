@@ -11,7 +11,7 @@ pub fn mount() -> RouterBuilder<Ctx> {
         .query("get_all_libraries", |t| {
             t(
                 |ctx: Ctx, _: ()| async move {
-                    ctx.client.user().find_many(vec![]).exec().await.unwrap()
+                    ctx.client.library().find_many(vec![]).exec().await.unwrap()
                 },
             )
         })

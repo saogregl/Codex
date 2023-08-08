@@ -27,9 +27,9 @@ impl LibraryManager {
             .target(env_logger::Target::Stdout)
             .init();
 
-        error!("Loaded {} libraries", loaded_libs.len());
+        info!("Loaded {} libraries", loaded_libs.len());
         //Log the libraries that were loaded
-        error!("Loaded libraries: {:?}", loaded_libs);
+        info!("Loaded libraries: {:?}", loaded_libs);
         println!("Loaded libraries: {:?}", loaded_libs);
 
         for library in loaded_libs {
@@ -44,7 +44,7 @@ impl LibraryManager {
             libraries.push(library.unwrap());
         }
 
-        error!("The library manager has loaded {:?} libraries", libraries);
+        info!("The library manager has loaded {:?} libraries", libraries);
 
         Self {
             db,

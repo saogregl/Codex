@@ -28,7 +28,7 @@ const index = (props: Props) => {
     data: objects,
     isLoading: isLoadingObjects,
     error: errorObjects,
-  } = rspc.useQuery(["library.get_all_libraries"]);
+  } = rspc.useQuery(["library.get_all_objects"]);
 
 
 
@@ -56,7 +56,7 @@ const index = (props: Props) => {
           showAllTagsLabel="Mostrar todas as tags"
           title={"Bem vindo, Lucas!"}
           subtitle={
-            "Aqui você pode acompanhar as atualizações mais recentes nos dados."
+            "Aqui você pode acompanhar as atualizações nos documentos da empresa."
           }
           pageActions={[
             {
@@ -165,10 +165,15 @@ const index = (props: Props) => {
         <FlexGrid fullWidth>
           <Row >
 
-            <h1>Libraries</h1>
-            {JSON.stringify(libraries)}
-            <h1>Objects</h1>
-            {JSON.stringify(objects)}
+            <Column>
+              <h1>Libraries</h1>
+              {JSON.stringify(libraries)}
+            </Column>
+            <Column>
+
+              <h1>Objects</h1>
+              {JSON.stringify(objects)}
+            </Column>
 
           </Row>
 

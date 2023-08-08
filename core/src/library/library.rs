@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     sync::Arc,
@@ -6,15 +7,14 @@ use std::{
 };
 
 use crate::{
-    fs_utils::extension_to_object_type,
+    fs_utils::{extension_to_object_type, extract_location_path},
     object::{Object, ObjectType},
     parsing, thumbnail,
 };
 
-use super::Library;
 use chrono::{TimeZone, Utc};
 use codex_prisma::prisma::{self, library, location, PrismaClient};
-use log::error;
+use log::{error, info};
 use rayon::prelude::*;
 use std::collections::HashSet;
 use uuid::Uuid;
@@ -116,7 +116,7 @@ impl LocalLibrary {
             .exec()
             .await?;
 
-        error!("Loaded library: {:?}", library); 
+        info!("Loaded library: {:?}", library);
 
         if library.is_none() {
             return Err("Library not found".into());
@@ -139,7 +139,8 @@ impl LocalLibrary {
 
         let this_library_id = self.id.to_string();
 
-        self.db
+        let location_db = self
+            .db
             .location()
             .create(
                 path.to_string(),
@@ -172,19 +173,22 @@ impl LocalLibrary {
             let object = self
                 .db
                 .object()
-                .create(vec![
-                    object::uuid::set(Uuid::new_v4().to_string()),
-                    object::obj_name::set(Some(file_name.to_string())),
-                    object::path::set(Some(file_path.to_string())),
-                    object::extension::set(Some(extension.to_string())),
-                    object::indexed::set(Some(false)),
-                    object::date_modified::set(Some(
-                        Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
-                            .unwrap()
-                            .into(),
-                    )),
-                    object::library::connect(library::uuid::equals(this_library_id.clone())),
-                ])
+                .create(
+                    library::uuid::equals(this_library_id.to_string()),
+                    location::uuid::equals(location_db.uuid.clone()),
+                    vec![
+                        object::uuid::set(Uuid::new_v4().to_string()),
+                        object::obj_name::set(Some(file_name.to_string())),
+                        object::path::set(Some(file_path.to_string())),
+                        object::extension::set(Some(extension.to_string())),
+                        object::indexed::set(Some(false)),
+                        object::date_modified::set(Some(
+                            Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
+                                .unwrap()
+                                .into(),
+                        )),
+                    ],
+                )
                 .exec()
                 .await?;
         }
@@ -211,15 +215,14 @@ impl LocalLibrary {
     }
 
     pub async fn index_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
-        error!("Indexing objects for library: {}", self.name); 
+        info!("Indexing objects for library: {}", self.name);
         let (changed_files, new_files, deleted_files) = self.check_for_changes().await?;
-        error!("Changed files: {:?}", changed_files);
-        error!("New files: {:?}", new_files);
-        error!("Deleted files: {:?}", deleted_files);
+        info!("Changed files: {:?}", changed_files);
+        info!("New files: {:?}", new_files);
+        info!("Deleted files: {:?}", deleted_files);
 
         // If there are no changes, we don't need to do anything.
         if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
-            
             return Ok(());
         }
 
@@ -249,31 +252,70 @@ impl LocalLibrary {
         }
 
         // We'll then add the new files.
+        // Step 1: Group files by location path
+        let mut files_by_location: HashMap<String, Vec<PathBuf>> = HashMap::new();
         for file in new_files {
-            let file_name = file.file_name().unwrap().to_str().unwrap();
-            let file_path = file.to_str().unwrap();
-            let metadata = fs::metadata(&file_path)?;
-            let date_modified = metadata
-                .modified()?
-                .duration_since(SystemTime::UNIX_EPOCH)?
-                .as_secs();
-            let extension = file.extension().unwrap().to_str().unwrap();
-            let object = self
-                .db
-                .object()
-                .create(vec![
-                    object::uuid::set(Uuid::new_v4().to_string()),
-                    object::obj_name::set(Some(file_name.to_string())),
-                    object::path::set(Some(file_path.to_string())),
-                    object::extension::set(Some(extension.to_string())),
-                    object::date_modified::set(Some(
-                        Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
-                            .unwrap()
-                            .into(),
-                    )),
-                ])
-                .exec()
-                .await?;
+            match extract_location_path(file.clone()) {
+                Some(location_path) => {
+                    files_by_location
+                        .entry(location_path)
+                        .or_insert_with(Vec::new)
+                        .push(file);
+                }
+                None => {
+                    error!(
+                        "Could not determine location for file: {}",
+                        file.to_str().unwrap_or("Invalid Path")
+                    );
+                }
+            }
+        }
+
+        // Step 2: Fetch locations from the database
+        let location_paths: Vec<String> = files_by_location.keys().cloned().collect();
+        let locations = self
+            .db
+            .location()
+            .find_many(vec![location::path::in_vec(location_paths)])
+            .exec()
+            .await?;
+
+        // Step 3: Insert new files
+        for location in locations {
+            if let Some(files) = files_by_location.get(&location.path) {
+                for file in files {
+                    let file_name = file.file_name().unwrap().to_str().unwrap();
+                    let file_path = file.to_str().unwrap();
+                    let metadata = fs::metadata(&file_path)?;
+                    let date_modified = metadata
+                        .modified()?
+                        .duration_since(SystemTime::UNIX_EPOCH)?
+                        .as_secs();
+                    let extension = file.extension().unwrap().to_str().unwrap();
+
+                    let object = self
+                        .db
+                        .object()
+                        .create(
+                            library::uuid::equals(self.id.to_string()),
+                            location::uuid::equals(location.uuid.clone()),
+                            vec![
+                                object::uuid::set(Uuid::new_v4().to_string()),
+                                object::obj_name::set(Some(file_name.to_string())),
+                                object::path::set(Some(file_path.to_string())),
+                                object::extension::set(Some(extension.to_string())),
+                                object::indexed::set(Some(false)),
+                                object::date_modified::set(Some(
+                                    Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
+                                        .unwrap()
+                                        .into(),
+                                )),
+                            ],
+                        )
+                        .exec()
+                        .await?;
+                }
+            }
         }
 
         Ok(())
