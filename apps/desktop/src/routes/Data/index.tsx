@@ -1,22 +1,51 @@
-import React, { useState } from 'react'
-import { ProductiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
-import { FlexGrid, Row, Column, Checkbox } from "@carbon/react"
+import React, { useEffect, useState } from 'react'
+import { Documentation } from "@carbon/pictograms-react"
+import { ProductiveCard, ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
+import { FlexGrid, Row, Column, Checkbox, Section, Heading, AspectRatio, Search, Dropdown, Accordion, AccordionItem } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput } from "@carbon/react";
+import { Theme, TextInput, Select, SelectItem, MultiSelect, Layer } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
-import { Edit, TrashCan } from "@carbon/icons-react"
+import { Edit, TrashCan, DataView as View } from "@carbon/icons-react"
 import { ICA } from '../../components/ICA';
 import rspc from '../../lib/query';
+import DataGridComponent from '../../components/Datagrid/DataGridComponent';
+import SearchPanel from '../../components/SearchPanel/SearchPanel';
+import parse, { attributesToProps } from 'html-react-parser';
+
 type Props = {}
 
 const index = (props: Props) => {
   const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [recommendedDocuments, setRecommendedDocuments] = useState([]); // Use appropriate logic to fetch recommended documents
+
   const [open, setOpen] = useState(false)
-  const action = () => {
-    console.log("action");
+
+  const [query, setQuery] = useState("teste");
+
+  const {
+    data: SearchResult,
+    isLoading: isLoadingSearchResult,
+    error: errorSearchResult,
+  } = rspc.useQuery(["search.search", { query }]);
+
+
+
+  const options = {
+    transform: (reactNode, domNode, index) => {
+      // this will wrap every element in a div
+      // we want to transform the <b> element into a span with a special class
+      if (domNode.name === "b") {
+        return <span className='data--highlight-text'>{reactNode}</span>;
+      }
+      else {
+        return reactNode;
+      }
+
+    }
   };
+
+
 
   const {
     data: libraries,
@@ -29,6 +58,22 @@ const index = (props: Props) => {
     isLoading: isLoadingObjects,
     error: errorObjects,
   } = rspc.useQuery(["library.get_all_objects"]);
+
+  useEffect(() => {
+    setRecommendedDocuments(
+      objects?.slice(0, 4)
+    )
+  }, [objects])
+
+
+
+  const collections = ['Collection 1', 'Collection 2', 'Collection 3'];
+  const spaces = ['Space 1', 'Space 2', 'Space 3'];
+  const documents = ['Document 1', 'Document 2', 'Document 3']; // Replace with your documents data
+
+  const [selectedCollection, setSelectedCollection] = useState(collections[0]);
+  const [selectedSpace, setSelectedSpace] = useState(spaces[0]);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
 
 
@@ -48,11 +93,11 @@ const index = (props: Props) => {
               key: "Breadcrumb 1",
               label: "Dashboard",
             },
-
           ]}
           collapseHeaderIconDescription="Recolher o cabeçalho da página"
           expandHeaderIconDescription="Expandir o cabeçalho da página"
           pageActionsOverflowLabel="Mostrar mais ações da página"
+          collapseTitle
           showAllTagsLabel="Mostrar todas as tags"
           title={"Bem vindo, Lucas!"}
           subtitle={
@@ -94,7 +139,6 @@ const index = (props: Props) => {
       </Theme>
 
       <div
-
         className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
       >
         <Theme theme="g90">
@@ -158,21 +202,65 @@ const index = (props: Props) => {
           </SidePanel>
         </Theme>
 
-        <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}
-        >
-          <h2>Visão Geral</h2>
-        </div>
-        <FlexGrid fullWidth>
-          <Row >
+        <FlexGrid fullWidth condensed>
+          {/* <Section level={3}>
+            <Heading>Documentos recomendados</Heading>
+          </Section> */}
+          <Row>
 
-            <Column>
-              <h1>Libraries</h1>
-              {JSON.stringify(libraries)}
+
+            <Column lg={4} md={2}>
+
+              <SearchPanel>
+
+                <Search labelText={''} onChange={(e) => setQuery(e.target.value)} />
+                <Accordion>
+
+                  <AccordionItem title="Section 1 title">
+
+                    <Dropdown id="default" titleText="Dropdown label" helperText="This is some helper text" label="Dropdown menu options" items={collections} itemToString={item => item ? item : ''} />
+                  </AccordionItem>
+                  <AccordionItem title="Section 2 title">
+
+                    <MultiSelect label="Multiselect Label" id="carbon-multiselect-example" titleText="Multiselect title" helperText="This is helper text" items={spaces} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
+                  </AccordionItem>
+
+                </Accordion>
+
+              </SearchPanel>
+
+
             </Column>
-            <Column>
 
-              <h1>Objects</h1>
-              {JSON.stringify(objects)}
+            <Column lg={12} md={2}>
+
+
+
+              <div style={{ overflow: "auto", maxHeight: "100vh" }}>
+
+                <Section level={5}>
+                  <Heading>Documentos</Heading>
+                </Section>
+                {
+                  SearchResult?.map((document) => (
+
+                    <div className={`${settings.sipePrefix}--card-content-wrapper`}>
+
+                      <ExpressiveCard
+                        label={document.object.date_created}
+                        mediaRatio={null}
+                        primaryButtonText="Primary"
+                        title={document.title}
+                      >
+                        {parse(document.snippet, options)}
+                      </ExpressiveCard>
+                    </div>
+
+
+                  ))
+                }
+              </div>
+
             </Column>
 
           </Row>
@@ -182,5 +270,7 @@ const index = (props: Props) => {
     </div>
   )
 }
+
+
 
 export default index

@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::library::LocalLibrary;
 use crate::search::Searcher;
+use crate::{library::LocalLibrary, search::SearchResult};
 use codex_prisma::prisma::PrismaClient;
 use log::info;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
@@ -54,19 +54,22 @@ impl LibraryManager {
 
         info!("The library manager has loaded {:?} libraries", libraries);
 
-        let mut searcher = Searcher::new("./index");
+        let mut searcher = Searcher::new("./index", db.clone());
         searcher.index(&mut libraries).await.unwrap();
 
         Self {
             db,
             libraries,
             handle: Vec::new(),
-            searcher: Searcher::new("./index"),
+            searcher,
         }
     }
 
-    pub async fn search(&self, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let search_result: Vec<String> = self.searcher.search(query).await?;
+    pub async fn search(
+        &self,
+        query: &str,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        let search_result: Vec<SearchResult> = self.searcher.search(query).await?;
         Ok(search_result)
     }
 

@@ -2,7 +2,11 @@
 @use "@carbon/react/scss/spacing";
 @use "@carbon/react/scss/type";
 @use "@carbon/react/scss/motion";
-@use '@carbon/styles/scss/components/button';
+
+//colors
+$carbonButton-primary: rgb(15, 98, 254);
+$carbonButton-secondary: rgb(57, 57, 57);
+$carbonButton-secondary-hover: hsla(0,0%,55%,.12);
 
 
 
@@ -186,7 +190,7 @@ $prefix: "cds";
   
     &--divider {
       margin: spacing.$spacing-03 0 0 0;
-      background-color: button.$button-secondary;
+      background-color: $carbonButton-secondary;
     }
   
     &--app-link,
@@ -217,7 +221,7 @@ $prefix: "cds";
     }
     .#{$prefix}--side-nav__item:not(.#{$prefix}--side-nav__item--active)
       > .#{$prefix}--side-nav__link:hover {
-      background-color: button.$button-secondary-hover	;
+      background-color: $carbonButton-secondary-hover	;
       .#{$prefix}--side-nav__link-text {
         color: theme.$text-primary;
       }
@@ -286,7 +290,7 @@ $prefix: "cds";
       visibility: hidden !important;
     }
     a.admin-icon__selected {
-      background-color: button.$button-secondary;
+      background-color: $carbonButton-secondary;
       border: none;
       border-bottom: spacing.$spacing-01 solid theme.$layer-01;
       padding-top: spacing.$spacing-01;
@@ -350,16 +354,16 @@ $prefix: "cds";
     .#{$sipe-prefix}--suite-header-help--separator {
       padding: 0;
       height: 0;
-      border-bottom: 1px solid button.$button-secondary-hover	;
+      border-bottom: 1px solid $carbonButton-secondary-hover	;
       margin: 0 spacing.$spacing-05 0 spacing.$spacing-05;
     }
   
     &--logout {
       a {
-        background-color: button.$button-secondary;
+        background-color: $carbonButton-secondary;
         color: theme.$text-inverse;
         &:hover {
-          background-color: button.$button-secondary-hover	 !important;
+          background-color: $carbonButton-secondary-hover	 !important;
         }
       }
     }

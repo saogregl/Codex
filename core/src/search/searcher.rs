@@ -3,19 +3,25 @@ use std::{
     sync::Arc,
 };
 
-use codex_prisma::prisma::{location, object};
+use codex_prisma::prisma::{location, object, object::Data, PrismaClient};
 use log::info;
+use serde::{Deserialize, Serialize};
 use tantivy::{
-    query::QueryParser,
-    schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, STORED, TEXT},
+    query::{Query, QueryParser},
+    schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, STORED, TEXT, FAST},
     store::{Compressor, ZstdCompressor},
+    DocAddress,
     Document,
     // tokenizer::TextAnalyzer,
     Index,
+    SnippetGenerator,
     TantivyError,
 };
 
 use crate::library::{Library, LocalLibrary};
+
+use super::SearchResult;
+
 
 #[derive(Clone)]
 
@@ -30,6 +36,8 @@ pub struct Searcher {
     // id: Field,
     title: Field,
     body: Field,
+
+    db: Arc<PrismaClient>,
     // author: Field,
     // extension: Field,
     // filesize: Field,
@@ -37,7 +45,7 @@ pub struct Searcher {
 }
 
 impl Searcher {
-    pub fn new(index_dir: impl AsRef<Path>) -> Self {
+    pub fn new(index_dir: impl AsRef<Path>, db: Arc<PrismaClient>) -> Self {
         let text_indexing = TextFieldIndexing::default()
             .set_tokenizer("default")
             .set_index_option(IndexRecordOption::Basic);
@@ -48,7 +56,8 @@ impl Searcher {
 
         let mut schema_builder = Schema::builder();
         let title = schema_builder.add_text_field("title", TEXT | STORED);
-        let body = schema_builder.add_text_field("body", TEXT);
+        let body = schema_builder.add_text_field("body", TEXT | STORED | FAST);
+
         // let title = schema_builder.add_text_field("title", text_options.clone());
         // let author = schema_builder.add_text_field("author", text_options.clone());
         // let extension = schema_builder.add_text_field("extension", STORED);
@@ -82,6 +91,7 @@ impl Searcher {
             index,
             schema,
             query_parser,
+            db,
 
             title,
             body,
@@ -161,26 +171,67 @@ impl Searcher {
         Ok(())
     }
 
-    pub async fn search(&self, query: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let query = self.query_parser.parse_query(query)?;
+    pub async fn search(
+        &self,
+        query_input: &str,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        let query = self.query_parser.parse_query(query_input)?;
         let searcher = self.index.reader()?.searcher();
         let top_docs = searcher.search(&query, &tantivy::collector::TopDocs::with_limit(10))?;
+        let mut snippet_generator = SnippetGenerator::create(&searcher, &*query, self.body)?;
+        snippet_generator.set_max_num_chars(100);
 
         //retrieve docs from searcher
+        let mut query_result: Vec<SearchResult> = Vec::new();
 
-        let mut query_result: Vec<String> = Vec::new();
-
-        for (_score, doc_address) in top_docs {
+        for (score, doc_address) in top_docs {
             let retrieved_doc = searcher.doc(doc_address)?;
+
             let title = retrieved_doc
                 .get_first(self.title)
                 .unwrap()
                 .as_text()
                 .unwrap();
-            query_result.push(title.to_string());
+
+            let obj = self
+                .db
+                .object()
+                .find_first(vec![object::obj_name::equals(Some(title.to_string()))])
+                .exec()
+                .await
+                .unwrap()
+                .expect("object should exist");
+
+            let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
+            let snippet_html: String = snippet.to_html();
+
+            query_result.push(SearchResult::new(
+                title.to_owned(),
+                snippet_html,
+                score,
+                obj,
+            ));
         }
 
         return Ok(query_result);
+    }
+
+    pub async fn generate_snippet(
+        &self,
+        query_input: &str,
+        doc_address: DocAddress,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let searcher = self.index.reader()?.searcher();
+        let query = self.query_parser.parse_query(query_input)?;
+
+        let mut snippet_generator = SnippetGenerator::create(&searcher, &*query, self.body)?;
+        snippet_generator.set_max_num_chars(300);
+        let retrieved_doc = searcher.doc(doc_address)?;
+
+        let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
+        let snippet_html: String = snippet.to_html();
+
+        return Ok(snippet_html);
     }
 
     pub fn set_compressor(&mut self, compressor: &str) {

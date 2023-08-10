@@ -15,13 +15,6 @@ export const DatagridActions = (datagridState) => {
     useDenseHeader,
   } = datagridState;
 
-  console.log("selectedFlatRows", selectedFlatRows)
-  console.log("setGlobalFilter", setGlobalFilter)
-  console.log("CustomizeColumnsButton", CustomizeColumnsButton)
-  console.log("RowSizeDropdown", RowSizeDropdown)
-  console.log("rowSizeDropdownProps", rowSizeDropdownProps)
-  console.log("useDenseHeader", useDenseHeader)
-
 
   const downloadCsv = () => {
     console.log('Downloading...');

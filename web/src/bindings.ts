@@ -4,6 +4,7 @@ export type Procedures = {
     queries: 
         { key: "library.get_all_libraries", input: never, result: Library[] } | 
         { key: "library.get_all_objects", input: never, result: Object[] } | 
+        { key: "search.search", input: SearchArgs, result: SearchResult[] } | 
         { key: "tasks.getAllUsers", input: never, result: User[] } | 
         { key: "version", input: never, result: string },
     mutations: 
@@ -17,6 +18,10 @@ export type Library = { id: number; uuid: string; name: string | null; redundanc
 export type Object = { id: number; uuid: string; obj_name: string | null; kind: number | null; hidden: boolean | null; favorite: boolean | null; important: boolean | null; note: string | null; date_created: string | null; date_modified: string | null; path: string | null; extension: string | null; relative_path: string | null; indexed: boolean | null; libraryId: string; locationId: string }
 
 export type CreateNewUserParam = { id: string; name: string }
+
+export type SearchArgs = { query: string }
+
+export type SearchResult = { title: string; snippet: string; score: number; object: Object }
 
 export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
 

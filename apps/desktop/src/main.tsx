@@ -7,7 +7,13 @@ import rspc, { client, queryClient } from "./lib/query";
 import { pkg } from "@carbon/ibm-products";
 // NOTE: must happen before component is first used
 pkg.component.Datagrid = true;
+pkg.feature['Datagrid.useFiltering'] = true;
+pkg.feature['Datagrid.useNestedRows'] = true;
+
 pkg.component.Toolbar = true;
+pkg.component.ButtonMenu = true;
+pkg.component.ButtonMenuItem = true;
+
 pkg.component.ToolbarGroup = true;
 pkg.component.ToolbarButton = true;
 
