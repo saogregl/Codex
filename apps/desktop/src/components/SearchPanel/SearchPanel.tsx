@@ -7,15 +7,16 @@ import { settings } from '../../constants/settings';
 import { Button, Layer } from '@carbon/react';
 
 interface FilterPanelProps {
-    children: React.ReactNode[]
+    children: React.ReactNode[] | React.ReactNode
     className?: string
-    filterPanelMinHeight?: number
     filterSections?: unknown[]
     open?: boolean
     primaryActionLabel?: string
+    filterPanelMinHeight?: number
 }
 
 const SearchPanel = ({ children, className }: FilterPanelProps) => {
+    const childArray = React.Children.toArray(children);
     return (
 
         <div className={classnames(
@@ -28,10 +29,10 @@ const SearchPanel = ({ children, className }: FilterPanelProps) => {
 
                 <div className={`${settings.sipePrefix}--search-panel-header`}>
                     <p className={`${settings.sipePrefix}--search-panel-header-text`}>
-                        Painel de busca
+                        Filtros
                     </p>
                 </div>
-                {children.map((child) => {
+                {childArray.map((child) => {
                     return <div>{child}</div>
                 })}
             </div>

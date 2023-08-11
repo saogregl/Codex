@@ -3,7 +3,7 @@ import { Documentation } from "@carbon/pictograms-react"
 import { ProductiveCard, ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
 import { FlexGrid, Row, Column, Checkbox, Section, Heading, AspectRatio, Search, Dropdown, Accordion, AccordionItem } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, Select, SelectItem, MultiSelect, Layer } from "@carbon/react";
+import { Theme, TextInput, Select, SelectItem, MultiSelect, Layer, Pagination } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import { Edit, TrashCan, DataView as View } from "@carbon/icons-react"
@@ -12,6 +12,12 @@ import rspc from '../../lib/query';
 import DataGridComponent from '../../components/Datagrid/DataGridComponent';
 import SearchPanel from '../../components/SearchPanel/SearchPanel';
 import parse, { attributesToProps } from 'html-react-parser';
+import dayjs from 'dayjs';
+import relative from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/pt-br' // import locale
+
+dayjs.extend(relative);
+dayjs.locale('pt-br') // use locale
 
 type Props = {}
 
@@ -207,20 +213,23 @@ const index = (props: Props) => {
             <Heading>Documentos recomendados</Heading>
           </Section> */}
           <Row>
+            <div className={`${settings.sipePrefix}--data-search-bar-wrapper`}>
+              <Search labelText={''} onChange={(e) => setQuery(e.target.value)} />
+
+            </div>
 
 
             <Column lg={4} md={2}>
 
               <SearchPanel>
 
-                <Search labelText={''} onChange={(e) => setQuery(e.target.value)} />
                 <Accordion>
 
-                  <AccordionItem title="Section 1 title">
+                  <AccordionItem title="Tags">
 
                     <Dropdown id="default" titleText="Dropdown label" helperText="This is some helper text" label="Dropdown menu options" items={collections} itemToString={item => item ? item : ''} />
                   </AccordionItem>
-                  <AccordionItem title="Section 2 title">
+                  <AccordionItem title="Coleções">
 
                     <MultiSelect label="Multiselect Label" id="carbon-multiselect-example" titleText="Multiselect title" helperText="This is helper text" items={spaces} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
                   </AccordionItem>
@@ -235,21 +244,18 @@ const index = (props: Props) => {
             <Column lg={12} md={2}>
 
 
+              <p className={`${settings.sipePrefix}--search-panel-header-text`}>Documentos</p>
 
               <div style={{ overflow: "auto", maxHeight: "100vh" }}>
 
-                <Section level={5}>
-                  <Heading>Documentos</Heading>
-                </Section>
                 {
                   SearchResult?.map((document) => (
 
                     <div className={`${settings.sipePrefix}--card-content-wrapper`}>
 
                       <ExpressiveCard
-                        label={document.object.date_created}
+                        label={`${dayjs(document.object.date_created).fromNow()}`}
                         mediaRatio={null}
-                        primaryButtonText="Primary"
                         title={document.title}
                       >
                         {parse(document.snippet, options)}
@@ -262,6 +268,26 @@ const index = (props: Props) => {
               </div>
 
             </Column>
+
+          </Row>
+          <Row>
+            <Pagination
+              backwardText="Previous page"
+              forwardText="Next page"
+              itemsPerPageText="Items per page:"
+              onChange={function noRefCheck() { }}
+              page={1}
+              pageSize={10}
+              pageSizes={[
+                10,
+                20,
+                30,
+                40,
+                50
+              ]}
+              size="md"
+              totalItems={103}
+            />
 
           </Row>
 
