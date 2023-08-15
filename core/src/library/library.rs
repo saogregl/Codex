@@ -8,7 +8,6 @@ use std::{
 
 use crate::{
     fs_utils::{extension_to_object_type, extract_location_path},
-    object::Object,
     parsing, thumbnail,
 };
 

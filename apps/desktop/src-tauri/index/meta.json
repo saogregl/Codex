@@ -25,17 +25,17 @@
       "deletes": null
     },
     {
-      "segment_id": "71c105cd-a89d-4362-94de-74156a472609",
-      "max_doc": 2,
-      "deletes": null
-    },
-    {
       "segment_id": "278448a3-3546-45bc-ac22-289254d0b1f3",
       "max_doc": 2,
       "deletes": null
     },
     {
       "segment_id": "46abeeaa-b24f-4908-a129-71cf98a8e485",
+      "max_doc": 2,
+      "deletes": null
+    },
+    {
+      "segment_id": "71c105cd-a89d-4362-94de-74156a472609",
       "max_doc": 2,
       "deletes": null
     },

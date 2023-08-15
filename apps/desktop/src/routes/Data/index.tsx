@@ -275,7 +275,7 @@ const index = (props: Props) => {
               backwardText="Previous page"
               forwardText="Next page"
               itemsPerPageText="Items per page:"
-              onChange={function noRefCheck() { }}
+              onChange={(e) => console.log(e)}
               page={1}
               pageSize={10}
               pageSizes={[

@@ -1,14 +1,17 @@
 use std::{fs, path::PathBuf};
 
-
-use crate::{
-    library::Library,
-    object::{ObjectType},
-};
+use crate::{library::Library, object::ObjectType};
 
 pub fn get_all_files_dir(file_path: &str) -> Vec<String> {
     let mut files = Vec::new();
-    let paths = fs::read_dir(file_path).unwrap();
+    let paths = fs::read_dir(file_path);
+
+    //handle error
+    let paths = match paths {
+        Ok(paths) => paths,
+        Err(_) => return files,
+    };
+
     for path in paths {
         let path = path.unwrap().path();
         //TODO: Make parsed and thumbnails into ignored directories by default.

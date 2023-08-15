@@ -21,7 +21,7 @@ impl Default for ObjectType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct FilePath {
     parent_id: i32,
     name: String,
@@ -29,11 +29,6 @@ pub struct FilePath {
     pub path: String,
 }
 
-impl PartialEq for FilePath {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-    }
-}
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct CodexMetadata {
     pub size: u64,
@@ -41,7 +36,7 @@ pub struct CodexMetadata {
     pub created: std::time::SystemTime,
     pub accessed: std::time::SystemTime,
 }
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, PartialEq)]
 pub struct Object {
     pub id: i32,
     pub name: String,
@@ -63,6 +58,8 @@ impl Object {
         metadata: std::fs::Metadata,
         indexed: bool,
     ) -> Object {
+        //handle metadata errors
+
         Object {
             id,
             name: name.clone(),
