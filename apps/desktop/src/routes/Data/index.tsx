@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Documentation } from "@carbon/pictograms-react"
 import { ProductiveCard, ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
 import { FlexGrid, Row, Column, Checkbox, Section, Heading, AspectRatio, Search, Dropdown, Accordion, AccordionItem } from "@carbon/react"
@@ -22,12 +22,13 @@ dayjs.locale('pt-br') // use locale
 type Props = {}
 
 const index = (props: Props) => {
+
+  //variables necessary for pagination 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
-  const [recommendedDocuments, setRecommendedDocuments] = useState([]); // Use appropriate logic to fetch recommended documents
-
   const [open, setOpen] = useState(false)
-
-  const [query, setQuery] = useState("teste");
+  const [query, setQuery] = useState("");
 
   const {
     data: SearchResult,
@@ -35,6 +36,47 @@ const index = (props: Props) => {
     error: errorSearchResult,
   } = rspc.useQuery(["search.search", { query }]);
 
+  const [paginatedSearchResult, setPaginatedSearchResult] = useState<any[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+
+  useEffect(() => {
+    setTotalItems(SearchResult?.length)
+  }, [SearchResult])
+
+
+  useEffect(() => {
+    setPaginatedSearchResult(
+      SearchResult?.slice(0, pageSize)
+    )
+  }, [SearchResult])
+
+  const handleSearchWithDebounce = (e: any) => {
+    setQuery(e.target.value)
+  }
+
+  const debounceRef = useRef(null);
+
+  const handleQuery = (e) => {
+    const value = e.target.value;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      setQuery(value);
+    }, 300); // 300ms is the delay after which setQuery will be called
+  };
+
+
+
+  const handlePaginateChange = (e: any) => {
+    setCurrentPage(e.page);
+    setPageSize(e.pageSize);
+    setPaginatedSearchResult(
+      SearchResult?.slice((e.page - 1) * e.pageSize, e.page * e.pageSize)
+    )
+  }
 
 
   const options = {
@@ -64,13 +106,6 @@ const index = (props: Props) => {
     isLoading: isLoadingObjects,
     error: errorObjects,
   } = rspc.useQuery(["library.get_all_objects"]);
-
-  useEffect(() => {
-    setRecommendedDocuments(
-      objects?.slice(0, 4)
-    )
-  }, [objects])
-
 
 
   const collections = ['Collection 1', 'Collection 2', 'Collection 3'];
@@ -208,92 +243,76 @@ const index = (props: Props) => {
           </SidePanel>
         </Theme>
 
-        <FlexGrid fullWidth condensed>
-          {/* <Section level={3}>
+        <div style={{height: "100%"}}>
+
+          <FlexGrid fullWidth condensed>
+            {/* <Section level={3}>
             <Heading>Documentos recomendados</Heading>
           </Section> */}
-          <Row>
-            <div className={`${settings.sipePrefix}--data-search-bar-wrapper`}>
-              <Search labelText={''} onChange={(e) => setQuery(e.target.value)} />
+            <Row>
+              <div className={`${settings.sipePrefix}--data-search-bar-wrapper`}>
+                <Search labelText={''} onChange={handleQuery} />
+              </div>
+              <Column lg={4} md={2}>
+                <SearchPanel>
+                  <Accordion>
+                    <AccordionItem title="Tags">
+                      <Dropdown id="default" titleText="Dropdown label" helperText="This is some helper text" label="Dropdown menu options" items={collections} itemToString={item => item ? item : ''} />
+                    </AccordionItem>
+                    <AccordionItem title="Coleções">
+                      <MultiSelect label="Multiselect Label" id="carbon-multiselect-example" titleText="Multiselect title" helperText="This is helper text" items={spaces} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
+                    </AccordionItem>
+                  </Accordion>
+                </SearchPanel>
+              </Column>
+              <Column lg={12} md={6} >
+
+                <p className={`${settings.sipePrefix}--search-panel-header-text`}>Documentos</p>
+                <div style={{ overflow: "scroll", height: "auto", maxHeight: "70%"}}>
+                  {
+                    paginatedSearchResult?.map((document) => (
+                      <div className={`${settings.sipePrefix}--card-content-wrapper`}>
+                        <ExpressiveCard
+                          label={`${dayjs(document.object.date_created).fromNow()}`}
+                          mediaRatio={null}
+                          title={document.title}
+                        >
+                          {parse(document.snippet, options)}
+                        </ExpressiveCard>
+                      </div>
+                    ))
+                  }
+                </div>
+
+              </Column>
+
+
+            </Row>
+            <div style={{ display: "flex", position: "absolute", bottom: "0", width: "100%", paddingRight: "96px" }}>
+
+              <Pagination
+                backwardText="Previous page"
+                forwardText="Next page"
+                itemsPerPageText="Items per page:"
+                onChange={handlePaginateChange}
+                page={currentPage}
+                pageSize={pageSize}
+                pageSizes={[
+                  5,
+                  10,
+                  15,
+                  20,
+                ]}
+                size="md"
+                totalItems={totalItems}
+              />
 
             </div>
+          </FlexGrid>
+        </div>
 
-
-            <Column lg={4} md={2}>
-
-              <SearchPanel>
-
-                <Accordion>
-
-                  <AccordionItem title="Tags">
-
-                    <Dropdown id="default" titleText="Dropdown label" helperText="This is some helper text" label="Dropdown menu options" items={collections} itemToString={item => item ? item : ''} />
-                  </AccordionItem>
-                  <AccordionItem title="Coleções">
-
-                    <MultiSelect label="Multiselect Label" id="carbon-multiselect-example" titleText="Multiselect title" helperText="This is helper text" items={spaces} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
-                  </AccordionItem>
-
-                </Accordion>
-
-              </SearchPanel>
-
-
-            </Column>
-
-            <Column lg={12} md={2}>
-
-
-              <p className={`${settings.sipePrefix}--search-panel-header-text`}>Documentos</p>
-
-              <div style={{ overflow: "auto", maxHeight: "100vh" }}>
-
-                {
-                  SearchResult?.map((document) => (
-
-                    <div className={`${settings.sipePrefix}--card-content-wrapper`}>
-
-                      <ExpressiveCard
-                        label={`${dayjs(document.object.date_created).fromNow()}`}
-                        mediaRatio={null}
-                        title={document.title}
-                      >
-                        {parse(document.snippet, options)}
-                      </ExpressiveCard>
-                    </div>
-
-
-                  ))
-                }
-              </div>
-
-            </Column>
-
-          </Row>
-          <Row>
-            <Pagination
-              backwardText="Previous page"
-              forwardText="Next page"
-              itemsPerPageText="Items per page:"
-              onChange={(e) => console.log(e)}
-              page={1}
-              pageSize={10}
-              pageSizes={[
-                10,
-                20,
-                30,
-                40,
-                50
-              ]}
-              size="md"
-              totalItems={103}
-            />
-
-          </Row>
-
-        </FlexGrid>
       </div>
-    </div>
+    </div >
   )
 }
 

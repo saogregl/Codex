@@ -35,7 +35,7 @@ impl Parser<Vec<u8>> for ImageParser {
         // Assuming thumbnail_data is a Vec<u8> containing the thumbnail
         Ok(())
     }
-    fn parse_file(&self, file_name: String, parsed_path: PathBuf) -> Result<(), Vec<u8>> {
+    fn parse_file(&self, _file_name: String, _parsed_path: PathBuf) -> Result<(), Vec<u8>> {
         // ...
         Ok(())
     }
@@ -50,7 +50,7 @@ impl Parser<Vec<u8>> for VideoParser {
         // ...
         Ok(())
     }
-    fn parse_file(&self, file_name: String, parsed_path: PathBuf) -> Result<(), Vec<u8>> {
+    fn parse_file(&self, _file_name: String, _parsed_path: PathBuf) -> Result<(), Vec<u8>> {
         // ...
         Ok(())
     }

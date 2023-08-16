@@ -5,18 +5,23 @@
   },
   "segments": [
     {
-      "segment_id": "ff59f591-4104-4b77-ad86-b98784417045",
+      "segment_id": "b6c5e587-9a08-46cc-a055-bc2a19613ad5",
       "max_doc": 3,
       "deletes": null
     },
     {
-      "segment_id": "b6c5e587-9a08-46cc-a055-bc2a19613ad5",
+      "segment_id": "ff59f591-4104-4b77-ad86-b98784417045",
       "max_doc": 3,
       "deletes": null
     },
     {
       "segment_id": "e2fed9a5-96ed-4920-8500-c7bb77fad190",
       "max_doc": 3,
+      "deletes": null
+    },
+    {
+      "segment_id": "71c105cd-a89d-4362-94de-74156a472609",
+      "max_doc": 2,
       "deletes": null
     },
     {
@@ -31,11 +36,6 @@
     },
     {
       "segment_id": "46abeeaa-b24f-4908-a129-71cf98a8e485",
-      "max_doc": 2,
-      "deletes": null
-    },
-    {
-      "segment_id": "71c105cd-a89d-4362-94de-74156a472609",
       "max_doc": 2,
       "deletes": null
     },

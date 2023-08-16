@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub enum ObjectType {
+    #[default]
     Unknown,
     Document,
     Folder,
@@ -15,11 +17,7 @@ pub enum ObjectType {
     Compressed,
 }
 
-impl Default for ObjectType {
-    fn default() -> Self {
-        ObjectType::Unknown
-    }
-}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct FilePath {

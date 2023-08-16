@@ -29,7 +29,7 @@ impl Parser<Vec<u8>> for PdfParser {
     }
     fn parse_file(&self, file_name: String, parsed_path: PathBuf) -> Result<(), Vec<u8>> {
         //get absolute path of pdf file
-        let mut pdf_path = PathBuf::from(parsed_path.clone()).join(file_name.clone());
+        let mut pdf_path = parsed_path.clone().join(file_name.clone());
         pdf_path.set_extension("pdf");
 
         let mut text_path = parsed_path.clone().join("parsed").join(file_name.clone());

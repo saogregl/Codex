@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    fs_utils::{extension_to_object_type, extract_location_path},
+    fs_utils::{extract_location_path},
     parsing, thumbnail,
 };
 
@@ -163,7 +163,7 @@ impl LocalLibrary {
         for file in files {
             let file_name = file.file_name().unwrap().to_str().unwrap();
             let file_path = file.to_str().unwrap();
-            let metadata = fs::metadata(&file_path)?;
+            let metadata = fs::metadata(file_path)?;
             let date_modified = metadata
                 .modified()?
                 .duration_since(SystemTime::UNIX_EPOCH)?
@@ -207,9 +207,9 @@ impl LocalLibrary {
             .await?;
 
         if let Some(library) = library {
-            return Ok(library);
+            Ok(library)
         } else {
-            return Err("Library not found".into());
+            Err("Library not found".into())
         }
     }
 
@@ -289,7 +289,7 @@ impl LocalLibrary {
                 for file in files {
                     let file_name = file.file_name().unwrap().to_str().unwrap();
                     let file_path = file.to_str().unwrap();
-                    let metadata = fs::metadata(&file_path)?;
+                    let metadata = fs::metadata(file_path)?;
                     let date_modified = metadata
                         .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
@@ -354,7 +354,7 @@ impl LocalLibrary {
 
 
             objects.par_iter().for_each(|object| {
-                let mut path = location_path.clone(); // Clone the common path
+                let path = location_path.clone(); // Clone the common path
 
                 let _ = thumbnail::generate_thumbnail(&object.obj_name.clone().unwrap(), path.clone());
             });
@@ -441,7 +441,7 @@ impl LocalLibrary {
     pub async fn check_for_changes(
         &self,
     ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), Box<dyn std::error::Error>> {
-        let mut changed_files = Vec::new();
+        let changed_files = Vec::new();
         let mut new_files = Vec::new();
         let mut deleted_files = Vec::new();
 

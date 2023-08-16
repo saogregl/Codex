@@ -15,7 +15,8 @@ pub struct Ctx {
 pub type Router = rspc::Router<Ctx>;
 
 pub fn new() -> Arc<Router> {
-    let r = Router::new()
+    
+    Router::new()
         .config(Config::new().export_ts_bindings(
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../web/src/bindings.ts"),
         ))
@@ -24,6 +25,5 @@ pub fn new() -> Arc<Router> {
         .merge("library.", library::mount())
         .merge("search.", search::mount())
         .build()
-        .arced();
-    r
+        .arced()
 }

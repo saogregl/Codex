@@ -3,11 +3,11 @@ use std::{
     sync::Arc,
 };
 
-use codex_prisma::prisma::{location, object, object::Data, PrismaClient};
+use codex_prisma::prisma::{location, object, PrismaClient};
 use log::info;
-use serde::{Deserialize, Serialize};
+
 use tantivy::{
-    query::{Query, QueryParser},
+    query::{QueryParser},
     schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, STORED, TEXT, FAST},
     store::{Compressor, ZstdCompressor},
     DocAddress,
@@ -213,7 +213,7 @@ impl Searcher {
             ));
         }
 
-        return Ok(query_result);
+        Ok(query_result)
     }
 
     pub async fn generate_snippet(
@@ -231,7 +231,7 @@ impl Searcher {
         let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
         let snippet_html: String = snippet.to_html();
 
-        return Ok(snippet_html);
+        Ok(snippet_html)
     }
 
     pub fn set_compressor(&mut self, compressor: &str) {

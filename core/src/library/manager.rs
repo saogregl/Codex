@@ -22,7 +22,7 @@ impl LibraryManager {
         //load libraries:
         let loaded_libs = db.library().find_many(vec![]).exec().await.unwrap();
 
-        let _logger = env_logger::builder()
+        env_logger::builder()
             .target(env_logger::Target::Stdout)
             .init();
 
@@ -41,8 +41,8 @@ impl LibraryManager {
             )
             .await;
 
-            let _parsed = library.as_ref().unwrap().parse_objects().await.unwrap();
-            let _thumbnailed = library
+            library.as_ref().unwrap().parse_objects().await.unwrap();
+            library
                 .as_ref()
                 .unwrap()
                 .generate_thumbnails()

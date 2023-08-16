@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use crate::{library::Library, object::ObjectType};
+use crate::object::ObjectType;
 
 pub fn get_all_files_dir(file_path: &str) -> Vec<String> {
     let mut files = Vec::new();
@@ -38,7 +38,7 @@ pub fn get_metadata(file_path: &str) -> std::io::Result<std::fs::Metadata> {
 
 pub fn get_extension(file_path: &str) -> String {
     let file_path = file_path.to_string();
-    let file_path = file_path.split(".").collect::<Vec<&str>>();
+    let file_path = file_path.split('.').collect::<Vec<&str>>();
     let file_path = file_path[file_path.len() - 1];
     file_path.to_string()
 }
@@ -64,7 +64,6 @@ pub fn extension_to_object_type(extension: &str) -> ObjectType {
 
 pub fn extract_location_path(path: PathBuf) -> Option<String> {
     path.parent()
-        .map(|parent_path| parent_path.to_str())
-        .flatten()
+        .and_then(|parent_path| parent_path.to_str())
         .map(|str_path| str_path.to_string())
 }
