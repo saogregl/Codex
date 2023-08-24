@@ -16,8 +16,6 @@ pub fn mount() -> RouterBuilder<Ctx> {
                 //Match to rspc::error::Error
                 |err| Error::new(ErrorCode::NotFound, err.to_string()),
             )?;
-
-            println!("Search response: {:?}", response);
             Ok(response)
         })
     })

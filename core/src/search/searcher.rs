@@ -177,9 +177,9 @@ impl Searcher {
     ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
         let query = self.query_parser.parse_query(query_input)?;
         let searcher = self.index.reader()?.searcher();
-        let top_docs = searcher.search(&query, &tantivy::collector::TopDocs::with_limit(10))?;
+        let top_docs = searcher.search(&query, &tantivy::collector::TopDocs::with_limit(30))?;
         let mut snippet_generator = SnippetGenerator::create(&searcher, &*query, self.body)?;
-        snippet_generator.set_max_num_chars(100);
+        snippet_generator.set_max_num_chars(300);
 
         //retrieve docs from searcher
         let mut query_result: Vec<SearchResult> = Vec::new();

@@ -27,7 +27,7 @@ const index = () => {
 
   //variables necessary for pagination 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
   const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("");
@@ -69,7 +69,7 @@ const index = () => {
   const handleQuery = (e) => {
     const value = e.target.value;
     //Check if the event is not clear 
-    if (e.target.value != "" && e.target.value != null){
+    if (e.target.value != "" && e.target.value != null) {
       setPersistentQuery(e.target.value)
     }
 
@@ -128,24 +128,10 @@ const index = () => {
     return (
       <div className={`${settings.sipePrefix}--card-content-wrapper`}>
         <ExpressiveCard
-          // label={`${dayjs(document.object.date_created).fromNow()}`}
+          label={`${dayjs(document.object.date_created).fromNow()}`}
           onClick={() => navigate(`/Data/${document.object.id}`)}
           mediaRatio={null}
           title={renderCardHeader(document.title)}
-          actionIcons={[
-            {
-              icon: Edit,
-              iconDescription: 'Edit',
-              id: '1',
-            },
-            {
-              icon: TrashCan,
-              iconDescription: 'Delete',
-              id: '2',
-            }
-          ]}
-          actionsPlacement="top"
-          primaryButtonText="Ver Documento"
         >
           {parse(document.snippet, options)}
         </ExpressiveCard>
@@ -295,12 +281,14 @@ const index = () => {
 
 
             </Row>
-            <div style={{ display: "flex", position: "absolute", bottom: "0", width: "100%", paddingRight: "96px" }}>
+            <div style={{ display: "flex", position: "absolute", bottom: "0", width: "calc(100% - 48px)", left: "48px" }}>
 
               <Pagination
                 backwardText="Página anterior"
                 forwardText="Próxima página"
                 itemsPerPageText="Itens por página:"
+                itemRangeText={(min, max, total) => {return `Itens ${min}-${max} de ${total}`}}
+                pageRangeText={(current, total) => {return `Página ${current} de ${total}`} }
                 onChange={handlePaginateChange}
                 page={currentPage}
                 pageSize={pageSize}
