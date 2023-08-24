@@ -5,6 +5,10 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import rspc, { client, queryClient } from "./lib/query";
 import { pkg } from "@carbon/ibm-products";
+import { pdfjs } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 // NOTE: must happen before component is first used
 pkg.component.Datagrid = true;
 pkg.feature['Datagrid.useFiltering'] = true;
@@ -25,6 +29,7 @@ import {
 
 import App from "./App";
 import "./style.scss";
+import DataId from "./routes/Data/DataId";
 
 const router = createBrowserRouter([
   {
@@ -38,8 +43,12 @@ const router = createBrowserRouter([
       {
         path: "/data",
         element: <Data />,
+        //Create dynamic router for each pdf: 
       },
-
+      {
+        path: "/data/:id",
+        element: <DataId />,
+      },
       {
         path: "/projects",
         element: <Home />,

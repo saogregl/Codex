@@ -17,7 +17,7 @@ use crate::{
     object::{Object, ObjectType},
 };
 
-// Define the Parser trait
+// Define the parser trait
 pub trait Parser<T> {
     fn parse(&self, object: &Object) -> Result<(), T>;
     fn parse_file(&self, file_name: String, parsed_path: PathBuf) -> Result<(), T>;
@@ -56,20 +56,20 @@ impl Parser<Vec<u8>> for VideoParser {
     }
 }
 
-// Intermediate function to dispatch the call to the appropriate Parser
+// Intermediate function to dispatch the call to the appropriate parser
 pub fn parse_for_object(object: &Object) -> Result<(), Vec<u8>> {
     match object.object_type {
         ObjectType::Image => {
-            let Parser = ImageParser;
-            Parser.parse(object)
+            let parser = ImageParser;
+            parser.parse(object)
         }
         ObjectType::Document => {
-            let Parser = PdfParser;
-            Parser.parse(object)
+            let parser = PdfParser;
+            parser.parse(object)
         }
         ObjectType::Video => {
-            let Parser = VideoParser;
-            Parser.parse(object)
+            let parser = VideoParser;
+            parser.parse(object)
         }
 
         _ => {
@@ -96,16 +96,16 @@ pub fn parse_file(file_name: String, parsed_path: PathBuf) -> Result<(), Vec<u8>
 
     match object_type {
         ObjectType::Image => {
-            let Parser = ImageParser;
-            Parser.parse_file(file_name, parsed_path)
+            let parser = ImageParser;
+            parser.parse_file(file_name, parsed_path)
         }
         ObjectType::Document => {
-            let Parser = PdfParser;
-            Parser.parse_file(file_name, parsed_path)
+            let parser = PdfParser;
+            parser.parse_file(file_name, parsed_path)
         }
         ObjectType::Video => {
-            let Parser = VideoParser;
-            Parser.parse_file(file_name, parsed_path)
+            let parser = VideoParser;
+            parser.parse_file(file_name, parsed_path)
         }
 
         _ => {

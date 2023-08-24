@@ -4,6 +4,7 @@ export type Procedures = {
     queries: 
         { key: "library.get_all_libraries", input: never, result: Library[] } | 
         { key: "library.get_all_objects", input: never, result: Object[] } | 
+        { key: "library.get_doc_by_id", input: GetDocById, result: Object | null } | 
         { key: "search.search", input: SearchArgs, result: SearchResult[] } | 
         { key: "tasks.getAllUsers", input: never, result: User[] } | 
         { key: "version", input: never, result: string },
@@ -23,8 +24,10 @@ export type CreateNewUserParam = { id: string; name: string }
 
 export type SearchResult = { title: string; snippet: string; score: number; object: Object }
 
-export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
+export type GetDocById = { id: number }
 
 export type User = { id: string; displayName: string }
+
+export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
 
 export type Location = { id: number; uuid: string; name: string | null; path: string; total_capacity: number | null; available_capacity: number | null; is_archived: boolean | null; generate_preview_media: boolean | null; hidden: boolean | null; date_created: string | null; instance_id: number | null; libraryId: number | null }

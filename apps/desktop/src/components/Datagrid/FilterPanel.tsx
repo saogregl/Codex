@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 /**
  * Copyright IBM Corp. 2022, 2023
  *
@@ -5,9 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-/* eslint-disable react/jsx-key */
 
 import React, { useRef, useMemo, useContext, useState, useEffect } from 'react';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { Accordion, AccordionItem, Button, Search, Layer } from '@carbon/react';
 import { rem } from '@carbon/layout';
@@ -69,7 +70,6 @@ const FilterPanel = ({
   updateMethod = BATCH,
   filterSections,
   setAllFilters,
-  onApply = () => {},
   onCancel = () => {},
   onPanelOpen = () => {},
   onPanelClose = () => {},
@@ -131,9 +131,9 @@ const FilterPanel = ({
   const apply = () => {
     setAllFilters(filtersObjectArray);
     // From the user
-    onApply();
-    // When the user clicks apply, the action set buttons should be disabled again
-    setShouldDisableButtons(true);
+    // onApply();
+    // // When the user clicks apply, the action set buttons should be disabled again
+    // setShouldDisableButtons(true);
 
     // updates the ref so next time the flyout opens we have records of the previous filters
     prevFiltersRef.current = JSON.stringify(filtersState);
@@ -147,23 +147,23 @@ const FilterPanel = ({
     return (
       showActionSet && (
         <MotionActionSet
-          actions={[
-            {
-              key: 1,
-              kind: 'primary',
-              label: primaryActionLabel,
-              onClick: apply,
-              disabled: shouldDisableButtons,
-            },
-            {
-              key: 2,
-              kind: 'secondary',
-              label: secondaryActionLabel,
-              onClick: cancel,
-              disabled: shouldDisableButtons,
-            },
-          ]}
-          className={`${componentClass}__action-set`}
+          // actions={[
+          //   {
+          //     key: 1,
+          //     kind: 'primary',
+          //     label: primaryActionLabel,
+          //     onClick: apply,
+          //     disabled: shouldDisableButtons,
+          //   },
+          //   {
+          //     key: 2,
+          //     kind: 'secondary',
+          //     label: secondaryActionLabel,
+          //     onClick: cancel,
+          //     disabled: shouldDisableButtons,
+          //   },
+          // ]}
+          // className={`${componentClass}__action-set`}
           ref={actionSetRef}
           variants={actionSetVariants}
         />
@@ -191,32 +191,32 @@ const FilterPanel = ({
     [panelOpen, onPanelClose, onPanelOpen]
   );
 
-  useEffect(
-    function setPanelMinimumHeight() {
-      filterPanelRef.current?.style.setProperty(
-        '--filter-panel-min-height',
-        rem(filterPanelMinHeight)
-      );
-    },
-    [filterPanelMinHeight]
-  );
+  // useEffect(
+  //   function setPanelMinimumHeight() {
+  //     filterPanelRef.current?.style.setProperty(
+  //       '--filter-panel-min-height',
+  //       rem(filterPanelMinHeight)
+  //     );
+  //   },
+  //   [filterPanelMinHeight]
+  // );
 
   useSubscribeToEventEmitter(CLEAR_FILTERS, reset);
 
-  const getScrollableContainerHeight = () => {
-    const filterHeadingHeight =
-      filterHeadingRef.current?.getBoundingClientRect().height;
-    const filterSearchHeight =
-      filterSearchRef.current?.getBoundingClientRect().height;
-    const actionSetHeight =
-      actionSetRef.current?.getBoundingClientRect().height;
+  // const getScrollableContainerHeight = () => {
+  //   const filterHeadingHeight =
+  //     filterHeadingRef.current?.getBoundingClientRect().height;
+  //   const filterSearchHeight =
+  //     filterSearchRef.current?.getBoundingClientRect().height;
+  //   const actionSetHeight =
+  //     actionSetRef.current?.getBoundingClientRect().height;
 
-    const height = `calc(100vh - ${filterHeadingHeight}px - ${
-      showFilterSearch ? filterSearchHeight : 0
-    }px - ${updateMethod === BATCH ? actionSetHeight : 0}px)`;
+  //   const height = `calc(100vh - ${filterHeadingHeight}px - ${
+  //     showFilterSearch ? filterSearchHeight : 0
+  //   }px - ${updateMethod === BATCH ? actionSetHeight : 0}px)`;
 
-    return height;
-  };
+  //   return height;
+  // };
 
   return (
     <motion.div
@@ -260,7 +260,7 @@ const FilterPanel = ({
           )}
         </header>
 
-        <div
+        {/* <div
           className={`${componentClass}__inner-container`}
           style={{ height: getScrollableContainerHeight() }}
           onScroll={onInnerContainerScroll}
@@ -292,7 +292,7 @@ const FilterPanel = ({
               );
             }
           )}
-        </div>
+        </div> */}
         {renderActionSet()}
       </motion.div>
     </motion.div>

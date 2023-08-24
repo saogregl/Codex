@@ -1,6 +1,5 @@
-import { Grid, FlexGrid, Row, Column } from "@carbon/react";
-// @ts-ignore
-import { Theme, Tab, Tabs, TabList, TabPanels, TabPanel, Button } from "@carbon/react";
+import { FlexGrid, Row, Column } from "@carbon/react";
+import { Button } from "@carbon/react";
 import { SidePanel, ProductiveCard } from "@carbon/ibm-products"
 import { settings } from "../../constants/settings";
 import { Edit, TrashCan } from "@carbon/icons-react"
@@ -20,15 +19,12 @@ const Summary = ({ open, setOpen }: Props) => {
             {
                 id: "1",
                 icon: (props) => <Edit size={16} {...props} />,
-                onClick: () => { },
-                onKeyDown: () => { },
+                // Remove the empty onClick method
                 iconDescription: "Edit"
             },
             {
                 id: "2",
                 icon: (props) => <TrashCan size={16} {...props} />,
-                onClick: () => { },
-                onKeyDown: () => { },
                 iconDescription: "Delete"
             }
         ]
@@ -41,14 +37,11 @@ const Summary = ({ open, setOpen }: Props) => {
             <ProductiveCard
                 {...defaultProps}    >
                 <div className={`${settings.sipePrefix}_card_content_wrapper`}>
-
                     <DataGridComponent />
-
                     <p>
                         Productive content text
                     </p>
                 </div>
-
             </ProductiveCard >
         )
     }
@@ -78,7 +71,6 @@ const Summary = ({ open, setOpen }: Props) => {
             </div>
         </ProductiveCard>
         )
-
     }
 
 

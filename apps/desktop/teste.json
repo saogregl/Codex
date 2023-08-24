@@ -1,0 +1,30 @@
+{
+    "tauri": {
+        "bundle": {
+            "externalBin": [
+                "/absolute/path/to/sidecar",
+                "relative/path/to/binary",
+                "binaries/my-sidecar"
+            ]
+        },
+        "allowlist": {
+            "shell": {
+                "sidecar": true,
+                "scope": [
+                    {
+                        "name": "/absolute/path/to/sidecar",
+                        "sidecar": true
+                    },
+                    {
+                        "name": "relative/path/to/binary",
+                        "sidecar": true
+                    },
+                    {
+                        "name": "binaries/my-sidecar",
+                        "sidecar": true
+                    }
+                ]
+            }
+        }
+    }
+}

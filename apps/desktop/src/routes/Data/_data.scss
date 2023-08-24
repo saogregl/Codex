@@ -29,18 +29,38 @@ $sipePrefix: "sipe";
   color: theme.$text-primary;
   padding-bottom: spacing.$spacing-02;
 }
+.c4p--card__title {
+  width: 100% !important; 
+}
+.c4p--card__title-container{ 
+  width: 100% !important; 
+}
 
+.#{$sipePrefix}--pdf-viewer-wrapper { 
+  width: 100%; 
+  height: 100%;
+}
 
 .data--highlight-text {
   b {
+    @include type.type-style("body-compact-01");
     background-color: rgba(208, 226, 255, 0.7); // Yellow background with some transparency
     border-radius: 5px; // Rounded corners
   }
-
 }
 
-.#{$sipePrefix}--data-search-bar-wrapper
-{
+.#{$sipePrefix}--data-title-link {
+  @include type.type-style("heading-compact-01");
+  color: theme.$link-primary;
+  text-decoration: none;
+}
+
+.data--snippet-text {
+  @include type.type-style("body-compact-01");
+  color: theme.$text-secondary;
+}
+
+.#{$sipePrefix}--data-search-bar-wrapper {
   display: flex;
   flex-direction: row;
   justify-content: space-between;

@@ -12,6 +12,15 @@ use std::sync::Arc;
 
 use tauri::Manager;
 
+#[tauri::command]
+fn extend_scope(handle: tauri::AppHandle, path: std::path::PathBuf) {
+    let asset_scope = handle.asset_protocol_scope();
+    let fs_scope = handle.fs_scope();
+
+    // ideally you don't apply a path sent from the frontend or at least not without some validation
+    asset_scope.allow_file(&path);
+}
+
 #[tokio::main]
 pub async fn main() {
     dotenv().ok();
@@ -20,13 +29,14 @@ pub async fn main() {
     let router = api::new();
     let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await);
 
-    tauri::Builder::default()
+    let mut app = tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {
             api::Ctx {
                 client: Arc::clone(&client),
                 manager: Arc::clone(&manager),
             }
         }))
+        .invoke_handler(tauri::generate_handler![extend_scope])
         .setup(move |app| {
             if cfg!(target_os = "windows") || cfg!(target_os = "linux") {
                 let window = app.get_window("main").unwrap();

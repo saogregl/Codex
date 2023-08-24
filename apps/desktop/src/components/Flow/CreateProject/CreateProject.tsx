@@ -1,4 +1,5 @@
-import type { Procedures } from "../../../../web/src/bindings"; // These were the bindings exported from your Rust code!
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import type { Procedures } from "../../../../../../web/src/bindings"; // These were the bindings exported from your Rust code!
 import { useClickOutside } from "../../../hooks/useClickOutside";
 import { Theme } from "@carbon/react"
 import {

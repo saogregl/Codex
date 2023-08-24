@@ -21,7 +21,7 @@
 @use "./components/SuiteHeader/SuiteHeaderAppSwitcher/suite-header-app-switcher";
 @use "./components/Profile/profile";
 @use "./components/ICA/ICA";
-
+@use "./components/StarRating/StarRating";
 @import "@carbon/charts/styles.css";
 
 $sipePrefix: "sipe";
@@ -60,6 +60,10 @@ body, html {
 
 ::-webkit-scrollbar {
   display: none;
+}
+
+:global(.cds--col) {
+  height: 100%;
 }
 
 

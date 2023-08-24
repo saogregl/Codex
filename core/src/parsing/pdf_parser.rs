@@ -1,6 +1,8 @@
-use crate::{object::Object as CodexObject, parsing::Parser};
+use crate::{object::Object as CodexObject};
 
-use std::{path::PathBuf, process::Command};
+use std::{path::PathBuf, process::{Command, Stdio}};
+
+use super::Parser;
 
 pub struct PdfParser;
 
@@ -17,11 +19,14 @@ impl Parser<Vec<u8>> for PdfParser {
         //Call pdfToText executable (assume it is in path) to generate text file
         Command::new("pdftotext")
             .args([
+                "-l",
                 "-enc",
                 "UTF-8",
                 path.to_str().unwrap(),
                 parsed_path.to_str().unwrap(),
             ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .output()
             .unwrap();
 
@@ -38,6 +43,7 @@ impl Parser<Vec<u8>> for PdfParser {
         //Call pdfToText executable (assume it is in path) to generate text file
         Command::new("pdftotext")
             .args([
+                "-l",
                 "-enc",
                 "UTF-8",
                 pdf_path.to_str().unwrap(),

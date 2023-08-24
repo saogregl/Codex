@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-script-url */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -11,7 +11,6 @@ import { SideNavLink, SideNavDivider } from '@carbon/react';
 import { settings } from '../../../constants/settings';
 import { handleSpecificKeyDown } from '../../../utils/componentsUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
-import { useProjectContextStore } from '../../../Stores/workspaceStore';
 import rspc from '../../../lib/query';
 import { workspaces as getWorkspacesData } from '../constants/workspaces';
 
@@ -81,7 +80,7 @@ interface Props {
   adminLink?: string;
   isAdminView?: boolean;
   workspaces?: Workspace[];
-};
+}
 
 const MultiWorkspaceSuiteHeaderAppSwitcher = ({
   customApplications = defaultValues.customApplications,
@@ -111,7 +110,7 @@ const MultiWorkspaceSuiteHeaderAppSwitcher = ({
     }
   }, [isWorkspacesView, workspaces, selectedWorkspace, currentWorkspace]);
 
-  const projectContextStore = useProjectContextStore();
+  // const projectContextStore = useProjectContextStore();
 
 
 
@@ -164,8 +163,7 @@ const MultiWorkspaceSuiteHeaderAppSwitcher = ({
   const handleWorkspaceSelection = useCallback(
     (workspace: { id: any }) => async (e: any) => {
       const { id } = workspace;
-      if (currentWorkspace) {
-      } else {
+      if (!currentWorkspace) {
         setSelectedWorkspace(workspace);
         setWorkspacesView(false);
       }
@@ -307,7 +305,7 @@ const MultiWorkspaceSuiteHeaderAppSwitcher = ({
           )}
           {getWorkspacesData.map((workspace) =>
             renderNavItem(
-              workspace.workspace_name ?? workspace.id,
+              workspace.name ?? workspace.id,
               null,
               false,
               null,
