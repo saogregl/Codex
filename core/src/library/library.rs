@@ -6,13 +6,11 @@ use std::{
     time::SystemTime,
 };
 
-use crate::{
-    fs_utils::{extract_location_path},
-    parsing, thumbnail,
-};
+use crate::{fs_utils::extract_location_path, parsing, thumbnail};
 
 use chrono::{TimeZone, Utc};
 use codex_prisma::prisma::{self, library, location, PrismaClient};
+use futures::future::try_join_all;
 use log::{error, info};
 use rayon::prelude::*;
 use std::collections::HashSet;
@@ -231,7 +229,7 @@ impl LocalLibrary {
         // If there are changes, we'll update the library.
         // We'll start by deleting the deleted files.
 
-        //TODO: Clean this up later: 
+        //TODO: Clean this up later:
         for file in deleted_files {
             self.db
                 .object()
@@ -334,31 +332,56 @@ impl LocalLibrary {
             .exec()
             .await?;
 
-        for location in locations {
-            let objects = self
-                .db
-                .object()
-                .find_many(vec![object::locations::is(vec![location::uuid::equals(
-                    location.uuid,
-                )])])
-                .exec()
-                .await?;
+        // Use a stream to handle the objects asynchronously
+        let tasks = locations.into_iter().map(|location| {
+            let db = Arc::clone(&self.db);
+            async move {
+                let objects = db
+                    .object()
+                    .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                        location.uuid,
+                    )])])
+                    .exec()
+                    .await?;
 
-            //The thumbnail path should be in the parent location of the object but in a folder called "thumbnails"
-            //If the folder doesn't exist, we should create it.
-            //If the thumbnail already exists, we should skip it.
-            //If the thumbnail doesn't exist, we should create it.
+                // Handle each object asynchronously
+                for object in objects {
+                    if let Some(_obj_name) = &object.obj_name {
+                        match thumbnail::generate_thumbnail(&object) {
+                            Ok(thumbnail) => {
+                                if let Err(e) = self
+                                    .db
+                                    .object()
+                                    .update(
+                                        object::uuid::equals(object.uuid.clone()),
+                                        vec![
+                                            object::thumbnail::set(Some(true)),
+                                            object::thumbnail_path::set(Some(
+                                                thumbnail.to_str().unwrap().to_string(),
+                                            )),
+                                        ],
+                                    )
+                                    .exec()
+                                    .await
+                                {
+                                    error!("Database update error: {:?}", e);
+                                }
+                            }
+                            Err(e) => {
+                                error!("Thumbnailer error: {:?}", e);
+                            }
+                        }
+                    } else {
+                        info!("Object missing name!");
+                    }
+                }
 
-            //Find the parent location of the object:
-            let location_path = PathBuf::from(&location.path.clone());
+                Ok::<_, Box<dyn std::error::Error>>(())
+            }
+        });
 
-
-            objects.par_iter().for_each(|object| {
-                let path = location_path.clone(); // Clone the common path
-
-                let _ = thumbnail::generate_thumbnail(&object.obj_name.clone().unwrap(), path.clone());
-            });
-        }
+        // Use try_join_all to run all tasks concurrently and await for all to finish
+        let _ = try_join_all(tasks).await;
 
         Ok(())
     }
@@ -373,35 +396,56 @@ impl LocalLibrary {
             .exec()
             .await?;
 
-        for location in locations {
-            let objects = self
-                .db
-                .object()
-                .find_many(vec![object::locations::is(vec![location::uuid::equals(
-                    location.uuid,
-                )])])
-                .exec()
-                .await?;
-            let directory = PathBuf::from(&location.path.clone());
+        // Use a stream to handle the objects asynchronously
+        let tasks = locations.into_iter().map(|location| {
+            let db = Arc::clone(&self.db);
+            async move {
+                let objects = db
+                    .object()
+                    .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                        location.uuid,
+                    )])])
+                    .exec()
+                    .await?;
 
-            objects.par_iter().for_each(|object| {
-                let text_path: PathBuf = [
-                    location.path.clone(),
-                    "parsed".to_string(),
-                    object.obj_name.clone().expect("every object needs a name"),
-                ]
-                .iter()
-                .collect();
-
-                if std::path::Path::new(&text_path).exists() {
-                    println!("File already created at: {:?}", text_path);
-                    return;
+                // Handle each object asynchronously
+                for object in objects {
+                    if let Some(_obj_name) = &object.obj_name {
+                        match parsing::parse_object(&object) {
+                            Ok(parsed) => {
+                                if let Err(e) = self
+                                    .db
+                                    .object()
+                                    .update(
+                                        object::uuid::equals(object.uuid.clone()),
+                                        vec![
+                                            object::parsed::set(Some(true)),
+                                            object::parsed_path::set(Some(
+                                                parsed.to_str().unwrap().to_string(),
+                                            )),
+                                        ],
+                                    )
+                                    .exec()
+                                    .await
+                                {
+                                    error!("Database update error: {:?}", e);
+                                }
+                            }
+                            Err(e) => {
+                                error!("Parsing error: {:?}", e);
+                            }
+                        }
+                    } else {
+                        info!("Object missing name!");
+                    }
                 }
 
-                let _parse_result =
-                    parsing::parse_file(object.obj_name.clone().unwrap(), directory.clone());
-            });
-        }
+                Ok::<_, Box<dyn std::error::Error>>(())
+            }
+        });
+
+        // Use try_join_all to run all tasks concurrently and await for all to finish
+        let _ = try_join_all(tasks).await;
 
         Ok(())
     }

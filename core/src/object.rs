@@ -16,6 +16,14 @@ pub enum ObjectType {
     Audio,
     Compressed,
 }
+use std::fmt;
+
+impl fmt::Display for ObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 
 
 

@@ -36,7 +36,13 @@ model Object {
   relative_path String? // relative to the location
 
   //So it can be searched 
-  indexed Boolean?
+  parsed_path String?
+  parsed      Boolean?
+  indexed     Boolean?
+
+  //
+  thumbnail_path String?
+  thumbnail      Boolean?
 
   tags       TagOnObject[]
   labels     LabelOnObject[]

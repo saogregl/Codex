@@ -15,21 +15,21 @@ use tauri::Manager;
 #[tauri::command]
 fn extend_scope(handle: tauri::AppHandle, path: std::path::PathBuf) {
     let asset_scope = handle.asset_protocol_scope();
-    let fs_scope = handle.fs_scope();
-
     // ideally you don't apply a path sent from the frontend or at least not without some validation
-    asset_scope.allow_file(&path);
+    let _ = asset_scope.allow_file(&path);
 }
 
 #[tokio::main]
-pub async fn main() {
+pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
-    #[cfg(any(windows, target_os = "macos"))]
-    let client = Arc::new(prisma::new_client().await.unwrap());
-    let router = api::new();
-    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await);
 
-    let mut app = tauri::Builder::default()
+    #[cfg(any(windows, target_os = "macos"))]
+    let client = Arc::new(prisma::new_client().await?);  // Propagate error using `?`
+
+    let router = api::new();
+    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await?);  // Propagate error using `?`
+
+    let mut _app = tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {
             api::Ctx {
                 client: Arc::clone(&client),
@@ -46,6 +46,7 @@ pub async fn main() {
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .run(tauri::generate_context!())?;
+
+    Ok(())
 }

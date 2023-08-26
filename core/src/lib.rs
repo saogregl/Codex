@@ -8,6 +8,7 @@ pub mod object;
 pub mod parsing;
 pub mod thumbnail;
 pub mod watcher;
+pub mod config;
 
 pub use library::LocalLibrary;
 pub use library::LibraryManager;

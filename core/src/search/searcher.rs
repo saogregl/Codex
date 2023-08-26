@@ -3,25 +3,25 @@ use std::{
     sync::Arc,
 };
 
-use codex_prisma::prisma::{location, object, PrismaClient};
+use codex_prisma::prisma::{
+    location::{self, Data as locationData},
+    object::{self, Data as objectData},
+    PrismaClient,
+};
 use log::info;
 
 use tantivy::{
-    query::{QueryParser},
-    schema::{Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, STORED, TEXT, FAST},
+    query::QueryParser,
+    schema::{
+        Field, IndexRecordOption, Schema, TextFieldIndexing, TextOptions, FAST, STORED, TEXT,
+    },
     store::{Compressor, ZstdCompressor},
-    DocAddress,
-    Document,
-    // tokenizer::TextAnalyzer,
-    Index,
-    SnippetGenerator,
-    TantivyError,
+    DocAddress, Document, Index, SnippetGenerator, TantivyError,
 };
 
 use crate::library::{Library, LocalLibrary};
 
 use super::SearchResult;
-
 
 #[derive(Clone)]
 
@@ -45,7 +45,10 @@ pub struct Searcher {
 }
 
 impl Searcher {
-    pub fn new(index_dir: impl AsRef<Path>, db: Arc<PrismaClient>) -> Self {
+    pub fn new(
+        index_dir: impl AsRef<Path>,
+        db: Arc<PrismaClient>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let text_indexing = TextFieldIndexing::default()
             .set_tokenizer("default")
             .set_index_option(IndexRecordOption::Basic);
@@ -58,34 +61,16 @@ impl Searcher {
         let title = schema_builder.add_text_field("title", TEXT | STORED);
         let body = schema_builder.add_text_field("body", TEXT | STORED | FAST);
 
-        // let title = schema_builder.add_text_field("title", text_options.clone());
-        // let author = schema_builder.add_text_field("author", text_options.clone());
-        // let extension = schema_builder.add_text_field("extension", STORED);
-        // let filesize = schema_builder.add_u64_field("filesize", STORED);
-        // let score_boost = schema_builder.add_u64_field("score_boost", FAST);
         let schema = schema_builder.build();
 
         // open or create index
         let index_dir = index_dir.as_ref();
-        let index = Index::open_in_dir(index_dir).unwrap_or_else(|err| {
-            if let TantivyError::OpenDirectoryError(_) | TantivyError::OpenReadError(_) = err {
-                std::fs::create_dir_all(index_dir).expect("create index directory");
-                Index::create_in_dir(index_dir, schema.clone()).unwrap()
-            } else {
-                panic!("Error opening index: {err:?}")
-            }
-        });
-
-        // let tokenizer = get_tokenizer();
-        // index
-        //     .tokenizers()
-        //     .register(META_TOKENIZER, tokenizer.clone());
-        // _ = index.set_default_multithread_executor();
+        let index = Self::setup_index(&index_dir, &schema)?;
 
         let mut query_parser = QueryParser::for_index(&index, vec![title, body]);
         query_parser.set_conjunction_by_default();
 
-        Self {
+        Ok(Self {
             compressor: Compressor::Brotli,
 
             index,
@@ -95,58 +80,45 @@ impl Searcher {
 
             title,
             body,
-        }
+        })
     }
 
     pub async fn index(
         &mut self,
         libs: &mut Vec<Arc<LocalLibrary>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        //We need to index all the libraries using the same searcher:
-
-        let mut index_writer = self.index.writer(200_000_000).unwrap();
+        let mut index_writer = self.index.writer(200_000_000)?;
 
         for lib in libs {
-            let locations = lib.db.location().find_many(vec![]).exec().await.unwrap();
+            let locations = lib.db.location().find_many(vec![]).exec().await?;
 
             for location in locations {
                 let objects = lib
                     .db
                     .object()
                     .find_many(vec![object::locations::is(vec![location::uuid::equals(
-                        location.uuid,
+                        location.uuid.clone(),
                     )])])
                     .exec()
-                    .await
-                    .unwrap();
+                    .await?;
 
                 for object in objects {
-                    if object.indexed.unwrap() {
-                        info!("Object already indexed: {:?}", object.obj_name.unwrap());
+                    if object.indexed.unwrap_or(false) {
+                        info!(
+                            "Object already indexed: {:?}",
+                            object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                        );
                         continue;
                     }
 
-                    let mut doc = Document::default();
+                    let text_path = Self::construct_text_path(&location.clone(), &object)?;
 
-                    // Load text for documents:
-                    //The text should be in the location of the object, in a folder called parsed
-                    //The text should have the same name as the object, but with a txt extension
-
-                    let text_path: PathBuf = [
-                        location.path.clone(),
-                        "parsed".to_string(),
-                        object.obj_name.clone().expect("every object needs a name"),
-                    ]
-                    .iter()
-                    .collect();
-
-                    let mut text_path = text_path.clone();
-                    text_path.set_extension("txt");
-
-                    info!("Trying to load text: {:?}", text_path);
-
-                    if let Ok(text) = std::fs::read_to_string(text_path) {
-                        doc.add_text(self.title, &object.obj_name.clone().unwrap());
+                    if let Ok(text) = std::fs::read_to_string(&text_path) {
+                        let mut doc = Document::default();
+                        doc.add_text(
+                            self.title,
+                            &object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string()),
+                        );
                         doc.add_text(self.body, &text);
                         index_writer.add_document(doc)?;
 
@@ -157,10 +129,12 @@ impl Searcher {
                                 vec![object::indexed::set(Some(true))],
                             )
                             .exec()
-                            .await
-                            .unwrap();
+                            .await?;
 
-                        info!("Indexed object: {:?}", object.obj_name.unwrap());
+                        info!(
+                            "Indexed object: {:?}",
+                            object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                        );
                     }
                 }
             }
@@ -171,17 +145,51 @@ impl Searcher {
         Ok(())
     }
 
+    fn construct_text_path(
+        location: &locationData,
+        object: &objectData,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        let mut text_path = PathBuf::from(&location.path);
+        text_path.push("parsed");
+        text_path.push(
+            object
+                .obj_name
+                .as_ref()
+                .ok_or("every object needs a name")?,
+        );
+        text_path.set_extension("txt");
+        Ok(text_path)
+    }
+
+    fn setup_index(index_dir: &Path, schema: &Schema) -> Result<Index, Box<dyn std::error::Error>> {
+        match Index::open_in_dir(index_dir) {
+            Ok(index) => Ok(index),
+            Err(err) => match err {
+                TantivyError::OpenDirectoryError(_) | TantivyError::OpenReadError(_) => {
+                    std::fs::create_dir_all(index_dir)?;
+                    Index::create_in_dir(index_dir, schema.clone()).map_err(From::from)
+                }
+                _ => Err(Box::new(err)),
+            },
+        }
+    }
+
     pub async fn search(
         &self,
         query_input: &str,
     ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        // Parse the query
         let query = self.query_parser.parse_query(query_input)?;
+
+        // Create a searcher and execute the search
         let searcher = self.index.reader()?.searcher();
         let top_docs = searcher.search(&query, &tantivy::collector::TopDocs::with_limit(30))?;
+
+        // Set up snippet generator
         let mut snippet_generator = SnippetGenerator::create(&searcher, &*query, self.body)?;
         snippet_generator.set_max_num_chars(300);
 
-        //retrieve docs from searcher
+        // Retrieve documents from the searcher
         let mut query_result: Vec<SearchResult> = Vec::new();
 
         for (score, doc_address) in top_docs {
@@ -189,19 +197,26 @@ impl Searcher {
 
             let title = retrieved_doc
                 .get_first(self.title)
-                .unwrap()
+                .ok_or("Title field not found in document")?
                 .as_text()
-                .unwrap();
+                .ok_or("Title field is not a text field")?;
 
+            // Fetch object by its name
             let obj = self
                 .db
                 .object()
                 .find_first(vec![object::obj_name::equals(Some(title.to_string()))])
                 .exec()
-                .await
-                .unwrap()
-                .expect("object should exist");
+                .await?;
 
+            if obj.is_none() {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "object not found in the database",
+                )));
+            }
+
+            // Generate a snippet from the document
             let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
             let snippet_html: String = snippet.to_html();
 
@@ -209,7 +224,7 @@ impl Searcher {
                 title.to_owned(),
                 snippet_html,
                 score,
-                obj,
+                obj.unwrap(),
             ));
         }
 

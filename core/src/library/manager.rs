@@ -1,6 +1,8 @@
+use log::{error, warn};
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::config;
 use crate::search::Searcher;
 use crate::{library::LocalLibrary, search::SearchResult};
 use codex_prisma::prisma::PrismaClient;
@@ -16,53 +18,80 @@ pub struct LibraryManager {
 }
 
 impl LibraryManager {
-    pub async fn new(db: Arc<PrismaClient>) -> Self {
+    pub async fn new(db: Arc<PrismaClient>) -> Result<Self, Box<dyn std::error::Error>> {
         let mut libraries = Vec::new();
+        let config = config::CodexConfig::new();
 
         //load libraries:
-        let loaded_libs = db.library().find_many(vec![]).exec().await.unwrap();
+        let loaded_libs = match db.library().find_many(vec![]).exec().await {
+            Ok(libs) => libs,
+            Err(e) => {
+                error!("Failed to load libraries: {}", e);
+                return Ok(LibraryManager {
+                    db: db.clone(),
+                    libraries,
+                    handle: Vec::new(),
+                    searcher: Searcher::new(config.data_dir.join("index"), db.clone())?,
+                });
+            }
+        };
 
         env_logger::builder()
             .target(env_logger::Target::Stdout)
             .init();
 
-        info!("Loaded {} libraries", loaded_libs.len());
-        //Log the libraries that were loaded
-        info!("Loaded libraries: {:?}", loaded_libs);
-        println!("Loaded libraries: {:?}", loaded_libs);
+        info!("Loading libraries: {:?}", loaded_libs);
 
         for library in loaded_libs {
-            let uuid_lib = Uuid::parse_str(&library.uuid).unwrap();
-            let library = LocalLibrary::new(
-                uuid_lib,
-                library.name.clone().expect("every library has a name"),
-                Some(library.name.expect("every library has a name")),
-                db.clone(),
-            )
-            .await;
+            if let Ok(uuid_lib) = Uuid::parse_str(&library.uuid) {
+                let name = match library.name.clone() {
+                    Some(name) => name,
+                    None => {
+                        warn!("Library without name found with UUID: {}", &library.uuid);
+                        continue; // skip this iteration of the loop
+                    }
+                };
 
-            library.as_ref().unwrap().parse_objects().await.unwrap();
-            library
-                .as_ref()
-                .unwrap()
-                .generate_thumbnails()
-                .await
-                .unwrap();
-
-            libraries.push(library.unwrap());
+                match LocalLibrary::new(uuid_lib, name.clone(), Some(name.clone()), db.clone())
+                    .await
+                {
+                    Ok(local_lib) => {
+                        if let Err(e) = local_lib.parse_objects().await {
+                            error!(
+                                "Failed to parse objects for library {}: {}",
+                                name.clone(),
+                                e
+                            );
+                        }
+                        if let Err(e) = local_lib.generate_thumbnails().await {
+                            error!(
+                                "Failed to generate thumbnails for library {}: {}",
+                                name.clone(),
+                                e
+                            );
+                        }
+                        libraries.push(local_lib);
+                    }
+                    Err(e) => {
+                        error!("Failed to create LocalLibrary for {}: {}", name.clone(), e);
+                    }
+                }
+            } else {
+                warn!("Invalid UUID found: {}", &library.uuid);
+            }
         }
 
         info!("The library manager has loaded {:?} libraries", libraries);
 
-        let mut searcher = Searcher::new("./index", db.clone());
-        searcher.index(&mut libraries).await.unwrap();
+        let mut searcher = Searcher::new("./index", db.clone())?;
+        searcher.index(&mut libraries).await?;
 
-        Self {
+        Ok(Self {
             db,
             libraries,
             handle: Vec::new(),
             searcher,
-        }
+        })
     }
 
     pub async fn search(

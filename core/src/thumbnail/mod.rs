@@ -1,4 +1,5 @@
-use std::{path::PathBuf};
+use codex_prisma::prisma::object::Data as ObjectData;
+use std::path::PathBuf;
 
 use log::info;
 
@@ -12,13 +13,28 @@ mod pdf_thumbnailer;
 // mod powerpoint_parser;
 // mod excel_parser;
 
+use crate::{fs_utils::extension_to_object_type, object::ObjectType};
 
-use crate::{object::{Object, ObjectType}, fs_utils::extension_to_object_type};
+#[derive(thiserror::Error, Debug)]
+pub enum ThumbnailerError {
+    #[error("Failed to generate Thumbnail {0}")]
+    ParserError(String),
+    #[error("Unsupported object type: {0}")]
+    UnsupportedObjectType(ObjectType),
+    #[error("Object name is missing")]
+    MissingObjectName,
+    #[error("Command failed with status: {0}")]
+    CommandFailed(std::process::ExitStatus),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+}
 
 // Define the Thumbnailer trait
 pub trait Thumbnailer {
-    fn generate_thumbnail_object(&self, object: &mut Object) -> Option<(Object, Vec<u8>)>;
-    fn generate_thumbnail(&self, name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>>;
+    fn generate_thumbnail(
+        &self,
+        object: &ObjectData,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>>;
 }
 
 // Implement the trait for specific file types
@@ -26,18 +42,18 @@ pub trait Thumbnailer {
 // For example, ImageThumbnailer implementation:
 struct ImageThumbnailer;
 impl Thumbnailer for ImageThumbnailer {
-    fn generate_thumbnail_object(&self, object: &mut Object) -> Option<(Object, Vec<u8>)> {
-        info!("Generating thumbnail for image: {}", object.get_name());
-        // Implementation for generating image thumbnails
-        // ...
-        // Assuming thumbnail_data is a Vec<u8> containing the thumbnail
-        None
-    }
-    fn generate_thumbnail(&self, name: &str, _path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Generating thumbnail for image: {}", name);
-        // Implementation for generating image thumbnails
-        // ...
-        Ok(())
+    fn generate_thumbnail(
+        &self,
+        object: &ObjectData,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        info!(
+            "Generating thumbnail for image: {}",
+            object.obj_name.clone().expect("Object should have name")
+        );
+
+        Err(Box::new(ThumbnailerError::UnsupportedObjectType(
+            ObjectType::Image,
+        )))
     }
 }
 
@@ -45,86 +61,91 @@ impl Thumbnailer for ImageThumbnailer {
 
 struct VideoThumbnailer;
 impl Thumbnailer for VideoThumbnailer {
-    fn generate_thumbnail_object(&self, object: &mut Object) -> Option<(Object, Vec<u8>)> {
-        println!("Generating thumbnail for video: {}", object.get_name());
+    fn generate_thumbnail(
+        &self,
+        object: &ObjectData,
+    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        info!(
+            "Generating thumbnail for video: {}",
+            object.obj_name.clone().expect("Object should have name")
+        );
         // ...
-        None
-    }
-    fn generate_thumbnail(&self, name: &str, _path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        println!("Generating thumbnail for video: {}", name);
-        // ...
-        Ok(())
+        Err(Box::new(ThumbnailerError::UnsupportedObjectType(
+            ObjectType::Video,
+        )))
     }
 }
 
 // Intermediate function to dispatch the call to the appropriate thumbnailer
-pub fn generate_thumbnail_for_object(object: &mut Object) -> Option<(Object, Vec<u8>)> {
-    match object.object_type {
+pub fn generate_thumbnail_for_object(
+    object: &ObjectData,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let object_type = extension_to_object_type(
+        &object
+            .clone()
+            .extension
+            .expect("No extension found for file"),
+    );
+    match object_type {
         ObjectType::Image => {
             let thumbnailer = ImageThumbnailer;
-            thumbnailer.generate_thumbnail_object(object)
+            thumbnailer.generate_thumbnail(object)
         }
         ObjectType::Document => {
             let thumbnailer = PdfThumbnailer;
-            thumbnailer.generate_thumbnail_object(object)
+            thumbnailer.generate_thumbnail(object)
         }
         ObjectType::Video => {
             let thumbnailer = VideoThumbnailer;
-            thumbnailer.generate_thumbnail_object(object)
+            thumbnailer.generate_thumbnail(object)
         }
 
         _ => {
-            println!(
+            info!(
                 "Thumbnail generation not supported for object type: {:?}, {:?}",
-                object.object_type,
-                object.get_name()
+                object.extension,
+                object.obj_name.clone().expect("Object should have name")
             );
-            None
+            Err(Box::new(ThumbnailerError::UnsupportedObjectType(
+                object_type,
+            )))
         }
     }
-
-
 }
 
-pub fn generate_thumbnail(name: &str, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-
+pub fn generate_thumbnail(object: &ObjectData) -> Result<PathBuf, Box<dyn std::error::Error>> {
     //Name is a string like document_name.extension. We need to extract the extension to determine the object type
 
-    let name_path = PathBuf::from(name);
-    
+    let name_path = PathBuf::from(object.path.clone().expect("Object should have path"));
+
     // Extract the extension using the `extension` method
-    let extension = name_path.extension()
-        .and_then(|os_str| os_str.to_str())
-        .ok_or("No extension found in name")?;
+    let extension = object
+        .extension
+        .clone()
+        .expect("Object should have extension");
 
-
-    let obj_type = extension_to_object_type(extension);
-
-    info!("Generating thumbnail for object: {:?}, {:?} and saving on path {:?} inside thumbnails folder", obj_type, name, path);
+    let obj_type = extension_to_object_type(&extension);
 
     match obj_type {
         ObjectType::Image => {
             let thumbnailer = ImageThumbnailer;
-            thumbnailer.generate_thumbnail(name, path)
+            thumbnailer.generate_thumbnail(object)
         }
         ObjectType::Document => {
             let thumbnailer = PdfThumbnailer;
-            thumbnailer.generate_thumbnail(name, path)
+            thumbnailer.generate_thumbnail(object)
         }
         ObjectType::Video => {
             let thumbnailer = VideoThumbnailer;
-            thumbnailer.generate_thumbnail(name, path)
+            thumbnailer.generate_thumbnail(object)
         }
 
         _ => {
             println!(
                 "Thumbnail generation not supported for object type: {:?}, {:?}",
-                obj_type,
-                name
+                obj_type, object.obj_name
             );
-            Ok(()) 
+            Err(Box::new(ThumbnailerError::UnsupportedObjectType(obj_type)))
         }
     }
-
-    
 }

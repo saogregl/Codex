@@ -1,57 +1,47 @@
-use crate::{object::Object as CodexObject};
+use crate::{
+    config::{self, CodexConfig},
+    object::Object as CodexObject,
+};
+use codex_prisma::prisma::object::Data as ObjectData;
 
-use std::{path::PathBuf, process::{Command, Stdio}};
+use std::{
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
-use super::Parser;
+
+use super::{Parser, ParsingError};
 
 pub struct PdfParser;
 
-impl Parser<Vec<u8>> for PdfParser {
-    fn parse(&self, object: &CodexObject) -> Result<(), Vec<u8>> {
+impl Parser for PdfParser {
+    fn parse_object(&self, file: &ObjectData) -> Result<PathBuf, ParsingError> {
+        let config = CodexConfig::new();
         //get absolute path of pdf file
-        let path = PathBuf::from(&object.path.path);
-        let parsed_folder = format!("./parsed/{}", object.get_name());
-        let mut parsed_path = PathBuf::from(&parsed_folder);
-        parsed_path.set_extension("txt");
-
-        println!("Parsed path: {:?}", parsed_path);
-
-        //Call pdfToText executable (assume it is in path) to generate text file
-        Command::new("pdftotext")
-            .args([
-                "-l",
-                "-enc",
-                "UTF-8",
-                path.to_str().unwrap(),
-                parsed_path.to_str().unwrap(),
-            ])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .unwrap();
-
-        Ok(())
-    }
-    fn parse_file(&self, file_name: String, parsed_path: PathBuf) -> Result<(), Vec<u8>> {
-        //get absolute path of pdf file
-        let mut pdf_path = parsed_path.clone().join(file_name.clone());
+        let mut pdf_path = PathBuf::from(&config.data_dir).join(
+            file.obj_name
+                .clone()
+                .ok_or(ParsingError::MissingObjectName)?,
+        );
         pdf_path.set_extension("pdf");
 
-        let mut text_path = parsed_path.clone().join("parsed").join(file_name.clone());
+        let mut text_path = PathBuf::from(&config.data_dir).join(&file.uuid);
         text_path.set_extension("txt");
 
         //Call pdfToText executable (assume it is in path) to generate text file
-        Command::new("pdftotext")
-            .args([
-                "-l",
+        let output = Command::new("pdftotext")
+            .args(&[
                 "-enc",
                 "UTF-8",
-                pdf_path.to_str().unwrap(),
-                text_path.to_str().unwrap(),
+                pdf_path.to_str().expect("We need a valid path to pdf file"),
+                text_path.to_str().expect("We need a valid path to text file"),
             ])
-            .output()
-            .unwrap();
+            .output()?;
 
-        Ok(())
+        if !output.status.success() {
+            return Err(ParsingError::CommandFailed(output.status));
+        }
+
+        Ok(text_path)
     }
 }
