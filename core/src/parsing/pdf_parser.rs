@@ -1,14 +1,8 @@
-use crate::{
-    config::{self, CodexConfig},
-    object::Object as CodexObject,
-};
+use crate::config::CodexConfig;
 use codex_prisma::prisma::object::Data as ObjectData;
+use log::info;
 
-use std::{
-    path::PathBuf,
-    process::{Command, Stdio},
-};
-
+use std::{path::PathBuf, process::Command};
 
 use super::{Parser, ParsingError};
 
@@ -18,13 +12,9 @@ impl Parser for PdfParser {
     fn parse_object(&self, file: &ObjectData) -> Result<PathBuf, ParsingError> {
         let config = CodexConfig::new();
         //get absolute path of pdf file
-        let mut pdf_path = PathBuf::from(&config.data_dir).join(
-            file.obj_name
-                .clone()
-                .ok_or(ParsingError::MissingObjectName)?,
-        );
-        pdf_path.set_extension("pdf");
+        let pdf_path = file.path.clone().expect("Object should have path");
 
+        info!("Parsing pdf: {}", pdf_path);
         let mut text_path = PathBuf::from(&config.data_dir).join(&file.uuid);
         text_path.set_extension("txt");
 
@@ -33,8 +23,10 @@ impl Parser for PdfParser {
             .args(&[
                 "-enc",
                 "UTF-8",
-                pdf_path.to_str().expect("We need a valid path to pdf file"),
-                text_path.to_str().expect("We need a valid path to text file"),
+                pdf_path.as_str(),
+                text_path
+                    .to_str()
+                    .expect("We need a valid path to text file"),
             ])
             .output()?;
 

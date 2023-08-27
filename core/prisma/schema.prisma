@@ -145,3 +145,14 @@ model LabelOnObject {
   @@id([label_id, Object_id])
   @@map("label_on_Object")
 }
+
+
+model Notification {
+    id         Int       @id @default(autoincrement())
+    read       Boolean   @default(false)
+    data       Int
+    message    String?
+    expires_at DateTime?
+
+    @@map("notification")
+}

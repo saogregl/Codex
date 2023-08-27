@@ -89,6 +89,14 @@ impl Searcher {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let mut index_writer = self.index.writer(200_000_000)?;
 
+        //If env variable REBUILD_INDEX is set to true, delete the index and rebuild it
+        if std::env::var("REBUILD_INDEX").unwrap_or("FALSE".to_string()) == "TRUE" {
+            info!("Rebuilding index");
+            let clear_res = index_writer.delete_all_documents().unwrap();
+            // have to commit, otherwise deleted terms remain available
+            index_writer.commit()?;
+        }
+
         for lib in libs {
             let locations = lib.db.location().find_many(vec![]).exec().await?;
 
@@ -103,38 +111,51 @@ impl Searcher {
                     .await?;
 
                 for object in objects {
-                    if object.indexed.unwrap_or(false) {
-                        info!(
-                            "Object already indexed: {:?}",
-                            object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
-                        );
-                        continue;
+                    if std::env::var("REBUILD_INDEX").unwrap_or("FALSE".to_string()) != "TRUE" {
+                        if object.indexed.unwrap_or(false) {
+                            info!(
+                                "Object already indexed: {:?}",
+                                object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                            );
+                            continue;
+                        }
                     }
 
-                    let text_path = Self::construct_text_path(&location.clone(), &object)?;
+                    let text_path = object.parsed_path.clone();
 
-                    if let Ok(text) = std::fs::read_to_string(&text_path) {
-                        let mut doc = Document::default();
-                        doc.add_text(
-                            self.title,
-                            &object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string()),
-                        );
-                        doc.add_text(self.body, &text);
-                        index_writer.add_document(doc)?;
+                    match text_path {
+                        Some(text_path) => {
+                            if let Ok(text) = std::fs::read_to_string(&text_path) {
+                                let mut doc = Document::default();
+                                doc.add_text(
+                                    self.title,
+                                    &object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string()),
+                                );
+                                doc.add_text(self.body, &text);
+                                index_writer.add_document(doc)?;
 
-                        lib.db
-                            .object()
-                            .update(
-                                object::uuid::equals(object.uuid),
-                                vec![object::indexed::set(Some(true))],
-                            )
-                            .exec()
-                            .await?;
+                                lib.db
+                                    .object()
+                                    .update(
+                                        object::uuid::equals(object.uuid),
+                                        vec![object::indexed::set(Some(true))],
+                                    )
+                                    .exec()
+                                    .await?;
 
-                        info!(
-                            "Indexed object: {:?}",
-                            object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
-                        );
+                                info!(
+                                    "Indexed object: {:?}",
+                                    object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                                );
+                            }
+                        }
+                        None => {
+                            info!(
+                                "Text file not found for object: {:?}",
+                                object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                            );
+                            continue;
+                        }
                     }
                 }
             }

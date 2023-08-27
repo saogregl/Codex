@@ -3,6 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::config;
+use crate::library::notification::NotificationManager;
 use crate::search::Searcher;
 use crate::{library::LocalLibrary, search::SearchResult};
 use codex_prisma::prisma::PrismaClient;
@@ -10,16 +11,20 @@ use log::info;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use uuid::Uuid;
 
+use super::notification::{CodexNotification, NotificationType};
+
 pub struct LibraryManager {
     pub db: Arc<PrismaClient>,
     pub libraries: Vec<Arc<LocalLibrary>>,
     handle: Vec<tokio::task::JoinHandle<Result<(), notify::Error>>>,
+    pub notification_manager: Arc<NotificationManager>,
     searcher: Searcher,
 }
 
 impl LibraryManager {
     pub async fn new(db: Arc<PrismaClient>) -> Result<Self, Box<dyn std::error::Error>> {
         let mut libraries = Vec::new();
+        let notification_manager = Arc::new(NotificationManager::new(Arc::clone(&db)));
         let config = config::CodexConfig::new();
 
         //load libraries:
@@ -31,7 +36,8 @@ impl LibraryManager {
                     db: db.clone(),
                     libraries,
                     handle: Vec::new(),
-                    searcher: Searcher::new(config.data_dir.join("index"), db.clone())?,
+                    notification_manager,
+                    searcher: Searcher::new(config.index_dir, db.clone())?,
                 });
             }
         };
@@ -52,8 +58,14 @@ impl LibraryManager {
                     }
                 };
 
-                match LocalLibrary::new(uuid_lib, name.clone(), Some(name.clone()), db.clone())
-                    .await
+                match LocalLibrary::new(
+                    uuid_lib,
+                    name.clone(),
+                    Some(name.clone()),
+                    Arc::clone(&db),
+                    Arc::clone(&notification_manager),
+                )
+                .await
                 {
                     Ok(local_lib) => {
                         if let Err(e) = local_lib.parse_objects().await {
@@ -83,13 +95,14 @@ impl LibraryManager {
 
         info!("The library manager has loaded {:?} libraries", libraries);
 
-        let mut searcher = Searcher::new("./index", db.clone())?;
+        let mut searcher = Searcher::new(config.index_dir, Arc::clone(&db))?;
         searcher.index(&mut libraries).await?;
 
         Ok(Self {
             db,
             libraries,
             handle: Vec::new(),
+            notification_manager,
             searcher,
         })
     }
@@ -99,6 +112,7 @@ impl LibraryManager {
         query: &str,
     ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
         let search_result: Vec<SearchResult> = self.searcher.search(query).await?;
+        self.notification_manager._internal_emit(CodexNotification::new("Search Finished".to_string(), NotificationType::SearchFinished)).await?;
         Ok(search_result)
     }
 

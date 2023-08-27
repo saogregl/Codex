@@ -6,17 +6,21 @@ use std::{
     time::SystemTime,
 };
 
-use crate::{fs_utils::extract_location_path, parsing, thumbnail};
+use crate::{
+    fs_utils::extract_location_path, library::notification::NotificationType, parsing, thumbnail,
+};
 
 use chrono::{TimeZone, Utc};
 use codex_prisma::prisma::{self, library, location, PrismaClient};
 use futures::future::try_join_all;
 use log::{error, info};
-use rayon::prelude::*;
 use std::collections::HashSet;
+use tokio::task;
 use uuid::Uuid;
 
 use codex_prisma::prisma::object;
+
+use super::notification::{CodexNotification, NotificationManager};
 
 //A decentralized library is a library that doesn't depend on a specific path and can have files from multiple paths.
 //this is useful for libraries that are stored in the cloud, like Google Drive, Dropbox, etc.
@@ -91,6 +95,7 @@ pub struct LocalLibrary {
     pub name: String,
     pub description: Option<String>,
     pub db: Arc<PrismaClient>,
+    pub notificationManager: Arc<NotificationManager>,
 }
 
 impl LocalLibrary {
@@ -99,6 +104,7 @@ impl LocalLibrary {
         name: String,
         description: Option<String>,
         db: Arc<PrismaClient>,
+        notificationManager: Arc<NotificationManager>,
     ) -> Result<Arc<Self>, Box<dyn std::error::Error>> {
         //This library is not meant to be used to create new library objects.
         //It's meant to be used to load existing library objects from the database.
@@ -124,6 +130,7 @@ impl LocalLibrary {
             name,
             description,
             db,
+            notificationManager: Arc::clone(&notificationManager),
         };
 
         library.index_objects().await?;
@@ -231,13 +238,24 @@ impl LocalLibrary {
 
         //TODO: Clean this up later:
         for file in deleted_files {
-            self.db
+            if let Ok(deleted) = self
+                .db
                 .object()
                 .delete_many(vec![object::path::equals(Some(
                     file.to_str().unwrap().to_string(),
                 ))])
                 .exec()
-                .await?;
+                .await
+            {
+                info!("Deleted file: {:?}", deleted);
+                self.emit_notification(CodexNotification::new(
+                    "deleted file".to_string(),
+                    NotificationType::FileRemoved,
+                ))
+                .await?
+            } else {
+                error!("Failed to delete file: {:?}", file);
+            }
         }
 
         // We'll then update the changed files.
@@ -365,6 +383,12 @@ impl LocalLibrary {
                                     .await
                                 {
                                     error!("Database update error: {:?}", e);
+                                } else {
+                                    self.emit_notification(CodexNotification::new(
+                                        "generated thumbnail".to_string(),
+                                        NotificationType::ThumbnailGenerated,
+                                    ))
+                                    .await?
                                 }
                             }
                             Err(e) => {
@@ -396,7 +420,6 @@ impl LocalLibrary {
             .exec()
             .await?;
 
-        // Use a stream to handle the objects asynchronously
         let tasks = locations.into_iter().map(|location| {
             let db = Arc::clone(&self.db);
             async move {
@@ -408,45 +431,66 @@ impl LocalLibrary {
                     .exec()
                     .await?;
 
-                // Handle each object asynchronously
-                for object in objects {
-                    if let Some(_obj_name) = &object.obj_name {
-                        match parsing::parse_object(&object) {
-                            Ok(parsed) => {
-                                if let Err(e) = self
-                                    .db
-                                    .object()
-                                    .update(
-                                        object::uuid::equals(object.uuid.clone()),
-                                        vec![
-                                            object::parsed::set(Some(true)),
-                                            object::parsed_path::set(Some(
-                                                parsed.to_str().unwrap().to_string(),
-                                            )),
-                                        ],
-                                    )
-                                    .exec()
-                                    .await
-                                {
-                                    error!("Database update error: {:?}", e);
-                                }
-                            }
-                            Err(e) => {
-                                error!("Parsing error: {:?}", e);
-                            }
-                        }
-                    } else {
-                        info!("Object missing name!");
-                    }
-                }
+                let object_tasks: Vec<_> = objects
+                    .into_iter()
+                    .map(|object| {
+                        let db = Arc::clone(&db);
+                        async move {
+                            if let Some(_obj_name) = &object.obj_name.clone() {
+                                let capture = object.clone();
+                                let parsed_result =
+                                    task::spawn_blocking(move || parsing::parse_object(&capture))
+                                        .await?;
 
-                Ok::<_, Box<dyn std::error::Error>>(())
+                                match parsed_result {
+                                    Ok(parsed) => {
+                                        if let Err(e) = db
+                                            .object()
+                                            .update(
+                                                object::uuid::equals(object.uuid.clone()),
+                                                vec![
+                                                    object::parsed::set(Some(true)),
+                                                    object::parsed_path::set(Some(
+                                                        parsed.to_str().unwrap().to_string(),
+                                                    )),
+                                                ],
+                                            )
+                                            .exec()
+                                            .await
+                                        {
+                                            error!("Database update error: {:?}", e);
+                                            self.emit_notification(CodexNotification::new(
+                                                "parse error".to_string(),
+                                                NotificationType::ParsingError,
+                                            ))
+                                            .await?
+                                        } else {
+                                            self.emit_notification(CodexNotification::new(
+                                                "parsed object".to_string(),
+                                                NotificationType::ObjectParsed,
+                                            ))
+                                            .await?
+                                        }
+                                    }
+                                    Err(e) => {
+                                        error!("Parsing error: {:?}", e);
+                                    }
+                                }
+                            } else {
+                                info!("Object missing name!");
+                            }
+
+                            Ok::<_, Box<dyn std::error::Error>>(())
+                        }
+                    })
+                    .collect();
+
+                let results = try_join_all(object_tasks).await?;
+                Ok::<_, Box<dyn std::error::Error>>(results)
             }
         });
 
-        // Use try_join_all to run all tasks concurrently and await for all to finish
         let _ = try_join_all(tasks).await;
-
         Ok(())
     }
 
@@ -535,4 +579,15 @@ impl LocalLibrary {
     //This library will check if the files in the library have changed since the last time the library was indexed.
     //If they have, it will update the library.
     //If they haven't, it will do nothing.
+
+    pub async fn emit_notification(
+        &self,
+        notification: CodexNotification,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.notificationManager
+            ._internal_emit(notification)
+            .await?;
+
+        Ok(())
+    }
 }

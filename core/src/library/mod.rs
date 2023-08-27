@@ -4,6 +4,7 @@ pub use self::manager::LibraryManager;
 // Include sub-modules
 mod library;
 mod manager;
+mod notification; 
 
 
 pub trait Library {

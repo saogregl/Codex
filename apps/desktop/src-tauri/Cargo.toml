@@ -29,6 +29,7 @@ dotenv = "0.15.0"
 window-shadows = "0.2.1"
 codex-prisma = { path = "../../../crates/prisma" }
 codex-core = {path = "../../../core"}
+whoami = "1.4.1"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

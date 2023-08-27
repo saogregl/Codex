@@ -16,6 +16,7 @@ import 'dayjs/locale/pt-br' // import locale
 import StarRating from '../../components/StarRating/StarRating';
 import { useNavigate } from 'react-router-dom';
 import useQueryParamStore from '../../Stores/searchStore';
+import { CodexNotification } from '../../../../../web/src/bindings';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -31,6 +32,17 @@ const index = () => {
   const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("");
+  const [notifications, setNotifications] = useState<CodexNotification[]>([])
+
+
+  rspc.useSubscription(["notifications.listen"], {
+    onData: (data) => {
+      {
+        setNotifications(prevNotifications => [...prevNotifications, data]);
+        console.log(data)
+      }
+    }
+  });
 
   const {
     data: SearchResult,
@@ -287,8 +299,8 @@ const index = () => {
                 backwardText="Página anterior"
                 forwardText="Próxima página"
                 itemsPerPageText="Itens por página:"
-                itemRangeText={(min, max, total) => {return `Itens ${min}-${max} de ${total}`}}
-                pageRangeText={(current, total) => {return `Página ${current} de ${total}`} }
+                itemRangeText={(min, max, total) => { return `Itens ${min}-${max} de ${total}` }}
+                pageRangeText={(current, total) => { return `Página ${current} de ${total}` }}
                 onChange={handlePaginateChange}
                 page={currentPage}
                 pageSize={pageSize}

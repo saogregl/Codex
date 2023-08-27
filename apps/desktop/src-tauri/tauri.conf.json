@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "sipe",
+    "productName": "codex",
     "version": "0.0.1"
   },
   "tauri": {
@@ -31,7 +31,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.sipe.dev",
+      "identifier": "com.codex.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

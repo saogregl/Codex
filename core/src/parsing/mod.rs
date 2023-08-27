@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use codex_prisma::prisma::object::Data as ObjectData;
-use thiserror::Error;
 
 use log::info;
 
@@ -13,6 +12,13 @@ use crate::{
     fs_utils::extension_to_object_type,
     object::{Object, ObjectType},
 };
+
+// The Xpdf tools use the following exit codes:
+// 0 No error.
+// 1 Error opening a PDF file.
+// 2 Error opening an output file.
+// 3 Error related to PDF permissions.
+// 99 Other error.
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParsingError {
