@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use codex_prisma::prisma::object::Data as ObjectData;
 use log::info;
 
@@ -9,10 +10,7 @@ use super::ThumbnailerError;
 pub struct PdfThumbnailer;
 
 impl Thumbnailer for PdfThumbnailer {
-    fn generate_thumbnail(
-        &self,
-        object: &ObjectData,
-    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    fn generate_thumbnail(&self, object: &ObjectData) -> Result<PathBuf, anyhow::Error> {
         let config = config::CodexConfig::new();
         //Call pdftoppm executable (assume it is in path) to generate text file
 
@@ -41,7 +39,7 @@ impl Thumbnailer for PdfThumbnailer {
             .output()?;
 
         if !output.status.success() {
-            return Err(Box::new(ThumbnailerError::CommandFailed(output.status)));
+            return Err(anyhow!(ThumbnailerError::CommandFailed(output.status)));
         }
 
         let thumbnail_path = thumbnail_path_prefix.with_extension("jpg");

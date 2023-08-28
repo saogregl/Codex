@@ -31,10 +31,7 @@ pub enum ThumbnailerError {
 
 // Define the Thumbnailer trait
 pub trait Thumbnailer {
-    fn generate_thumbnail(
-        &self,
-        object: &ObjectData,
-    ) -> Result<PathBuf, Box<dyn std::error::Error>>;
+    fn generate_thumbnail(&self, object: &ObjectData) -> Result<PathBuf, anyhow::Error>;
 }
 
 // Implement the trait for specific file types
@@ -42,16 +39,13 @@ pub trait Thumbnailer {
 // For example, ImageThumbnailer implementation:
 struct ImageThumbnailer;
 impl Thumbnailer for ImageThumbnailer {
-    fn generate_thumbnail(
-        &self,
-        object: &ObjectData,
-    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    fn generate_thumbnail(&self, object: &ObjectData) -> Result<PathBuf, anyhow::Error> {
         info!(
             "Generating thumbnail for image: {}",
             object.obj_name.clone().expect("Object should have name")
         );
 
-        Err(Box::new(ThumbnailerError::UnsupportedObjectType(
+        Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(
             ObjectType::Image,
         )))
     }
@@ -61,25 +55,20 @@ impl Thumbnailer for ImageThumbnailer {
 
 struct VideoThumbnailer;
 impl Thumbnailer for VideoThumbnailer {
-    fn generate_thumbnail(
-        &self,
-        object: &ObjectData,
-    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    fn generate_thumbnail(&self, object: &ObjectData) -> Result<PathBuf, anyhow::Error> {
         info!(
             "Generating thumbnail for video: {}",
             object.obj_name.clone().expect("Object should have name")
         );
         // ...
-        Err(Box::new(ThumbnailerError::UnsupportedObjectType(
+        Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(
             ObjectType::Video,
         )))
     }
 }
 
 // Intermediate function to dispatch the call to the appropriate thumbnailer
-pub fn generate_thumbnail_for_object(
-    object: &ObjectData,
-) -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn generate_thumbnail_for_object(object: &ObjectData) -> Result<PathBuf, anyhow::Error> {
     let object_type = extension_to_object_type(
         &object
             .clone()
@@ -106,14 +95,14 @@ pub fn generate_thumbnail_for_object(
                 object.extension,
                 object.obj_name.clone().expect("Object should have name")
             );
-            Err(Box::new(ThumbnailerError::UnsupportedObjectType(
-                object_type,
+            Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(
+                object_type
             )))
         }
     }
 }
 
-pub fn generate_thumbnail(object: &ObjectData) -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn generate_thumbnail(object: &ObjectData) -> Result<PathBuf, anyhow::Error> {
     //Name is a string like document_name.extension. We need to extract the extension to determine the object type
 
     let name_path = PathBuf::from(object.path.clone().expect("Object should have path"));
@@ -145,7 +134,7 @@ pub fn generate_thumbnail(object: &ObjectData) -> Result<PathBuf, Box<dyn std::e
                 "Thumbnail generation not supported for object type: {:?}, {:?}",
                 obj_type, object.obj_name
             );
-            Err(Box::new(ThumbnailerError::UnsupportedObjectType(obj_type)))
+            Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(obj_type)))
         }
     }
 }

@@ -365,6 +365,14 @@ impl LocalLibrary {
 
                 // Handle each object asynchronously
                 for object in objects {
+
+
+                    //check if thumbnail already exists for this object
+                    if object.thumbnail.unwrap_or(false) {
+                        continue;
+                    }
+
+
                     if let Some(_obj_name) = &object.obj_name {
                         match thumbnail::generate_thumbnail(&object) {
                             Ok(thumbnail) => {
@@ -383,7 +391,11 @@ impl LocalLibrary {
                                     .exec()
                                     .await
                                 {
-                                    error!("Database update error: {:?}", e);
+                                    error!(
+                                        "Database update error: {:?} for thumbnail path: {:?}",
+                                        e,
+                                        thumbnail.clone().to_str().unwrap()
+                                    );
                                 } else {
                                     self.emit_notification(CodexNotification::new(
                                         "generated thumbnail".to_string(),
@@ -435,8 +447,17 @@ impl LocalLibrary {
                 let object_tasks: Vec<_> = objects
                     .into_iter()
                     .map(|object| {
+
+
+                        //check if object was already parsed 
+
                         let db = Arc::clone(&db);
                         async move {
+
+                            if object.parsed.unwrap_or(false) {
+                                return Ok::<_, anyhow::Error>(());
+                            }
+    
                             if let Some(_obj_name) = &object.obj_name.clone() {
                                 let capture = object.clone();
                                 let parsed_result =
@@ -444,6 +465,7 @@ impl LocalLibrary {
                                         .await?;
 
                                 match parsed_result {
+                                    
                                     Ok(parsed) => {
                                         if let Err(e) = db
                                             .object()
@@ -459,13 +481,14 @@ impl LocalLibrary {
                                             .exec()
                                             .await
                                         {
-                                            error!("Database update error: {:?}", e);
+                                            error!("Database update error: {:?} for parsed object {:?}", e, parsed.clone().to_str().unwrap());
                                             self.emit_notification(CodexNotification::new(
                                                 "parse error".to_string(),
                                                 NotificationType::ParsingError,
                                             ))
                                             .await?
                                         } else {
+                                            info!("Parsed object: {:?}", parsed.clone().to_str().unwrap());
                                             self.emit_notification(CodexNotification::new(
                                                 "parsed object".to_string(),
                                                 NotificationType::ObjectParsed,
@@ -487,7 +510,7 @@ impl LocalLibrary {
                     .collect();
 
                 let results = try_join_all(object_tasks).await?;
-                Ok::<_, anyhow::Error>(())
+                Ok::<_, anyhow::Error>((results, ()))
             }
         });
 

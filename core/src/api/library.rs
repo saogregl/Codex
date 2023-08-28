@@ -58,10 +58,10 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .await
                         .unwrap();
 
-                        // let res = ctx.manager
-                        // .update_library(library_id.clone())
-                        // .await;
-
+                    let res = tokio::spawn(async move {
+                        let _ = ctx.manager.update_library(library_id.clone()).await;
+                    });
+                    res.await.unwrap();
                 },
             )
         })

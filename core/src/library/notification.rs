@@ -54,6 +54,7 @@ pub struct NotificationManager {
 
 impl NotificationManager {
     pub fn new(db: Arc<PrismaClient>) -> Self {
+        
         let (tx, _) = broadcast::channel(100);
         // tokio::spawn(async move {
         //     let mut rx = tx.subscribe();
@@ -103,19 +104,19 @@ impl NotificationManager {
     ) -> Result<(), anyhow::Error> {
         let expires_at = self.get_expiration_time();
 
-        let _ = self
-            .db
-            .notification()
-            .create(
-                notification.notification_type.clone() as i32,
-                vec![
-                    notification::message::set(Some(notification.message.clone())),
-                    notification::expires_at::set(Some(expires_at)),
-                ],
-            )
-            .exec()
-            .await
-            .unwrap();
+        // let _ = self
+        //     .db
+        //     .notification()
+        //     .create(
+        //         notification.notification_type.clone() as i32,
+        //         vec![
+        //             notification::message::set(Some(notification.message.clone())),
+        //             notification::expires_at::set(Some(expires_at)),
+        //         ],
+        //     )
+        //     .exec()
+        //     .await
+        //     .unwrap();
 
         self.notifications.send(notification).ok();
         Ok(())

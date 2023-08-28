@@ -45,10 +45,7 @@ pub struct Searcher {
 }
 
 impl Searcher {
-    pub fn new(
-        index_dir: impl AsRef<Path>,
-        db: Arc<PrismaClient>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(index_dir: impl AsRef<Path>, db: Arc<PrismaClient>) -> Result<Self, anyhow::Error> {
         let text_indexing = TextFieldIndexing::default()
             .set_tokenizer("default")
             .set_index_option(IndexRecordOption::Basic);
@@ -83,10 +80,7 @@ impl Searcher {
         })
     }
 
-    pub async fn index(
-        &mut self,
-        libs: &mut Vec<Arc<LocalLibrary>>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn index(&self, libs: &Vec<Arc<LocalLibrary>>) -> Result<(), anyhow::Error> {
         let mut index_writer = self.index.writer(200_000_000)?;
 
         //If env variable REBUILD_INDEX is set to true, delete the index and rebuild it
@@ -125,14 +119,21 @@ impl Searcher {
 
                     match text_path {
                         Some(text_path) => {
+                            info!("Indexing object: {:?}", text_path);
                             if let Ok(text) = std::fs::read_to_string(&text_path) {
+                                info!("Text file found for object: {:?}", text_path); 
                                 let mut doc = Document::default();
                                 doc.add_text(
                                     self.title,
                                     &object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string()),
                                 );
                                 doc.add_text(self.body, &text);
-                                index_writer.add_document(doc)?;
+                                
+                                if let Ok(doc) = index_writer.add_document(doc){
+                                    info!("Document added to index: {:?}", doc);
+                                } else {
+                                    info!("Document not added to index");
+                                };
 
                                 lib.db
                                     .object()
@@ -169,20 +170,20 @@ impl Searcher {
     fn construct_text_path(
         location: &locationData,
         object: &objectData,
-    ) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    ) -> Result<PathBuf, anyhow::Error> {
         let mut text_path = PathBuf::from(&location.path);
         text_path.push("parsed");
         text_path.push(
             object
                 .obj_name
                 .as_ref()
-                .ok_or("every object needs a name")?,
+                .ok_or("every object needs a name").unwrap(),
         );
         text_path.set_extension("txt");
         Ok(text_path)
     }
 
-    fn setup_index(index_dir: &Path, schema: &Schema) -> Result<Index, Box<dyn std::error::Error>> {
+    fn setup_index(index_dir: &Path, schema: &Schema) -> Result<Index, anyhow::Error> {
         match Index::open_in_dir(index_dir) {
             Ok(index) => Ok(index),
             Err(err) => match err {
@@ -190,15 +191,12 @@ impl Searcher {
                     std::fs::create_dir_all(index_dir)?;
                     Index::create_in_dir(index_dir, schema.clone()).map_err(From::from)
                 }
-                _ => Err(Box::new(err)),
+                _ => Err(anyhow::anyhow!(err)),
             },
         }
     }
 
-    pub async fn search(
-        &self,
-        query_input: &str,
-    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+    pub async fn search(&self, query_input: &str) -> Result<Vec<SearchResult>, anyhow::Error> {
         // Parse the query
         let query = self.query_parser.parse_query(query_input)?;
 
@@ -218,9 +216,9 @@ impl Searcher {
 
             let title = retrieved_doc
                 .get_first(self.title)
-                .ok_or("Title field not found in document")?
+                .ok_or("Title field not found in document").unwrap()
                 .as_text()
-                .ok_or("Title field is not a text field")?;
+                .ok_or("Title field is not a text field").unwrap();
 
             // Fetch object by its name
             let obj = self
@@ -231,7 +229,7 @@ impl Searcher {
                 .await?;
 
             if obj.is_none() {
-                return Err(Box::new(std::io::Error::new(
+                return Err(anyhow::anyhow!(std::io::Error::new(
                     std::io::ErrorKind::NotFound,
                     "object not found in the database",
                 )));
@@ -256,7 +254,7 @@ impl Searcher {
         &self,
         query_input: &str,
         doc_address: DocAddress,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, anyhow::Error> {
         let searcher = self.index.reader()?.searcher();
         let query = self.query_parser.parse_query(query_input)?;
 

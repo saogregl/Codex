@@ -26,14 +26,14 @@ export type Library = { id: number; uuid: string; name: string | null; redundanc
 
 export type CreateNewUserParam = { id: string; name: string }
 
+export type GetDocById = { id: number }
+
 export type SearchResult = { title: string; snippet: string; score: number; object: Object }
+
+export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
 
 export type CodexNotification = { message: string; notification_type: NotificationType }
 
 export type User = { id: string; displayName: string }
 
-export type GetDocById = { id: number }
-
 export type Notification = { id: number; read: boolean; data: number; message: string | null; expires_at: string | null }
-
-export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }

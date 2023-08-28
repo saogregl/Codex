@@ -46,6 +46,9 @@ const index = () => {
   const { mutate } = rspc.useMutation("library.add_new_location");
 
   const requestSubmit = async () => {
+
+    setCreateModalIsOpen(false);
+
     await mutate({
       library_id: libraries[0].uuid,
       name: collectionName,

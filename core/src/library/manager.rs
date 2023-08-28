@@ -23,7 +23,7 @@ pub struct LibraryManager {
 }
 
 impl LibraryManager {
-    pub async fn new(db: Arc<PrismaClient>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(db: Arc<PrismaClient>) -> Result<Self, anyhow::Error> {
         let mut libraries = Vec::new();
         let notification_manager = Arc::new(NotificationManager::new(Arc::clone(&db)));
         let config = config::CodexConfig::new();
@@ -108,10 +108,7 @@ impl LibraryManager {
         })
     }
 
-    pub async fn search(
-        &self,
-        query: &str,
-    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+    pub async fn search(&self, query: &str) -> Result<Vec<SearchResult>, anyhow::Error> {
         let search_result: Vec<SearchResult> = self.searcher.search(query).await?;
         self.notification_manager
             ._internal_emit(CodexNotification::new(
@@ -122,8 +119,9 @@ impl LibraryManager {
         Ok(search_result)
     }
 
-    pub fn index(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let _ = self.searcher.index(&mut self.libraries);
+    pub async fn index(&self) -> Result<(), anyhow::Error> {
+        info!("Indexing libraries");
+        let _ = self.searcher.index(&self.libraries).await?;
         Ok(())
     }
 
@@ -134,12 +132,13 @@ impl LibraryManager {
             .find(|lib| lib.id.to_string() == lib_uuid)
         {
             let _ = lib.check_for_changes().await.unwrap();
+            let _ = lib.index_objects().await.unwrap();
             let _ = lib.parse_objects().await.unwrap();
             let _ = lib.generate_thumbnails().await.unwrap();
         }
+        let _ = &self.index().await.unwrap();
         Ok(())
     }
-
 
     pub fn add_library(&mut self, lib: Arc<LocalLibrary>) {
         self.libraries.push(lib);

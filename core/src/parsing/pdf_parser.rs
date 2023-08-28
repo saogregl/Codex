@@ -1,6 +1,6 @@
 use crate::config::CodexConfig;
 use codex_prisma::prisma::object::Data as ObjectData;
-use log::info;
+use log::{info, error};
 
 use std::{path::PathBuf, process::Command};
 
@@ -31,6 +31,11 @@ impl Parser for PdfParser {
             .output()?;
 
         if !output.status.success() {
+            error!(
+                "pdftotext failed to parse file {:?} with status: {}",
+                pdf_path.as_str(),
+                output.status
+            );
             return Err(ParsingError::CommandFailed(output.status));
         }
 
