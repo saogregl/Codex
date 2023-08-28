@@ -73,7 +73,6 @@ model Location {
   libraryId   Int?
   Object      Object[]
 
-  // instance    Instance? @relation(fields: [instance_id], references: [id]) // TODO: Enabling this breaks migration 7's `update_many` in `library/config.rs`
   @@map("location")
 }
 
@@ -81,7 +80,6 @@ model Library {
   id              Int       @id @default(autoincrement())
   uuid            String    @unique @default(uuid())
   name            String?
-  // Enum: ???
   redundancy_goal Int?
   date_created    DateTime?
   date_modified   DateTime?

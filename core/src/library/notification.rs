@@ -100,7 +100,7 @@ impl NotificationManager {
     pub async fn _internal_emit(
         &self,
         notification: CodexNotification,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         let expires_at = self.get_expiration_time();
 
         let _ = self

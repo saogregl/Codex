@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { motion } from 'framer-motion';
 
 import React from 'react'
@@ -23,22 +24,18 @@ const SearchPanel = ({ children, className }: FilterPanelProps) => {
             `${settings.sipePrefix}--search-panel-wrapper`,
             `${className ? className : ""}`
         )}
-
         >
             <div className={`${settings.sipePrefix}--search-panel-content`}>
-
                 <div className={`${settings.sipePrefix}--search-panel-header`}>
                     <p className={`${settings.sipePrefix}--search-panel-header-text`}>
                         Filtros
                     </p>
                 </div>
                 {childArray.map((child) => {
-                    return <div>{child}</div>
+                    return <div key={child.toString()}>{child}</div>
                 })}
             </div>
-
             <div className={`${settings.sipePrefix}--search-panel-separator`} />
-
         </div>
     )
 }

@@ -1,6 +1,9 @@
 use super::Ctx;
 use chrono::{DateTime, Utc};
 use codex_prisma::prisma::{library, location, object};
+use log::{error, info};
+use rspc::{Error, ErrorCode};
+
 pub use rspc::RouterBuilder;
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -27,7 +30,6 @@ pub fn mount() -> RouterBuilder<Ctx> {
                 hidden: bool,
                 date_created: DateTime<Utc>,
             }
-
             t(
                 |ctx: Ctx,
                  AddNewLocation {
@@ -43,7 +45,9 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .create(
                             path,
                             vec![
-                                location::library::connect(library::uuid::equals(library_id)),
+                                location::library::connect(library::uuid::equals(
+                                    library_id.clone(),
+                                )),
                                 location::name::set(Some(name)),
                                 location::is_archived::set(Some(is_archived)),
                                 location::hidden::set(Some(hidden)),
@@ -52,7 +56,12 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         )
                         .exec()
                         .await
-                        .unwrap()
+                        .unwrap();
+
+                        // let res = ctx.manager
+                        // .update_library(library_id.clone())
+                        // .await;
+
                 },
             )
         })

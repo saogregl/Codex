@@ -27,7 +27,7 @@ const useCustomHeader = () => {
     }, []);
 
     const noDragSelector =
-        "input, a, button, input *, a *, button *, #notification-button, .notification-button"; // CSS selector
+        "input, a, button, input *, a *, button *, #notification-button, .notification-button, .c4p--notifications-panel, #c4p--notifications-panel"; // CSS selector
 
     const minimizeRef = useRef<HTMLDivElement | null>(null)
     const maximizeRef = useRef<HTMLDivElement | null>(null)

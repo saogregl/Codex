@@ -5,6 +5,13 @@
 
 $sipePrefix: "sipe";
 
+// .cds--header__global {
+
+//   >.cds--btn--primary{
+//     background-color: black;
+//   }
+// }
+
 .#{$sipePrefix}--header-subtitle {
   border-left: 1px solid theme.$layer-accent-01;
   padding-left: spacing.$spacing-05;
@@ -20,10 +27,11 @@ $sipePrefix: "sipe";
 .#{$sipePrefix}--header-searchBar {
   display: flex;
   width: 400px;
+
   @media (max-width: 1050px) {
-      width: 200px;
+    width: 200px;
   }
-  
+
 }
 
 .#{$sipePrefix}--content {

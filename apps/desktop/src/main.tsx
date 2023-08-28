@@ -27,7 +27,6 @@ import {
   Data,
 } from "./routes";
 
-import App from "./App";
 import "./style.scss";
 import DataId from "./routes/Data/DataId";
 
@@ -43,7 +42,6 @@ const router = createBrowserRouter([
       {
         path: "/data",
         element: <Data />,
-        //Create dynamic router for each pdf: 
       },
       {
         path: "/data/:id",

@@ -1,0 +1,35 @@
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/spacing";
+@use "@carbon/react/scss/type";
+@use "@carbon/react/scss/motion";
+
+$sipePrefix: "sipe";
+
+.#{$sipePrefix}--header-actions {
+    gap: spacing.$spacing-02;
+    background-color: theme.$layer-01;
+    width: 100%;
+    height: 72px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+
+    border-bottom: 1px;
+    border-style: solid;
+    border-color: rgb(206, 206, 206);
+    position: sticky;
+    left: 48px;
+    top: 166px;
+
+
+}
+
+.#{$sipePrefix}--header-actions-header {
+    @include type.type-style("body-compact-01");
+    color: theme.$text-primary;
+    padding: 0 spacing.$spacing-08;
+    
+}

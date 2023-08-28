@@ -1,23 +1,60 @@
-import React, { useState } from 'react'
-import { ExpressiveCard, ProductiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
-import { Grid, FlexGrid, Row, Column, Checkbox } from "@carbon/react"
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import React, { useRef, useState } from 'react'
+import { ProductiveCard, PageHeader, } from "@carbon/ibm-products"
+import { Grid, FlexGrid, Row, Column, NumberInput, DatePicker, DatePickerInput, Button } from "@carbon/react"
 // @ts-ignore
-import { Theme, Tab, Tabs, TabList, TabPanels, TabPanel, Button, TextInput, NumberInput, Dropdown } from "@carbon/react";
+import { Theme, TextInput, RadioButtonGroup, RadioButton, Modal } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
-import { Edit, TrashCan } from "@carbon/icons-react"
-import { AreaChartExample } from '../../components/ChartTest'
-import DataGridComponent from '../../components/Datagrid/DataGridComponent';
+import { Edit, TrashCan, Db2Database, DocumentAdd } from "@carbon/icons-react"
 import { ICA } from '../../components/ICA';
-type Props = {}
+import ActionHeader from '../../components/ui/actionHeader';
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { openDirectoryDialog } from '../../utils/file';
+import rspc from '../../lib/query';
+import useLocations from '../../hooks/useLocations';
+// Open a selection dialog for directories
 
-const index = (props: Props) => {
-  const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
+// const selected = await open({
+//   directory: true,
+//   multiple: true,
+//   defaultPath: await appDir(),
+// });
+
+
+const index = () => {
+  const [createModalIsOpen, setCreateModalIsOpen] = useState(false);
+  const [collectionName, setCollectionName] = useState('');
+  const [selectedDirectory, setSelectedDirectory] = useState(null);
+  const [isCollectionNameInvalid, setIsCollectionNameInvalid] = useState(false);
+
+
   const [open, setOpen] = useState(false)
   const action = () => {
     console.log("action");
   };
+
+  const onOpenDirectoryDialog = async () => {
+    const selected = await openDirectoryDialog();
+    setSelectedDirectory(selected);
+  }
+  const { libraries } = useLocations();
+
+
+  const { mutate } = rspc.useMutation("library.add_new_location");
+
+  const requestSubmit = async () => {
+    await mutate({
+      library_id: libraries[0].uuid,
+      name: collectionName,
+      path: selectedDirectory,
+      is_archived: false,
+      hidden: false,
+      date_created: new Date().toISOString()
+    });
+  }
 
   const defaultProps = {
     title: "Projetos recentes",
@@ -39,43 +76,24 @@ const index = (props: Props) => {
     ]
   };
 
-
-
-  const renderProjectItems = () => {
-    return (
-      <ProductiveCard
-        {...defaultProps}    >
-        <div className={`${settings.sipePrefix}_card_content_wrapper`}>
-        </div>
-      </ProductiveCard >
-    )
-  }
-
-  const renderCard = () => {
-    return (<ProductiveCard
-      {...defaultProps}    >
-      <div className={`${settings.sipePrefix}_card_content_wrapper`}>
-
-      </div>
-    </ProductiveCard>
-    )
-  }
-
   const renderProject = (index: number) => {
     return (
-
       <ProductiveCard
         {...defaultProps}>
         <div className={`${settings.sipePrefix}_small_card_content_wrapper`}>
           <ICA label={"lorem ipsum"}></ICA>
           <ICA label={"lorem ipsum"}></ICA>
           <ICA label={"lorem ipsum"}></ICA>
-
         </div>
       </ProductiveCard>
     )
-
   }
+  // export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
+
+  const taskSchema = z.object({
+    name: z.string().min(1, { message: "Esse campo deve ser preenchido." }),
+    path: z.instanceof(File)
+  });
 
   return (
     <div>
@@ -99,17 +117,10 @@ const index = (props: Props) => {
           expandHeaderIconDescription="Expandir o cabeçalho da página"
           pageActionsOverflowLabel="Mostrar mais ações da página"
           showAllTagsLabel="Mostrar todas as tags"
-          title={"Bem vindo, Lucas!"}
+          title={"Gerencie arquivos"}
           subtitle={
-            "Aqui você pode acompanhar as atualizações mais recentes nos dados."
+            "Prepare coleções com seus documentos para iniciar análise."
           }
-          pageActions={[
-            {
-              label: "Inserir novo documento",
-              onClick: () => setTearsheetIsOpen(!tearsheetIsOpen),
-              kind: "primary"
-            },
-          ]}
 
         // navigation={
         //   <Tabs
@@ -138,85 +149,78 @@ const index = (props: Props) => {
         />
       </Theme>
 
+
       <div
 
         className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
       >
         <Theme theme="g90">
-          <CreateSidePanel
-            formDescription="We recommend you fill out and evaluate these details at a minimum before deploying your object."
-            formTitle="Object configuration"
-            onRequestClose={() => setTearsheetIsOpen(false)}
-            onRequestSubmit={function noRefCheck() { }}
-            primaryButtonText="Create"
-            secondaryButtonText="Cancel"
-            selectorPageContent="#sipe--main-content-wrapper"
-            selectorPrimaryFocus=".cds--text-input"
-            subtitle="Specify the details of your object."
-            title="Create object"
-            open={tearsheetIsOpen}
+          <Modal
+            open={createModalIsOpen}
+            modalHeading="Crie uma nova coleção"
+            modalLabel="A coleção é um conjunto de documentos que serão analisados juntos."
+            size="sm"
+            onRequestClose={() => setCreateModalIsOpen(!createModalIsOpen)}
+            primaryButtonText="Criar coleção"
+            secondaryButtonText="Cancelar"
+            primaryButtonDisabled={!collectionName || !selectedDirectory || isCollectionNameInvalid}
+            onRequestSubmit={(e) => requestSubmit()}
           >
-            <Checkbox
-              id="object-hidden-checkbox"
-              labelText="Hidden"
-              onChange={(e) => console.log(e)}
-            />
-            <Checkbox
-              id="object-favorite-checkbox"
-              labelText="Favorite"
-              onChange={(e) => console.log(e)}
-            />
-            <Checkbox
-              id="object-important-checkbox"
-              labelText="Important"
-              onChange={(e) => console.log(e)}
-            />
-            <TextInput
-              id="object-note-textarea"
-              labelText="Note"
-              onChange={(e) => console.log(e)}
-              placeholder="Enter a note"
-            />
-
-          </CreateSidePanel>
-
-          <SidePanel
-            includeOverlay
-            className='test'
-            open={open}
-            onRequestClose={() => setOpen(false)}
-            title='Incident management'
-            subtitle='Testing subtitle text.'
-            actions={[
-              {
-                label: "Submit",
-                onClick: () => setOpen(false),
-                kind: "primary"
-              },
-              {
-                label: "Cancel",
-                onClick: () => setOpen(false),
-                kind: "secondary"
-              }
-            ]}
-          >
-          </SidePanel>
+            <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+              <TextInput
+                id="1"
+                labelText="Selecione o nome da coleção"
+                placeholder="Minha coleção"
+                onChange={(e) => setCollectionName(e.target.value)}
+                invalid={isCollectionNameInvalid}
+                invalidText="Nome da coleção inválido"
+              />
+              <Button onClick={onOpenDirectoryDialog}>Selecionar o diretório</Button>
+              {selectedDirectory && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <DocumentAdd />
+                  <p className={classnames(`${settings.sipePrefix}--document-selected`)}>{selectedDirectory}</p>
+                </div>
+              )}
+            </div>
+          </Modal>
         </Theme>
+        <ActionHeader actions={[
+          {
+            id: "1",
+            title: "Coleção de documentos",
+            icon: DocumentAdd,
+            onClick: () => setCreateModalIsOpen(!open),
+          },
+          {
+            id: "2",
+            title: "Conectar fonte de dados",
+            icon: Db2Database,
+            onClick: () => setCreateModalIsOpen(!open),
+          },
+        ]} />
 
-        <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}
-        >
-          <h2>Visão Geral</h2>
-        </div>
+
         <FlexGrid fullWidth>
+          <Row>
+            <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}
+            >
+
+            </div>
+
+          </Row>
           <Row >
+            <Column lg={4} md={8}>
+              <div>
+                {renderProject(0)}
+              </div>
+            </Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}{renderProject(0)}{renderProject(0)}{renderProject(0)}</div></Column>
+              {renderProject(0)}</div></Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}{renderProject(0)}{renderProject(0)}</div></Column>
+              {renderProject(0)}</div></Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}{renderProject(0)}</div></Column>
-            <Column lg={4} md={8}><div>
-              {renderProject(0)}{renderProject(0)}{renderProject(0)}{renderProject(0)}</div></Column>
+              {renderProject(0)}</div></Column>
           </Row>
 
         </FlexGrid>

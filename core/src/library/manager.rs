@@ -1,3 +1,4 @@
+use anyhow::Error;
 use log::{error, warn};
 use std::path::Path;
 use std::sync::Arc;
@@ -112,7 +113,12 @@ impl LibraryManager {
         query: &str,
     ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
         let search_result: Vec<SearchResult> = self.searcher.search(query).await?;
-        self.notification_manager._internal_emit(CodexNotification::new("Search Finished".to_string(), NotificationType::SearchFinished)).await?;
+        self.notification_manager
+            ._internal_emit(CodexNotification::new(
+                "Search Finished".to_string(),
+                NotificationType::SearchFinished,
+            ))
+            .await?;
         Ok(search_result)
     }
 
@@ -120,6 +126,20 @@ impl LibraryManager {
         let _ = self.searcher.index(&mut self.libraries);
         Ok(())
     }
+
+    pub async fn update_library(&self, lib_uuid: String) -> Result<(), anyhow::Error> {
+        if let Some(lib) = self
+            .libraries
+            .iter()
+            .find(|lib| lib.id.to_string() == lib_uuid)
+        {
+            let _ = lib.check_for_changes().await.unwrap();
+            let _ = lib.parse_objects().await.unwrap();
+            let _ = lib.generate_thumbnails().await.unwrap();
+        }
+        Ok(())
+    }
+
 
     pub fn add_library(&mut self, lib: Arc<LocalLibrary>) {
         self.libraries.push(lib);

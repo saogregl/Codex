@@ -7,6 +7,12 @@ $sipePrefix: "sipe";
 
 .#{$sipePrefix}--Content-header-container {
   display: flex;
-  padding: 0 spacing.$spacing-06 spacing.$spacing-06 spacing.$spacing-06;
+
+  padding-bottom: spacing.$spacing-08;
   width: 100%;
+}
+
+.#{$sipePrefix}--document-selected {
+  @include type.type-style("body-compact-01");
+
 }

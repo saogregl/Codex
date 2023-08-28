@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useState, useEffect, useRef, useCallback } from "react";
 import classnames from "classnames";
 import { settings } from "../../constants/settings";
@@ -56,15 +57,13 @@ import {
   Dropdown,
 } from "@carbon/react";
 import { Theme } from "@carbon/react";
-import { sampleData } from "./sampleData";
 import { NotificationsPanel } from "@carbon/ibm-products";
 import MultiWorkspaceSuiteHeaderAppSwitcher from "./SuiteHeaderAppSwitcher/MultiWorkspaceSuiteHeaderAppSwitcher";
-import { supabase } from "../../lib/supabaseClient";
 import { Profile } from "../Profile";
-import { useClickOutside } from "../../hooks/useClickOutside";
 import useStore from "../../Stores/sessionStore";
 import { workspaces } from "./constants/workspaces";
 import useCustomHeader from "./SuiteHeaderAppSwitcher/hooks/useCustomHeader";
+import useNotifications from "../../hooks/useNotifications";
 
 const layout = () => {
   //We need to know which menu is currently active
@@ -73,15 +72,27 @@ const layout = () => {
   const [isSwitcherExpanded, setSwitcherExpand] = useState(false);
   const [isNotificationsExpanded, setNotificationsExpand] = useState(false);
 
-  let location = useLocation();
+  const location = useLocation();
+
+  // The route "/" should redirect to login, but since we have no login for this application, we'll redirect to /home
+  useEffect(() => {
+    if (location.pathname === "/") {
+      navigate("/home");
+    }
+  }, []);
+  
   const navigate = useNavigate();
+
+  const {
+    notifications,
+    dismissAllNotifications,
+    dismissNotification,
+    removeNotification
+  } = useNotifications();
+
   const userStore = useStore();
   const appSwitcherRef = useRef(null);
-
-
-
-
-
+  
   useEffect(() => {
     //Check which menu is active comparing the location with the routes
     const activeMenu = Apps.find((route) => {
@@ -200,7 +211,36 @@ const layout = () => {
           <NotificationsPanel
             open={isNotificationsExpanded}
             onClickOutside={() => setNotificationsExpand(false)}
-            data={[]}
+            data={notifications}
+            onSettingsClick={() => console.log("Settings clicked")}
+            onDismissAllNotifications={() => dismissAllNotifications()}
+            onDismissSingleNotification={(notification) => {
+              console.log("Notification dismissed", notification)
+              removeNotification(notification.id)
+            }}
+            dismissAllLabel="Descartar todas"
+            viewAllLabel="Ver todas"
+            previousLabel="Anterior"
+            readLessLabel="Ler menos"
+            readMoreLabel="Ler mais"
+            title="Notificações"
+            todayLabel="Hoje"
+            yesterdayLabel="Ontem"
+            settingsIconDescription="Configurações"
+            nowText="Agora"
+            emptyStateLabel="Você não possui novas notificações"
+            doNotDisturbLabel="Não perturbe"
+            dismissSingleNotificationIconDescription="Marcar como lida"
+            daysAgoText={(daysAgo) => `${daysAgo} dias atrás`}
+            hoursAgoText={(hoursAgo) => `${hoursAgo} horas atrás`}
+            minutesAgoText={(minutesAgo) => `${minutesAgo} minutos atrás`}
+            minuteAgoText={(minutesAgo) => `${minutesAgo} minuto atrás`}
+            monthsAgoText={(monthsAgo) => `${monthsAgo} meses atrás`}
+            monthAgoText={(monthAgo) => `${monthAgo} mês atrás`}
+            yearAgoText={(yearAgo) => `${yearAgo} ano atrás`}
+            yearsAgoText={(yearsAgo) => `${yearsAgo} anos atrás`}
+            yesterdayAtText={(yesterdayAt) => `Ontem às ${yesterdayAt}`}
+
           />
 
           <HeaderGlobalAction
@@ -244,7 +284,6 @@ const layout = () => {
               />
             </div>
           </HeaderGlobalAction>
-
           <HeaderPanel
             aria-label="Painel superior"
             expanded={isSwitcherExpanded}
@@ -253,13 +292,14 @@ const layout = () => {
             <MultiWorkspaceSuiteHeaderAppSwitcher
               workspaces={workspaces} />
           </HeaderPanel>
+
         </HeaderGlobalBar>
         <SideNav
           aria-label="Side navigation"
           isRail
           expanded={isSideNavExpanded}
           onOverlayClick={expandSidenav}
-          // isPersistent={false}
+        // isPersistent={false}
         >
           <SideNavItems>
             <SideNavLink
@@ -294,7 +334,7 @@ const layout = () => {
                 >
                   {route.children?.map((child) => {
                     return (
-                      <SideNavMenuItem href={child.href}>
+                      <SideNavMenuItem href={child.href} key={child.href}>
                         {/* {child.icon && child.icon()} */}
                         {child.ItemName}
                       </SideNavMenuItem>

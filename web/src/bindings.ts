@@ -10,7 +10,7 @@ export type Procedures = {
         { key: "tasks.getAllUsers", input: never, result: User[] } | 
         { key: "version", input: never, result: string },
     mutations: 
-        { key: "library.add_new_location", input: AddNewLocation, result: Location } | 
+        { key: "library.add_new_location", input: AddNewLocation, result: null } | 
         { key: "tasks.createNewUser", input: CreateNewUserParam, result: User },
     subscriptions: 
         { key: "notifications.listen", input: never, result: CodexNotification }
@@ -26,16 +26,14 @@ export type Library = { id: number; uuid: string; name: string | null; redundanc
 
 export type CreateNewUserParam = { id: string; name: string }
 
-export type Location = { id: number; uuid: string; name: string | null; path: string; total_capacity: number | null; available_capacity: number | null; is_archived: boolean | null; generate_preview_media: boolean | null; hidden: boolean | null; date_created: string | null; instance_id: number | null; libraryId: number | null }
-
 export type SearchResult = { title: string; snippet: string; score: number; object: Object }
 
 export type CodexNotification = { message: string; notification_type: NotificationType }
 
-export type GetDocById = { id: number }
-
 export type User = { id: string; displayName: string }
 
-export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
+export type GetDocById = { id: number }
 
 export type Notification = { id: number; read: boolean; data: number; message: string | null; expires_at: string | null }
+
+export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }

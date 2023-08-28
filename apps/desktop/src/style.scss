@@ -1,8 +1,5 @@
-@use "@carbon/react" with (
-  $font-path: "@ibm/plex",
-  $use-flexbox-grid: true
-
-);
+@use "@carbon/react" with ($font-path: "@ibm/plex",
+  $use-flexbox-grid: true);
 
 @use "@carbon/react/scss/theme";
 @use "@carbon/react/scss/themes";
@@ -15,14 +12,19 @@
 @use "./routes/Home/home";
 @use "./routes/Data/data";
 
-@use "./components/Datagrid/datagrid"; 
+@use "./components/Datagrid/datagrid";
 @use "./components/SearchPanel/SearchPanel";
 @use "./components/SuiteHeader/layout";
 @use "./components/SuiteHeader/SuiteHeaderAppSwitcher/suite-header-app-switcher";
 @use "./components/Profile/profile";
 @use "./components/ICA/ICA";
 @use "./components/StarRating/StarRating";
+@use "./components/ui/card";
+@use "./components/ui/actionHeader";
+
+
 @import "@carbon/charts/styles.css";
+
 
 $sipePrefix: "sipe";
 
@@ -46,15 +48,18 @@ $sipePrefix: "sipe";
 
 }
 
-body, html {
+body,
+html {
   overflow: clip;
   margin: 0;
   padding: 0;
   height: 100%;
   background: theme.$background;
   color: theme.$text-primary;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
   border-radius: 10px !important;
 }
 
@@ -75,16 +80,17 @@ body, html {
 }
 
 .#{$sipePrefix}--main-content-wrapper {
-  padding-top: spacing.$spacing-05;
   background: theme.$background;
   padding-left: 0;
   transition: all motion.$duration-fast-02 cubic-bezier(0.2, 0, 1, 0.9);
   height: calc(100vh - 180px);
   width: 100%;
 }
-.c4p--side-panel__overlay{
+
+.c4p--side-panel__overlay {
   z-index: 8000;
 }
+
 svg.folder-pictogram {
   fill: black;
   width: 64px;

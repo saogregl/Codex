@@ -10,6 +10,7 @@ use crate::{
     fs_utils::extract_location_path, library::notification::NotificationType, parsing, thumbnail,
 };
 
+use anyhow::anyhow;
 use chrono::{TimeZone, Utc};
 use codex_prisma::prisma::{self, library, location, PrismaClient};
 use futures::future::try_join_all;
@@ -105,7 +106,7 @@ impl LocalLibrary {
         description: Option<String>,
         db: Arc<PrismaClient>,
         notificationManager: Arc<NotificationManager>,
-    ) -> Result<Arc<Self>, Box<dyn std::error::Error>> {
+    ) -> Result<Arc<Self>, anyhow::Error> {
         //This library is not meant to be used to create new library objects.
         //It's meant to be used to load existing library objects from the database.
         //If the library doesn't exist in the database, we'll return an error.
@@ -122,7 +123,7 @@ impl LocalLibrary {
         info!("Loaded library: {:?}", library);
 
         if library.is_none() {
-            return Err("Library not found".into());
+            error!("Library not found");
         }
 
         let library = LocalLibrary {
@@ -138,7 +139,7 @@ impl LocalLibrary {
         Ok(Arc::new(library))
     }
 
-    pub async fn add_location(&self, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn add_location(&self, path: PathBuf) -> Result<(), anyhow::Error> {
         let path = path.to_str().unwrap();
 
         let this_library_id = self.id.to_string();
@@ -203,7 +204,7 @@ impl LocalLibrary {
         Ok(())
     }
 
-    pub async fn get_library(&self) -> Result<prisma::library::Data, Box<dyn std::error::Error>> {
+    pub async fn get_library(&self) -> Result<prisma::library::Data, anyhow::Error> {
         let library = self
             .db
             .library()
@@ -214,11 +215,11 @@ impl LocalLibrary {
         if let Some(library) = library {
             Ok(library)
         } else {
-            Err("Library not found".into())
+            Err(anyhow!("Library not found".to_string()))
         }
     }
 
-    pub async fn index_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn index_objects(&self) -> Result<(), anyhow::Error> {
         info!("Indexing objects for library: {}", self.name);
         let (changed_files, new_files, deleted_files) = self.check_for_changes().await?;
         info!("Changed files: {:?}", changed_files);
@@ -340,7 +341,7 @@ impl LocalLibrary {
         Ok(())
     }
 
-    pub async fn generate_thumbnails(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn generate_thumbnails(&self) -> Result<(), anyhow::Error> {
         let locations = self
             .db
             .location()
@@ -400,7 +401,7 @@ impl LocalLibrary {
                     }
                 }
 
-                Ok::<_, Box<dyn std::error::Error>>(())
+                Ok::<_, anyhow::Error>(())
             }
         });
 
@@ -410,7 +411,7 @@ impl LocalLibrary {
         Ok(())
     }
 
-    pub async fn parse_objects(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn parse_objects(&self) -> Result<(), anyhow::Error> {
         let locations = self
             .db
             .location()
@@ -480,24 +481,24 @@ impl LocalLibrary {
                                 info!("Object missing name!");
                             }
 
-                            Ok::<_, Box<dyn std::error::Error>>(())
+                            Ok::<_, anyhow::Error>(())
                         }
                     })
                     .collect();
 
                 let results = try_join_all(object_tasks).await?;
-                Ok::<_, Box<dyn std::error::Error>>(results)
+                Ok::<_, anyhow::Error>(())
             }
         });
 
-        let _ = try_join_all(tasks).await;
+        let _ = try_join_all(tasks).await?;
         Ok(())
     }
 
     pub async fn get_objects(
         &self,
         library_uuid: String,
-    ) -> Result<Vec<object::Data>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<object::Data>, anyhow::Error> {
         let mut objects = Vec::new();
         let db_objects = self
             .db
@@ -515,7 +516,7 @@ impl LocalLibrary {
         Ok(objects)
     }
 
-    pub async fn get_locations(&self) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+    pub async fn get_locations(&self) -> Result<Vec<PathBuf>, anyhow::Error> {
         let mut locations = Vec::new();
         let db_locations = self.db.location().find_many(vec![]).exec().await?;
 
@@ -528,7 +529,7 @@ impl LocalLibrary {
 
     pub async fn check_for_changes(
         &self,
-    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), Box<dyn std::error::Error>> {
+    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), anyhow::Error> {
         let changed_files = Vec::new();
         let mut new_files = Vec::new();
         let mut deleted_files = Vec::new();
@@ -583,7 +584,7 @@ impl LocalLibrary {
     pub async fn emit_notification(
         &self,
         notification: CodexNotification,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), anyhow::Error> {
         self.notificationManager
             ._internal_emit(notification)
             .await?;
