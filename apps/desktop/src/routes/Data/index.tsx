@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useEffect, useRef, useState } from 'react'
 import { ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
-import { FlexGrid, Row, Column, Checkbox, Search, Dropdown, Accordion, AccordionItem } from "@carbon/react"
+import { FlexGrid, Row, Checkbox, Search, Dropdown, Accordion, AccordionItem, DatePicker } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, MultiSelect, Pagination } from "@carbon/react";
+import { Theme, TextInput, MultiSelect, Pagination, DatePickerInput, Layer } from "@carbon/react";
 import { Edit, TrashCan } from "@carbon/icons-react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
@@ -17,6 +17,7 @@ import StarRating from '../../components/StarRating/StarRating';
 import { useNavigate } from 'react-router-dom';
 import useQueryParamStore from '../../Stores/searchStore';
 import { CodexNotification } from '../../../../../web/src/bindings';
+import useThemeStore from '../../Stores/themeStore';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -25,6 +26,7 @@ dayjs.locale('pt-br') // use locale
 const index = () => {
 
   const navigate = useNavigate();
+  const {theme} = useThemeStore();
 
   //variables necessary for pagination 
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,6 +110,7 @@ const index = () => {
       // this will wrap every element in a div
       // we want to transform the <b> element into a span with a special class
       if (domNode.name === "b") {
+        
         return <span className='data--highlight-text'>{reactNode}</span>;
       }
       else {
@@ -131,6 +134,13 @@ const index = () => {
 
   const collections = ['Collection 1', 'Collection 2', 'Collection 3'];
   const spaces = ['Space 1', 'Space 2', 'Space 3'];
+  const tags = ['Tag 1', 'Tag 2', 'Tag 3'];
+  const documentTypes = ['Document Type 1', 'Document Type 2', 'Document Type 3'];
+  const authors = ['Author 1', 'Author 2', 'Author 3'];
+
+  const handleFavoritesChange = (e) => {
+    console.log(e)
+  }
 
   // const [selectedCollection, setSelectedCollection] = useState(collections[0]);
   // const [selectedSpace, setSelectedSpace] = useState(spaces[0]);
@@ -160,9 +170,11 @@ const index = () => {
         </div>
       </div>)
   }
+
+
   return (
     <div>
-      <Theme theme="g10">
+      <Theme theme={theme}>
         <PageHeader
           actionBarOverflowAriaLabel="Mostrar outras ações"
           fullWidthGrid
@@ -197,126 +209,74 @@ const index = () => {
         />
       </Theme>
 
-      <div
-        className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
-      >
-        <Theme theme="g90">
-          <CreateSidePanel
-            formDescription="We recommend you fill out and evaluate these details at a minimum before deploying your object."
-            formTitle="Object configuration"
-            onRequestClose={() => setTearsheetIsOpen(false)}
-            primaryButtonText="Create"
-            secondaryButtonText="Cancel"
-            selectorPageContent="#sipe--main-content-wrapper"
-            selectorPrimaryFocus=".cds--text-input"
-            subtitle="Specify the details of your object."
-            title="Create object"
-            open={tearsheetIsOpen}
-          >
-            <Checkbox
-              id="object-hidden-checkbox"
-              labelText="Hidden"
-              onChange={(e) => console.log(e)}
-            />
-            <Checkbox
-              id="object-favorite-checkbox"
-              labelText="Favorite"
-              onChange={(e) => console.log(e)}
-            />
-            <Checkbox
-              id="object-important-checkbox"
-              labelText="Important"
-              onChange={(e) => console.log(e)}
-            />
-            <TextInput
-              id="object-note-textarea"
-              labelText="Note"
-              onChange={(e) => console.log(e)}
-              placeholder="Enter a note"
-            />
-
-          </CreateSidePanel>
-
-          <SidePanel
-            includeOverlay
-            className='test'
-            open={open}
-            onRequestClose={() => setOpen(false)}
-            title='Incident management'
-            subtitle='Testing subtitle text.'
-            actions={[
-              {
-                label: "Submit",
-                onClick: () => setOpen(false),
-                kind: "primary"
-              },
-              {
-                label: "Cancel",
-                onClick: () => setOpen(false),
-                kind: "secondary"
-              }
-            ]}
-          >
-          </SidePanel>
-        </Theme>
-
-        <div style={{ height: "100%" }}>
-
-          <FlexGrid fullWidth condensed>
-            <Row>
-              <div className={`${settings.sipePrefix}--data-search-bar-wrapper`}>
-                <Search labelText={''} onChange={handleQuery} defaultValue={persistentQuery} />
-              </div>
-              <Column lg={4} md={2}>
+      <div className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}>
+        <div className="height-100">
+          <div className="flex-column height-100">
+            <div className={`${settings.sipePrefix}--data-search-bar-wrapper`}>
+              <Search labelText={''} onChange={handleQuery} defaultValue={persistentQuery} />
+            </div>
+            <div className="flex-row height-100">
+              <div className="left-panel">
                 <SearchPanel>
                   <Accordion>
                     <AccordionItem title="Tags">
-                      <Dropdown id="default" titleText="Dropdown label" helperText="This is some helper text" label="Dropdown menu options" items={collections} itemToString={item => item ? item : ''} />
+                      <Dropdown label="tags" id="tags-dropdown" titleText="Selecione as Tags" helperText="Filtre os documentos por tags" items={tags} itemToString={item => item ? item : ''} />
                     </AccordionItem>
                     <AccordionItem title="Coleções">
-                      <MultiSelect label="Multiselect Label" id="carbon-multiselect-example" titleText="Multiselect title" helperText="This is helper text" items={spaces} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
+                      <MultiSelect label="Selecione as coleções" id="collections-multiselect" titleText="Selecione as coleções" helperText="Filtre os documentos por coleções" items={collections} itemToString={item => item ? item : ''} selectionFeedback="top-after-reopen" />
+                    </AccordionItem>
+                    <AccordionItem title="Data">
+                      <DatePicker datePickerType="range">
+                        <DatePickerInput id="date-picker-input-id-start" placeholder="dd/mm/aaaa" labelText="Data de início" size="md" />
+                        <DatePickerInput id="date-picker-input-id-finish" placeholder="dd/mm/aaaa" labelText="Data final" size="md" />
+                      </DatePicker>
+                    </AccordionItem>
+                    <AccordionItem title="Tipo de Documento">
+                      <Dropdown label="tags" id="doctype-dropdown" titleText="Selecione o Tipo de Documento" helperText="Filtre os documentos por tipo" items={documentTypes} itemToString={item => item ? item : ''} />
+                    </AccordionItem>
+                    <AccordionItem title="Autor">
+                      <Dropdown label="tags" id="author-dropdown" titleText="Selecione o Autor" helperText="Filtre os documentos por autor" items={authors} itemToString={item => item ? item : ''} />
+                    </AccordionItem>
+                    <AccordionItem title="Favoritos">
+                      <Checkbox labelText="Mostrar apenas favoritos" id="favorites-checkbox" onChange={handleFavoritesChange} />
                     </AccordionItem>
                   </Accordion>
                 </SearchPanel>
-              </Column>
-              <Column lg={12} md={6} >
+              </div>
+              <div className="right-panel">
                 <p className={`${settings.sipePrefix}--search-panel-header-text`}>Documentos</p>
-                <div style={{ overflow: "scroll", height: "auto", maxHeight: "70%" }}>
+                <div className="scrollable-area">
                   {
                     paginatedSearchResult?.map((document) => (
                       renderCard(document)
                     ))
                   }
                 </div>
-
-              </Column>
-
-
-            </Row>
-            <div style={{ display: "flex", position: "absolute", bottom: "0", width: "calc(100% - 48px)", left: "48px" }}>
-
-              <Pagination
-                backwardText="Página anterior"
-                forwardText="Próxima página"
-                itemsPerPageText="Itens por página:"
-                itemRangeText={(min, max, total) => { return `Itens ${min}-${max} de ${total}` }}
-                pageRangeText={(current, total) => { return `Página ${current} de ${total}` }}
-                onChange={handlePaginateChange}
-                page={currentPage}
-                pageSize={pageSize}
-                pageSizes={[
-                  5,
-                  10,
-                  15,
-                  20,
-                ]}
-                size="lg"
-                totalItems={totalItems}
-              />
+              </div>
             </div>
-          </FlexGrid>
-        </div>
 
+          </div>
+          <div className="pagination-wrapper">
+            <Pagination
+              backwardText="Página anterior"
+              forwardText="Próxima página"
+              itemsPerPageText="Itens por página:"
+              itemRangeText={(min, max, total) => { return `Itens ${min}-${max} de ${total}` }}
+              pageRangeText={(current, total) => { return `Página ${current} de ${total}` }}
+              onChange={handlePaginateChange}
+              page={currentPage}
+              pageSize={pageSize}
+              pageSizes={[
+                5,
+                10,
+                15,
+                20,
+              ]}
+              size="lg"
+              totalItems={totalItems}
+            />
+          </div>
+        </div>
       </div>
     </div >
   )

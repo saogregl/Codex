@@ -5,7 +5,7 @@ import React from 'react'
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 // @ts-ignore
-import { Button, Layer } from '@carbon/react';
+import { Button, Layer, Theme } from '@carbon/react';
 
 interface FilterPanelProps {
     children: React.ReactNode[] | React.ReactNode
@@ -19,7 +19,6 @@ interface FilterPanelProps {
 const SearchPanel = ({ children, className }: FilterPanelProps) => {
     const childArray = React.Children.toArray(children);
     return (
-
         <div className={classnames(
             `${settings.sipePrefix}--search-panel-wrapper`,
             `${className ? className : ""}`

@@ -433,85 +433,74 @@ impl LocalLibrary {
             .exec()
             .await?;
 
-        let tasks = locations.into_iter().map(|location| {
-            let db = Arc::clone(&self.db);
-            async move {
-                let objects = db
-                    .object()
-                    .find_many(vec![object::locations::is(vec![location::uuid::equals(
-                        location.uuid,
-                    )])])
-                    .exec()
-                    .await?;
-
-                let object_tasks: Vec<_> = objects
-                    .into_iter()
-                    .map(|object| {
-
-
-                        //check if object was already parsed 
-
-                        let db = Arc::clone(&db);
-                        async move {
-
-                            if object.parsed.unwrap_or(false) {
-                                return Ok::<_, anyhow::Error>(());
-                            }
-    
-                            if let Some(_obj_name) = &object.obj_name.clone() {
-                                let capture = object.clone();
-                                let parsed_result =
-                                    task::spawn_blocking(move || parsing::parse_object(&capture))
-                                        .await?;
-
-                                match parsed_result {
-                                    
-                                    Ok(parsed) => {
-                                        if let Err(e) = db
-                                            .object()
-                                            .update(
-                                                object::uuid::equals(object.uuid.clone()),
-                                                vec![
-                                                    object::parsed::set(Some(true)),
-                                                    object::parsed_path::set(Some(
-                                                        parsed.to_str().unwrap().to_string(),
-                                                    )),
-                                                ],
-                                            )
-                                            .exec()
-                                            .await
-                                        {
-                                            error!("Database update error: {:?} for parsed object {:?}", e, parsed.clone().to_str().unwrap());
-                                            self.emit_notification(CodexNotification::new(
-                                                "parse error".to_string(),
-                                                NotificationType::ParsingError,
-                                            ))
-                                            .await?
-                                        } else {
-                                            info!("Parsed object: {:?}", parsed.clone().to_str().unwrap());
-                                            self.emit_notification(CodexNotification::new(
-                                                "parsed object".to_string(),
-                                                NotificationType::ObjectParsed,
-                                            ))
-                                            .await?
+            let tasks = locations.into_iter().map(|location| {
+                let db = Arc::clone(&self.db);
+                async move {
+                    let objects = db
+                        .object()
+                        .find_many(vec![object::locations::is(vec![location::uuid::equals(
+                            location.uuid,
+                        )])])
+                        .exec()
+                        .await?;
+        
+                    let object_tasks: Vec<_> = objects
+                        .into_iter()
+                        .filter(|object| !object.parsed.unwrap_or(false))
+                        .map(|object| {
+                            let db = Arc::clone(&self.db);
+                            async move {
+                                if let Some(_obj_name) = &object.obj_name {
+                                    let capture = object.clone();
+                                    let parsed_result = task::spawn_blocking(move || parsing::parse_object(&capture)).await?;
+        
+                                    match parsed_result {
+                                        Ok(parsed) => {
+                                            if let Err(e) = db
+                                                .object()
+                                                .update(
+                                                    object::uuid::equals(object.uuid.clone()),
+                                                    vec![
+                                                        object::parsed::set(Some(true)),
+                                                        object::parsed_path::set(Some(
+                                                            parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?.to_string(),
+                                                        )),
+                                                    ],
+                                                )
+                                                .exec()
+                                                .await
+                                            {
+                                                error!("Database update error: {:?} for parsed object {:?}", e, parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
+                                                self.emit_notification(CodexNotification::new(
+                                                    "parse error".to_string(),
+                                                    NotificationType::ParsingError,
+                                                ))
+                                                .await?
+                                            } else {
+                                                info!("Parsed object: {:?}", parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
+                                                self.emit_notification(CodexNotification::new(
+                                                    "parsed object".to_string(),
+                                                    NotificationType::ObjectParsed,
+                                                ))
+                                                .await?
+                                            }
+                                        }
+                                        Err(e) => {
+                                            error!("Parsing error: {:?}", e);
                                         }
                                     }
-                                    Err(e) => {
-                                        error!("Parsing error: {:?}", e);
-                                    }
+                                } else {
+                                    error!("Object missing name: {:?}", object);
                                 }
-                            } else {
-                                info!("Object missing name!");
+        
+                                Ok::<_, anyhow::Error>(())
                             }
-
-                            Ok::<_, anyhow::Error>(())
-                        }
-                    })
-                    .collect();
-
-                let results = try_join_all(object_tasks).await?;
-                Ok::<_, anyhow::Error>((results, ()))
-            }
+                        })
+                        .collect();
+        
+                    let results = try_join_all(object_tasks).await?;
+                    Ok::<_, anyhow::Error>((results, ()))
+                    }
         });
 
         let _ = try_join_all(tasks).await?;

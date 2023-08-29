@@ -1,20 +1,19 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useRef, useState } from 'react'
+import { useState } from 'react'
 import { ProductiveCard, PageHeader, } from "@carbon/ibm-products"
-import { Grid, FlexGrid, Row, Column, NumberInput, DatePicker, DatePickerInput, Button } from "@carbon/react"
+import { FlexGrid, Row, Column, Button } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, RadioButtonGroup, RadioButton, Modal } from "@carbon/react";
+import { Theme, TextInput, Modal } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import { Edit, TrashCan, Db2Database, DocumentAdd } from "@carbon/icons-react"
 import { ICA } from '../../components/ICA';
 import ActionHeader from '../../components/ui/actionHeader';
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { openDirectoryDialog } from '../../utils/file';
 import rspc from '../../lib/query';
-import useLocations from '../../hooks/useLocations';
+import useLibraries from '../../hooks/useLibraries';
+import useThemeStore from '../../Stores/themeStore';
 // Open a selection dialog for directories
 
 // const selected = await open({
@@ -40,7 +39,7 @@ const index = () => {
     const selected = await openDirectoryDialog();
     setSelectedDirectory(selected);
   }
-  const { libraries } = useLocations();
+  const { libraries } = useLibraries();
 
 
   const { mutate } = rspc.useMutation("library.add_new_location");
@@ -98,9 +97,11 @@ const index = () => {
     path: z.instanceof(File)
   });
 
+  const { theme } = useThemeStore();
+
   return (
     <div>
-      <Theme theme="g10">
+      <Theme theme={theme}>
         <PageHeader
           actionBarOverflowAriaLabel="Mostrar outras ações"
           fullWidthGrid

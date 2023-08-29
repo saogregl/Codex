@@ -15,6 +15,7 @@ import { useParams } from 'react-router-dom';
 import { Document, Page } from 'react-pdf';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { invoke } from "@tauri-apps/api"
+import useThemeStore from '../../../Stores/themeStore';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -25,6 +26,7 @@ const index = () => {
 
     const { id } = useParams();
     const id_number = parseInt(id)
+    const {theme} = useThemeStore();
 
 
 
@@ -67,7 +69,7 @@ const index = () => {
 
     return (
         <div>
-            <Theme theme="g10">
+            <Theme theme={theme}>
                 <PageHeader
                     actionBarOverflowAriaLabel="Mostrar outras ações"
                     fullWidthGrid

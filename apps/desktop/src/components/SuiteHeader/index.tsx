@@ -8,7 +8,9 @@ import {
   Notification,
   Switcher as SwitcherIcon,
   Home,
-  Db2Database
+  Db2Database,
+  LightFilled,
+  Light,
 } from "@carbon/icons-react";
 import {
   ChromeCloseIcon,
@@ -64,6 +66,7 @@ import useStore from "../../Stores/sessionStore";
 import { workspaces } from "./constants/workspaces";
 import useCustomHeader from "./SuiteHeaderAppSwitcher/hooks/useCustomHeader";
 import useNotifications from "../../hooks/useNotifications";
+import useThemeStore from "../../Stores/themeStore";
 
 const layout = () => {
   //We need to know which menu is currently active
@@ -80,7 +83,7 @@ const layout = () => {
       navigate("/home");
     }
   }, []);
-  
+
   const navigate = useNavigate();
 
   const {
@@ -92,7 +95,7 @@ const layout = () => {
 
   const userStore = useStore();
   const appSwitcherRef = useRef(null);
-  
+
   useEffect(() => {
     //Check which menu is active comparing the location with the routes
     const activeMenu = Apps.find((route) => {
@@ -142,11 +145,7 @@ const layout = () => {
 
 
 
-  // useClickOutside(appSwitcherRef, () => {
-  //   if (isSwitcherExpanded) {
-  //     expandSwitcher();
-  //   }
-  // }, ["cds--btn", "cds--header-panel cds--header-panel--expanded"]);
+  const { theme, switchTheme } = useThemeStore();
 
   return (
     <Theme theme="g100">
@@ -175,7 +174,7 @@ const layout = () => {
           </span>
         </HeaderName>
         <HeaderGlobalBar>
-          <div
+          {/* <div
             style={{
               display: "flex",
               justifyContent: "center", // Horizontally center the items
@@ -195,7 +194,15 @@ const layout = () => {
               <Search labelText={""} size={"lg"} />
             </div>
 
-          </div>
+          </div> */}
+          <HeaderGlobalAction
+            aria-label="Tema"
+            onClick={switchTheme}
+            id="theme-switcher"
+            className="theme-switcher"
+          >
+            {theme == "g10" ? <LightFilled /> : <Light />}
+          </HeaderGlobalAction>
 
           <HeaderGlobalAction
             aria-label="Notificações"
@@ -348,7 +355,7 @@ const layout = () => {
       </Header>
 
       <main>
-        <Theme theme="g10">
+        <Theme theme={theme}>
           <div
             className={
               !isSideNavExpanded

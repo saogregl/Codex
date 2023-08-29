@@ -9,6 +9,8 @@ $sipePrefix: "sipe";
 .#{$sipePrefix}--search-panel-wrapper {
     display: flex;
     align-items: stretch;
+    overflow: scroll; 
+    height: 100%;
   
 
 .#{$sipePrefix}--search-panel-content {
