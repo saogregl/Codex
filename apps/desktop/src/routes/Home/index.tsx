@@ -78,7 +78,7 @@ const index = () => {
     ]
   };
 
-  const renderProject = (index: number) => {
+  const renderDocument = (index: number) => {
     return (
       <ProductiveCard
         {...defaultProps}>
@@ -125,40 +125,12 @@ const index = () => {
           subtitle={
             "Prepare coleções com seus documentos para iniciar análise."
           }
-
-        // navigation={
-        //   <Tabs
-        //     selectedIndex={selectedTab}
-        //     onChange={(e) => setSelectedTab(e.selectedIndex)}
-        //   >
-        //     <TabList aria-label="Opções de navegação">
-        //       <Tab
-        //         aria-label="Status do andamento do projeto"
-        //         title="Status do andamento do projeto"
-        //       >
-        //         Resumo
-        //       </Tab>
-        //       <Tab>Minhas atividades</Tab>
-
-        //       <Tab>Notícias</Tab>
-        //       <Tab
-        //         aria-label="Status do andamento do negócio"
-        //         title="Status do andamento do negócio"
-        //       >
-        //         Status do negócio
-        //       </Tab>
-        //     </TabList>
-        //   </Tabs>
-        // }
         />
       </Theme>
-
-
       <div
-
         className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
       >
-        <Theme theme="g90">
+        <Theme theme={(theme == "g100"? "g10" : "g100")}>
           <Modal
             open={createModalIsOpen}
             modalHeading="Crie uma nova coleção"
@@ -173,7 +145,7 @@ const index = () => {
             <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
               <TextInput
                 id="1"
-                labelText="Selecione o nome da coleção"
+                labelText="Digite o nome da coleção"
                 placeholder="Minha coleção"
                 onChange={(e) => setCollectionName(e.target.value)}
                 invalid={isCollectionNameInvalid}
@@ -203,30 +175,23 @@ const index = () => {
             onClick: () => setCreateModalIsOpen(!open),
           },
         ]} />
-
-
         <FlexGrid fullWidth>
           <Row>
-            <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}
-            >
-
-            </div>
-
+            <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}></div>
           </Row>
           <Row >
             <Column lg={4} md={8}>
               <div>
-                {renderProject(0)}
+                {renderDocument(0)}
               </div>
             </Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}</div></Column>
+              {renderDocument(0)}</div></Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}</div></Column>
+              {renderDocument(0)}</div></Column>
             <Column lg={4} md={8}><div>
-              {renderProject(0)}</div></Column>
+              {renderDocument(0)}</div></Column>
           </Row>
-
         </FlexGrid>
       </div>
     </div>

@@ -26,7 +26,7 @@ dayjs.locale('pt-br') // use locale
 const index = () => {
 
   const navigate = useNavigate();
-  const {theme} = useThemeStore();
+  const { theme } = useThemeStore();
 
   //variables necessary for pagination 
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,8 +110,12 @@ const index = () => {
       // this will wrap every element in a div
       // we want to transform the <b> element into a span with a special class
       if (domNode.name === "b") {
-        
-        return <span className='data--highlight-text'>{reactNode}</span>;
+        if (theme == "g100") {
+          return <span className='data--highlight-text--g100'>{reactNode}</span>;
+        } else {
+          return <span className='data--highlight-text'>{reactNode}</span>;
+        }
+
       }
       else {
         return <span className='data--snippet-text'>{reactNode}</span>;
@@ -281,7 +285,5 @@ const index = () => {
     </div >
   )
 }
-
-
 
 export default index
