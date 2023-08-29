@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ProductiveCard, PageHeader, } from "@carbon/ibm-products"
 import { FlexGrid, Row, Column, Button } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, Modal } from "@carbon/react";
+import { Theme, TextInput, Modal, ContentSwitcher, Switch } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import { Edit, TrashCan, Db2Database, DocumentAdd } from "@carbon/icons-react"
@@ -123,14 +123,14 @@ const index = () => {
           showAllTagsLabel="Mostrar todas as tags"
           title={"Gerencie arquivos"}
           subtitle={
-            "Prepare coleções com seus documentos para iniciar análise."
+            "Prepare coleções com seus documentos para iniciar."
           }
         />
       </Theme>
       <div
         className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
       >
-        <Theme theme={(theme == "g100"? "g10" : "g100")}>
+        <Theme theme={(theme == "g100" ? "g10" : "g100")}>
           <Modal
             open={createModalIsOpen}
             modalHeading="Crie uma nova coleção"
@@ -177,7 +177,18 @@ const index = () => {
         ]} />
         <FlexGrid fullWidth>
           <Row>
-            <div className={classnames(`${settings.sipePrefix}--Content-header-container`)}></div>
+            <div className={classnames(`${settings.sipePrefix}--home-header-container`)}>
+              <ContentSwitcher onChange={function noRefCheck() { }}>
+              <Switch
+                name="favorites"
+                text="Favoritos"
+              />
+              <Switch
+                name="two"
+                text="Recomendados"
+              />
+            </ContentSwitcher>
+            </div>
           </Row>
           <Row >
             <Column lg={4} md={8}>

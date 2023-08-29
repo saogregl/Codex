@@ -124,7 +124,7 @@ impl LibraryManager {
         let _ = self.searcher.index(&self.libraries).await?;
         Ok(())
     }
-
+    
     pub async fn update_library(&self, lib_uuid: String) -> Result<(), anyhow::Error> {
         if let Some(lib) = self
             .libraries

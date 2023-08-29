@@ -5,11 +5,11 @@
 $sipePrefix: "sipe";
 
 
-.#{$sipePrefix}--Content-header-container {
+.#{$sipePrefix}--home-header-container {
   display: flex;
-
-  padding-bottom: spacing.$spacing-08;
-  width: 100%;
+  padding: spacing.$spacing-05 0 spacing.$spacing-05 spacing.$spacing-05;
+  width: 24%; 
+  min-width: 300px;
 }
 
 .#{$sipePrefix}--document-selected {
