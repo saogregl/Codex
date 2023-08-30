@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
 import { FlexGrid, Row, Checkbox, Search, Dropdown, Accordion, AccordionItem, DatePicker } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, MultiSelect, Pagination, DatePickerInput, Layer } from "@carbon/react";
-import { Edit, TrashCan } from "@carbon/icons-react";
+import { Theme, TextInput, MultiSelect, Pagination, DatePickerInput, Layer, Tag } from "@carbon/react";
+import { Edit, TrashCan, ArrowRight } from "@carbon/icons-react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import rspc from '../../lib/query';
@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import useQueryParamStore from '../../Stores/searchStore';
 import { CodexNotification } from '../../../../../web/src/bindings';
 import useThemeStore from '../../Stores/themeStore';
+import useTags from '../../hooks/useTags';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -155,14 +156,33 @@ const index = () => {
       <div className={`${settings.sipePrefix}--card-content-wrapper`}>
         <ExpressiveCard
           label={`${dayjs(document.object.date_created).fromNow()}`}
-          onClick={() => navigate(`/Data/${document.object.id}`)}
+          // onClick={() => navigate(`/Data/${document.object.id}`)}
+          actionIcons={[
+            {
+              icon: (props) => <Edit {...props} />,
+              iconDescription: 'Editar',
+              id: '1',
+              onClick: () => { console.log('clicked') }
+            },
+            {
+              href: `/Data/${document.object.id}`,
+              icon: (props) => <ArrowRight {...props} />,
+              iconDescription: 'Ver documento...',
+              id: '2'
+            },
+          ]}
+
           mediaRatio={null}
           title={renderCardHeader(document.title)}
+          pictogram={() => { return docTags.map((tag) => (<Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>)) }}
+
         >
-          {parse(document.snippet, options)}
+          "{parse(document.snippet, options)}"
         </ExpressiveCard>
       </div>)
   }
+
+  const { tags: docTags } = useTags();
 
   const renderCardHeader = (title: string) => {
     return (

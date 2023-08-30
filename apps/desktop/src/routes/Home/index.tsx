@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ProductiveCard, PageHeader, } from "@carbon/ibm-products"
 import { FlexGrid, Row, Column, Button } from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, Modal, ContentSwitcher, Switch } from "@carbon/react";
+import { Theme, TextInput, Modal, ContentSwitcher, Switch, Tag } from "@carbon/react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
 import { Edit, TrashCan, Db2Database, DocumentAdd } from "@carbon/icons-react"
@@ -14,6 +14,7 @@ import { openDirectoryDialog } from '../../utils/file';
 import rspc from '../../lib/query';
 import useLibraries from '../../hooks/useLibraries';
 import useThemeStore from '../../Stores/themeStore';
+import useTags from '../../hooks/useTags';
 // Open a selection dialog for directories
 
 // const selected = await open({
@@ -98,6 +99,7 @@ const index = () => {
   });
 
   const { theme } = useThemeStore();
+  const { tags } = useTags();
 
   return (
     <div>
@@ -178,19 +180,21 @@ const index = () => {
         <FlexGrid fullWidth>
           <Row>
             <div className={classnames(`${settings.sipePrefix}--home-header-container`)}>
-              <ContentSwitcher onChange={function noRefCheck() { }}>
-              <Switch
-                name="favorites"
-                text="Favoritos"
-              />
-              <Switch
-                name="two"
-                text="Recomendados"
-              />
-            </ContentSwitcher>
-            </div>
+                <ContentSwitcher onChange={(e) => console.log(e)}>
+                  <Switch
+                    name="favorites"
+                    text="Favoritos"
+                  />
+                  <Switch
+                    name="reccomended"
+                    text="Recomendados"
+                  />
+                </ContentSwitcher>
+              </div>
+
           </Row>
           <Row >
+
             <Column lg={4} md={8}>
               <div>
                 {renderDocument(0)}
@@ -203,6 +207,9 @@ const index = () => {
             <Column lg={4} md={8}><div>
               {renderDocument(0)}</div></Column>
           </Row>
+          {tags && tags.map((tag) => <Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>)}
+          
+
         </FlexGrid>
       </div>
     </div>

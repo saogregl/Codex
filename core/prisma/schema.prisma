@@ -97,7 +97,7 @@ model Library {
 /// @shared(id: pub_id)
 model Tag {
   id              Int           @id @default(autoincrement())
-  pub_id          Bytes         @unique
+  uuid            String        @unique @default(uuid())
   name            String?
   color           String?
   // Enum: ??
@@ -111,10 +111,10 @@ model Tag {
 
 /// @relation(item: tag, group: Object)
 model TagOnObject {
-  tag_id    Int
-  tag       Tag    @relation(fields: [tag_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  Object_id Int
-  Object    Object @relation(fields: [Object_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tag_id    String
+  tag       Tag    @relation(fields: [tag_id], references: [uuid], onDelete: NoAction, onUpdate: NoAction)
+  Object_id String
+  Object    Object @relation(fields: [Object_id], references: [uuid], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([tag_id, Object_id])
   @@map("tag_on_Object")
@@ -144,13 +144,12 @@ model LabelOnObject {
   @@map("label_on_Object")
 }
 
-
 model Notification {
-    id         Int       @id @default(autoincrement())
-    read       Boolean   @default(false)
-    data       Int
-    message    String?
-    expires_at DateTime?
+  id         Int       @id @default(autoincrement())
+  read       Boolean   @default(false)
+  data       Int
+  message    String?
+  expires_at DateTime?
 
-    @@map("notification")
+  @@map("notification")
 }
