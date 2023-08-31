@@ -250,7 +250,7 @@ impl LocalLibrary {
             {
                 info!("Deleted file: {:?}", deleted);
                 self.emit_notification(CodexNotification::new(
-                    "deleted file".to_string(),
+                    format!("{}{}", "deleted file: ".to_string(), file.to_str().unwrap()),
                     NotificationType::FileRemoved,
                 ))
                 .await?
@@ -334,6 +334,12 @@ impl LocalLibrary {
                         )
                         .exec()
                         .await?;
+
+                    self.emit_notification(CodexNotification::new(
+                        format!("{}{}", "added file:".to_string(), file.to_str().unwrap()),
+                        NotificationType::FileAdded,
+                    )).await?; 
+
                 }
             }
         }
@@ -398,7 +404,7 @@ impl LocalLibrary {
                                     );
                                 } else {
                                     self.emit_notification(CodexNotification::new(
-                                        "generated thumbnail".to_string(),
+                                        format!("{}{}", "generated thumbnail".to_string(), thumbnail.clone().to_str().unwrap()),
                                         NotificationType::ThumbnailGenerated,
                                     ))
                                     .await?
@@ -472,14 +478,14 @@ impl LocalLibrary {
                                             {
                                                 error!("Database update error: {:?} for parsed object {:?}", e, parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
                                                 self.emit_notification(CodexNotification::new(
-                                                    "parse error".to_string(),
+                                                    format!("{}{}", "parse error".to_string(), parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?),
                                                     NotificationType::ParsingError,
                                                 ))
                                                 .await?
                                             } else {
                                                 info!("Parsed object: {:?}", parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
                                                 self.emit_notification(CodexNotification::new(
-                                                    "parsed object".to_string(),
+                                                    format!("{}{}", "parsed object".to_string(), parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?),
                                                     NotificationType::ObjectParsed,
                                                 ))
                                                 .await?

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ProductiveCard, PageHeader, } from "@carbon/ibm-products"
 import { FlexGrid, Row, Column, Button } from "@carbon/react"
 // @ts-ignore
@@ -91,12 +91,7 @@ const index = () => {
       </ProductiveCard>
     )
   }
-  // export type AddNewLocation = { library_id: string; name: string; path: string; is_archived: boolean; hidden: boolean; date_created: string }
 
-  const taskSchema = z.object({
-    name: z.string().min(1, { message: "Esse campo deve ser preenchido." }),
-    path: z.instanceof(File)
-  });
 
   const { theme } = useThemeStore();
   const { tags } = useTags();
@@ -180,36 +175,34 @@ const index = () => {
         <FlexGrid fullWidth>
           <Row>
             <div className={classnames(`${settings.sipePrefix}--home-header-container`)}>
-                <ContentSwitcher onChange={(e) => console.log(e)}>
-                  <Switch
-                    name="favorites"
-                    text="Favoritos"
-                  />
-                  <Switch
-                    name="reccomended"
-                    text="Recomendados"
-                  />
-                </ContentSwitcher>
-              </div>
+              <ContentSwitcher onChange={(e) => console.log(e)}>
+                <Switch
+                  name="favorites"
+                  text="Favoritos"
+                />
+                <Switch
+                  name="reccomended"
+                  text="Recomendados"
+                />
+              </ContentSwitcher>
+            </div>
 
           </Row>
           <Row >
-
             <Column lg={4} md={8}>
               <div>
                 {renderDocument(0)}
               </div>
             </Column>
             <Column lg={4} md={8}><div>
-              {renderDocument(0)}</div></Column>
+              {renderDocument(0)}</div>
+            </Column>
             <Column lg={4} md={8}><div>
               {renderDocument(0)}</div></Column>
             <Column lg={4} md={8}><div>
               {renderDocument(0)}</div></Column>
           </Row>
           {tags && tags.map((tag) => <Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>)}
-          
-
         </FlexGrid>
       </div>
     </div>

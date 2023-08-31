@@ -1,9 +1,22 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useEffect, useRef, useState } from 'react'
 import { ExpressiveCard, PageHeader, SidePanel, CreateSidePanel } from "@carbon/ibm-products"
-import { FlexGrid, Row, Checkbox, Search, Dropdown, Accordion, AccordionItem, DatePicker } from "@carbon/react"
+
+
+import {
+  FlexGrid,
+  Row,
+  Checkbox,
+  Search,
+  Dropdown,
+  Accordion,
+  AccordionItem,
+  DatePicker,
+  Form,
+  TextArea
+} from "@carbon/react"
 // @ts-ignore
-import { Theme, TextInput, MultiSelect, Pagination, DatePickerInput, Layer, Tag } from "@carbon/react";
+import { Theme, TextInput, MultiSelect, Pagination, DatePickerInput, Layer, Tag, FilterableMultiSelect, CheckboxGroup } from "@carbon/react";
 import { Edit, TrashCan, ArrowRight } from "@carbon/icons-react";
 import classnames from "classnames";
 import { settings } from '../../constants/settings';
@@ -19,6 +32,8 @@ import useQueryParamStore from '../../Stores/searchStore';
 import { CodexNotification } from '../../../../../web/src/bindings';
 import useThemeStore from '../../Stores/themeStore';
 import useTags from '../../hooks/useTags';
+import { z } from 'zod';
+import { set } from 'react-hook-form';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -26,7 +41,6 @@ dayjs.locale('pt-br') // use locale
 
 const index = () => {
 
-  const navigate = useNavigate();
   const { theme } = useThemeStore();
 
   //variables necessary for pagination 
@@ -35,17 +49,7 @@ const index = () => {
   const [tearsheetIsOpen, setTearsheetIsOpen] = useState(false);
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("");
-  const [notifications, setNotifications] = useState<CodexNotification[]>([])
-
-
-  rspc.useSubscription(["notifications.listen"], {
-    onData: (data) => {
-      {
-        setNotifications(prevNotifications => [...prevNotifications, data]);
-        console.log(data)
-      }
-    }
-  });
+  const [newTag, setNewTag] = useState("");
 
   const {
     data: SearchResult,
@@ -53,7 +57,7 @@ const index = () => {
     error: errorSearchResult,
   } = rspc.useQuery(["search.search", { query }]);
 
-  const [paginatedSearchResult, setPaginatedSearchResult] = useState<unknown[]>([]);
+  const [paginatedSearchResult, setPaginatedSearchResult] = useState<typeof SearchResult>([]);
   const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
@@ -78,7 +82,6 @@ const index = () => {
   const debounceRef = useRef(null);
 
   const { persistentQuery, setPersistentQuery } = useQueryParamStore();
-  console.log(persistentQuery)
 
 
   const handleQuery = (e) => {
@@ -102,7 +105,7 @@ const index = () => {
     setCurrentPage(e.page);
     setPageSize(e.pageSize);
     setPaginatedSearchResult(
-      SearchResult?.slice((e.page - 1) * e.pageSize, e.page * e.pageSize) as unknown[]
+      SearchResult?.slice((e.page - 1) * e.pageSize, e.page * e.pageSize)
     )
   }
 
@@ -124,19 +127,6 @@ const index = () => {
     }
   };
 
-  // const {
-  //   data: libraries,
-  //   isLoading: isLoadingLibraries,
-  //   error: errorLibraries,
-  // } = rspc.useQuery(["library.get_all_libraries"]);
-
-  // const {
-  //   data: objects,
-  //   isLoading: isLoadingObjects,
-  //   error: errorObjects,
-  // } = rspc.useQuery(["library.get_all_objects"]);
-
-
   const collections = ['Collection 1', 'Collection 2', 'Collection 3'];
   const spaces = ['Space 1', 'Space 2', 'Space 3'];
   const tags = ['Tag 1', 'Tag 2', 'Tag 3'];
@@ -147,11 +137,14 @@ const index = () => {
     console.log(e)
   }
 
+
+  const [selectedObject, setSelectedObject] = useState<typeof SearchResult[number]>(null);
+
   // const [selectedCollection, setSelectedCollection] = useState(collections[0]);
   // const [selectedSpace, setSelectedSpace] = useState(spaces[0]);
   // const [selectedDocument, setSelectedDocument] = useState(null);
 
-  const renderCard = (document: any) => {
+  const renderCard = (document: typeof SearchResult[number]) => {
     return (
       <div className={`${settings.sipePrefix}--card-content-wrapper`}>
         <ExpressiveCard
@@ -162,16 +155,15 @@ const index = () => {
               icon: (props) => <Edit {...props} />,
               iconDescription: 'Editar',
               id: '1',
-              onClick: () => { console.log('clicked') }
+              onClick: () => { setSelectedObject(document); setOpen(!open) }
             },
             {
               href: `/Data/${document.object.id}`,
-              icon: (props) => <ArrowRight {...props} />,
+              icon: (props) => <ArrowRight {...props}/>,
               iconDescription: 'Ver documento...',
               id: '2'
             },
           ]}
-
           mediaRatio={null}
           title={renderCardHeader(document.title)}
           pictogram={() => { return docTags.map((tag) => (<Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>)) }}
@@ -194,6 +186,7 @@ const index = () => {
         </div>
       </div>)
   }
+
 
 
   return (
@@ -232,6 +225,54 @@ const index = () => {
 
         />
       </Theme>
+
+
+      <Theme theme={theme == 'g10' ? 'g100' : 'g10'}>
+        <SidePanel
+          includeOverlay
+          className='test'
+          open={open}
+          onRequestClose={() => setOpen(false)}
+          title='Edite o documento'
+          subtitle={`Edite o documento "${selectedObject?.object.obj_name}"`}
+          actions={[
+            {
+              label: "Editar",
+              onClick: () => setOpen(false),
+              kind: "primary"
+            },
+            {
+              label: "Cancelar",
+              onClick: () => setOpen(false),
+              kind: "secondary"
+            }
+          ]}
+        >
+          <Form aria-label="sample form">
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', rowGap: "16px" }}>
+              <TextInput defaultValue={selectedObject?.object.obj_name} id="name" labelText="Nome" />
+              <TextArea defaultValue={selectedObject?.object.uuid} id="description" labelText="Descrição" />
+              <CheckboxGroup legendText='Favorito' label="Favorito" title="Favorito" helperText="Selecione para marcar o documento como Favorito">
+                <Checkbox labelText='Checkbox label' title="Favorito" checked={selectedObject?.object.favorite} id="favorite"  />
+              </CheckboxGroup>
+              <FilterableMultiSelect label="Tags" id="carbon-multiselect-example"
+                titleText="Tags"
+                helperText="Selecione tags para ajudar a identificar o documento" items={docTags}
+                itemToElement={(tag: typeof Tag) => tag ? <Tag type={tag?.color.toLocaleLowerCase()}>{tag?.name}</Tag> : ''}
+                itemToString={(tag: typeof Tag) => tag ? tag?.name : ''}
+                selectionFeedback="top-after-reopen"
+                onInputValueChange={(e) => setNewTag(e)}
+                onMenuChange={(e) => {
+                  if (e) {
+                    console.log("should create new tag", newTag)
+                  }
+                }}
+              />
+            </div>
+          </Form>
+        </SidePanel>
+      </Theme>
+
 
       <div className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}>
         <div className="height-100">

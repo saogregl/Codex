@@ -16,7 +16,7 @@ model User {
 
 model Object {
   id   Int    @id @default(autoincrement())
-  uuid String @unique @default(uuid())
+  uuid String @unique @default(uuid()) // TODO: uuid's are bad for indexing, can use a simple autoincrement instead
 
   obj_name String?
   // Enum: sd_file_ext::kind::ObjectKind
@@ -29,6 +29,8 @@ model Object {
   note          String?
   date_created  DateTime? @default(now())
   date_modified DateTime?
+
+  //user defined metadata: 
 
   //path 
   path          String?
