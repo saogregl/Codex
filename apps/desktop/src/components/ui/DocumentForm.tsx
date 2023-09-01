@@ -50,7 +50,7 @@ const DocumentForm = ({ selectedObject, docTags, open, setOpen }: DocumentFormPr
                         <TextInput defaultValue={selectedObject?.object.obj_name} id="name" labelText="Nome" />
                         <TextArea defaultValue={selectedObject?.object.uuid} id="description" labelText="Descrição" />
                         <CheckboxGroup legendText='Favorito' label="Favorito" title="Favorito" helperText="Selecione para marcar o documento como Favorito">
-                            <Checkbox labelText='Checkbox label' title="Favorito" checked={selectedObject?.object.favorite} id="favorite" />
+                            <Checkbox labelText='Favorito' title="Favorito" checked={selectedObject?.object.favorite} id="favorite" />
                         </CheckboxGroup>
                         <FilterableMultiSelect label="Tags" id="carbon-multiselect-example"
                             titleText="Tags"

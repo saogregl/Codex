@@ -17,6 +17,7 @@ import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { invoke } from "@tauri-apps/api"
 import useThemeStore from '../../../Stores/themeStore';
 import { defaultPageHeaderProps } from '../../../constants/defaultPageHeader';
+import { PDFViewer } from '../../../components/PDFViewer';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
@@ -25,7 +26,7 @@ const index = () => {
 
     const { id } = useParams();
     const id_number = parseInt(id)
-    const {theme} = useThemeStore();
+    const { theme } = useThemeStore();
 
     const {
         data: object,
@@ -70,10 +71,10 @@ const index = () => {
                 className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
             >
 
-                <div style={{ height: "100%" }}>
-                    {object && object.path && <object className={`${settings.sipePrefix}--pdf-viewer-wrapper`} data={convertFileSrc(object.path)}>
-                    </object>
-                    }
+                <div style={{ height: "100%", width: "100%"}}>
+
+                    <PDFViewer src={convertFileSrc(object?.path)}></PDFViewer>
+
 
                 </div >
             </div >

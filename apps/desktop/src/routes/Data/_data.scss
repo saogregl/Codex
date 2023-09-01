@@ -28,7 +28,7 @@ $sipePrefix: "sipe";
 }
 
 .#{$sipePrefix}--search-panel-header-text {
-  @include type.type-style("heading-compact-01");
+  @include type.type-style("productive-heading-03");
   color: theme.$text-primary;
   padding-bottom: spacing.$spacing-02;
 }
@@ -49,7 +49,7 @@ $sipePrefix: "sipe";
 .data--highlight-text {
   b {
     background-color: theme.$highlight; // Yellow background with some transparency
-    @include type.type-style("body-compact-01");
+    @include type.type-style("body-02");
     color: theme.$text-on-color;
     border-radius: 5px; // Rounded corners
   }
@@ -58,7 +58,7 @@ $sipePrefix: "sipe";
 .data--highlight-text--g100 {
   b {
     background-color: theme.$highlight; // Yellow background with some transparency
-    @include type.type-style("body-compact-01");
+    @include type.type-style("body-02", $fluid: true);
     color: theme.$text-on-color;
     border-radius: 5px; // Rounded corners
   }
@@ -66,13 +66,13 @@ $sipePrefix: "sipe";
 }
 
 .#{$sipePrefix}--data-title-link {
-  @include type.type-style("heading-compact-01");
-  color: theme.$link-primary;
+  @include type.type-style("productive-heading-02");
+  // color: theme.$link-primary;
   text-decoration: none;
 }
 
 .data--snippet-text {
-  @include type.type-style("body-compact-01");
+  @include type.type-style("body-02", $fluid: true);
   color: theme.$text-secondary;
 }
 

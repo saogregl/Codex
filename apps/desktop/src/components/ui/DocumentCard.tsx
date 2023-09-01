@@ -1,4 +1,4 @@
-import { ExpressiveCard } from "@carbon/ibm-products"
+import { ProductiveCard } from "@carbon/ibm-products"
 import { SearchResult, Tag } from "../../../../../web/src/bindings";
 import { settings } from "../../constants/settings";
 import { Edit, ArrowRight } from "@carbon/icons-react";
@@ -69,9 +69,11 @@ const DocumentCard: FC<DocumentCardProps> = ({ document, setSelectedObject, setO
 
     return (
         <div className={`${settings.sipePrefix}--card-content-wrapper`} {...rest}>
-            <ExpressiveCard
+            <ProductiveCard
+                onClick={() => handleDocumentEditClick(document)}
 
                 label={`${dayjs(document?.object.date_created).fromNow()}`}
+                actionsPlacement="bottom"
                 actionIcons={[
                     {
                         icon: (props) => <Edit {...props} />,
@@ -93,8 +95,8 @@ const DocumentCard: FC<DocumentCardProps> = ({ document, setSelectedObject, setO
                 )) : null}
 
             >
-                "{parse(document.snippet, options)}"
-            </ExpressiveCard>
+                {parse(`"${document.snippet}"`, options)}
+            </ProductiveCard>
         </div >)
 }
 
