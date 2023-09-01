@@ -9,6 +9,7 @@ mod notifications;
 mod search;
 mod tasks;
 mod tags; 
+mod collections;
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
     pub manager: Arc<LibraryManager>,
@@ -27,6 +28,7 @@ pub fn new() -> Arc<Router> {
         .merge("search.", search::mount())
         .merge("notifications.", notifications::mount())
         .merge("tags.", tags::mount())
+        .merge("collections.", collections::mount())
         .build()
         .arced()
 }

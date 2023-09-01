@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useState, useEffect, useRef, useCallback } from "react";
 import classnames from "classnames";
 import { settings } from "../../constants/settings";
@@ -56,10 +57,7 @@ import {
 import { Theme } from "@carbon/react";
 
 
-type Props = {
-};
-
-const TitleBar = (props: Props) => {
+const TitleBar = () => {
 
 
   const minimize = useCallback(() => {

@@ -16,11 +16,10 @@ import { Document, Page } from 'react-pdf';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { invoke } from "@tauri-apps/api"
 import useThemeStore from '../../../Stores/themeStore';
+import { defaultPageHeaderProps } from '../../../constants/defaultPageHeader';
 
 dayjs.extend(relative);
 dayjs.locale('pt-br') // use locale
-
-
 
 const index = () => {
 
@@ -28,14 +27,8 @@ const index = () => {
     const id_number = parseInt(id)
     const {theme} = useThemeStore();
 
-
-
-
-
     const {
         data: object,
-        isLoading: isLoadingObjects,
-        error: errorObjects,
     } = rspc.useQuery(["library.get_doc_by_id", { id: id_number }]);
 
     useEffect(() => {
@@ -43,40 +36,16 @@ const index = () => {
             if (object?.path) {
                 const data = await invoke('extend_scope', { path: object.path });
             }
-
         }
         extend_scope()
     }, [object])
-
-    console.log(object?.path)
-
-
-    const [numPages, setNumPages] = useState<number>();
-    const [pageNumber, setPageNumber] = useState<number>(1);
-
-    function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
-        setNumPages(numPages);
-    }
-
-
-
-
-    // const [selectedCollection, setSelectedCollection] = useState(collections[0]);
-    // const [selectedSpace, setSelectedSpace] = useState(spaces[0]);
-    // const [selectedDocument, setSelectedDocument] = useState(null);
-
 
 
     return (
         <div>
             <Theme theme={theme}>
                 <PageHeader
-                    actionBarOverflowAriaLabel="Mostrar outras ações"
-                    fullWidthGrid
-                    allTagsModalSearchLabel="Pesquisar todas as tags"
-                    allTagsModalSearchPlaceholderText="Digite o termo de pesquisa"
-                    allTagsModalTitle="Todas as tags"
-                    breadcrumbOverflowAriaLabel="Abrir e fechar lista de itens de rota de navegação adicionais."
+                    {...defaultPageHeaderProps}
                     breadcrumbs={[
                         {
                             href: "/Data",
@@ -90,11 +59,6 @@ const index = () => {
                         },
 
                     ]}
-                    collapseHeaderIconDescription="Recolher o cabeçalho da página"
-                    expandHeaderIconDescription="Expandir o cabeçalho da página"
-                    pageActionsOverflowLabel="Mostrar mais ações da página"
-                    collapseTitle
-                    showAllTagsLabel="Mostrar todas as tags"
                     title={"Bem vindo, Lucas!"}
                     subtitle={
                         "Aqui você pode buscar seus documentos."

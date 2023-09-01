@@ -46,15 +46,37 @@ model Object {
   thumbnail_path String?
   thumbnail      Boolean?
 
-  tags       TagOnObject[]
-  labels     LabelOnObject[]
+  tags         TagOnObject[]
+  labels       LabelOnObject[]
   //Every object belongs to a location and every location belongs to a library
-  Library    Library         @relation(fields: [libraryId], references: [uuid])
-  libraryId  String
-  Locations  Location        @relation(fields: [locationId], references: [uuid])
-  locationId String
+  Library      Library         @relation(fields: [libraryId], references: [uuid])
+  libraryId    String
+  Locations    Location        @relation(fields: [locationId], references: [uuid])
+  locationId   String
+  Collection   Collection?     @relation(fields: [collectionId], references: [id])
+  collectionId Int?
 
   @@map("Object")
+}
+
+model Collection {
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
+  //Every collection belongs to a library
+  Library   Library @relation(fields: [libraryId], references: [uuid])
+  libraryId String
+
+  //The collection can contain multiple locations (which can be either files or folders)
+  Locations Location[]
+
+  name          String?
+  date_created  DateTime?
+  date_modified DateTime?
+
+  Objects Object[]
+
+  @@map("collection")
 }
 
 model Location {
@@ -70,10 +92,11 @@ model Location {
   hidden                 Boolean?
   date_created           DateTime?
 
-  instance_id Int?
-  Library     Library? @relation(fields: [libraryId], references: [id])
-  libraryId   Int?
-  Object      Object[]
+  Library      Library?    @relation(fields: [libraryId], references: [id])
+  libraryId    Int?
+  Object       Object[]
+  Collection   Collection? @relation(fields: [collectionId], references: [id])
+  collectionId Int?
 
   @@map("location")
 }
@@ -89,7 +112,8 @@ model Library {
   // the library can contain multiple locations. 
   locations Location[]
 
-  Objects Object[]
+  Objects    Object[]
+  Collection Collection[]
 
   @@map("library")
 }
