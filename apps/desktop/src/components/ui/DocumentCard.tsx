@@ -42,11 +42,17 @@ interface DocumentCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const DocumentCard: FC<DocumentCardProps> = ({ document, setSelectedObject, setOpen, open, tags, ...rest }) => {
     const { theme } = useThemeStore();
-
+    const navigate = useNavigate();
     const handleDocumentEditClick = (document) => {
         setSelectedObject(document);
         setOpen(!open);
     }
+
+    const handleDocumentViewClick = (e) => {
+        e.preventDefault();
+        navigate(`/Data/${document.object.id}`);
+    }
+
 
     const options = {
         transform: (reactNode, domNode, index) => {
@@ -79,10 +85,10 @@ const DocumentCard: FC<DocumentCardProps> = ({ document, setSelectedObject, setO
                         icon: (props) => <Edit {...props} />,
                         iconDescription: 'Editar',
                         id: '1',
-                        onClick: () => handleDocumentEditClick(document)
+                        onClick: () => handleDocumentEditClick(document),
                     },
                     {
-                        href: `/Data/${document.object.id}`,
+                        onClick: (e) => handleDocumentViewClick(e),
                         icon: (props) => <ArrowRight {...props} />,
                         iconDescription: 'Ver documento...',
                         id: '2'
