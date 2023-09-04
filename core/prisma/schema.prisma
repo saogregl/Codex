@@ -48,11 +48,11 @@ model Object {
 
   tags         TagOnObject[]
   labels       LabelOnObject[]
-  //Every object belongs to a location and every location belongs to a library
-  Library      Library         @relation(fields: [libraryId], references: [uuid])
-  libraryId    String
-  Locations    Location        @relation(fields: [locationId], references: [uuid])
-  locationId   String
+  //Every object belongs to a location and every location belongs to a collection
+  Library      Library         @relation(fields: [libraryId], references: [id])
+  libraryId    Int
+  Locations    Location        @relation(fields: [locationId], references: [id])
+  locationId   Int
   Collection   Collection     @relation(fields: [collectionId], references: [id])
   collectionId Int
 

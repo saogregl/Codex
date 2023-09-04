@@ -1,7 +1,7 @@
 use notify::{Config, Error, Event, RecommendedWatcher, Watcher};
 use std::{path::Path, sync::mpsc::Receiver, time::Duration};
 
-use crate::library::{Library, LocalLibrary};
+use crate::library::LocalLibrary;
 
 #[derive(Debug)]
 pub struct LibraryWatcher {

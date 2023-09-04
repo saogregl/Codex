@@ -1,6 +1,6 @@
 use super::Ctx;
 use chrono::{DateTime, Utc};
-use codex_prisma::prisma::{library, location, object};
+use codex_prisma::prisma::{collection, library, location, object};
 use log::{error, info};
 use rspc::{Error, ErrorCode};
 
@@ -45,7 +45,7 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .create(
                             path,
                             vec![
-                                location::library::connect(library::uuid::equals(
+                                location::collection::connect(collection::uuid::equals(
                                     library_id.clone(),
                                 )),
                                 location::name::set(Some(name)),

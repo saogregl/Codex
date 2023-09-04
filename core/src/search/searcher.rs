@@ -68,7 +68,7 @@ impl Searcher {
         query_parser.set_conjunction_by_default();
 
         Ok(Self {
-            compressor: Compressor::Brotli,
+            compressor: Compressor::Lz4,
 
             index,
             schema,
@@ -121,15 +121,15 @@ impl Searcher {
                         Some(text_path) => {
                             info!("Indexing object: {:?}", text_path);
                             if let Ok(text) = std::fs::read_to_string(&text_path) {
-                                info!("Text file found for object: {:?}", text_path); 
+                                info!("Text file found for object: {:?}", text_path);
                                 let mut doc = Document::default();
                                 doc.add_text(
                                     self.title,
                                     &object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string()),
                                 );
                                 doc.add_text(self.body, &text);
-                                
-                                if let Ok(doc) = index_writer.add_document(doc){
+
+                                if let Ok(doc) = index_writer.add_document(doc) {
                                     info!("Document added to index: {:?}", doc);
                                 } else {
                                     info!("Document not added to index");
@@ -177,7 +177,8 @@ impl Searcher {
             object
                 .obj_name
                 .as_ref()
-                .ok_or("every object needs a name").unwrap(),
+                .ok_or("every object needs a name")
+                .unwrap(),
         );
         text_path.set_extension("txt");
         Ok(text_path)
@@ -216,9 +217,11 @@ impl Searcher {
 
             let title = retrieved_doc
                 .get_first(self.title)
-                .ok_or("Title field not found in document").unwrap()
+                .ok_or("Title field not found in document")
+                .unwrap()
                 .as_text()
-                .ok_or("Title field is not a text field").unwrap();
+                .ok_or("Title field is not a text field")
+                .unwrap();
 
             // Fetch object by its name
             let obj = self
@@ -266,27 +269,5 @@ impl Searcher {
         let snippet_html: String = snippet.to_html();
 
         Ok(snippet_html)
-    }
-
-    pub fn set_compressor(&mut self, compressor: &str) {
-        let compressor = match compressor {
-            "none" => Compressor::None,
-            "lz4" => Compressor::Lz4,
-            "brotli" => Compressor::Brotli,
-            "snappy" => Compressor::Snappy,
-            _ => {
-                if compressor.starts_with("zstd") {
-                    Compressor::Zstd(ZstdCompressor::default())
-                } else {
-                    println!(
-                        "compressor not valid: {:#?}",
-                        ["none", "lz4", "brotli", "snappy", "zstd",]
-                    );
-                    std::process::exit(1);
-                }
-            }
-        };
-
-        self.index.settings_mut().docstore_compression = compressor;
     }
 }

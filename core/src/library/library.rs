@@ -97,7 +97,7 @@ pub struct LocalLibrary {
     pub name: String,
     pub description: Option<String>,
     pub db: Arc<PrismaClient>,
-    pub notificationManager: Arc<NotificationManager>,
+    pub notification_manager: Arc<NotificationManager>,
 }
 
 impl LocalLibrary {
@@ -107,7 +107,7 @@ impl LocalLibrary {
         name: String,
         description: Option<String>,
         db: Arc<PrismaClient>,
-        notificationManager: Arc<NotificationManager>,
+        notification_manager: Arc<NotificationManager>,
     ) -> Result<Arc<Self>, anyhow::Error> {
         //This library is not meant to be used to create new library objects.
         //It's meant to be used to load existing library objects from the database.
@@ -118,7 +118,7 @@ impl LocalLibrary {
         // Double check that the library exists in the database.
         let library = db
             .library()
-            .find_unique(prisma::library::id::equals(id.to_string()))
+            .find_unique(prisma::library::id::equals(id.clone()))
             .exec()
             .await?;
 
@@ -134,7 +134,7 @@ impl LocalLibrary {
             name,
             description,
             db,
-            notificationManager: Arc::clone(&notificationManager),
+            notification_manager: Arc::clone(&notificationManager),
         };
 
         library.index_objects().await?;
@@ -255,6 +255,8 @@ impl LocalLibrary {
         info!("New files: {:?}", new_files);
         info!("Deleted files: {:?}", deleted_files);
 
+
+
         // If there are no changes, we don't need to do anything.
         if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
             return Ok(());
@@ -302,6 +304,10 @@ impl LocalLibrary {
 
         // We'll then add the new files.
         // Step 1: Group files by location path
+        //TODO: We can't group by location anymore, we need to group by collection.
+
+        
+
         let mut files_by_location: HashMap<String, Vec<PathBuf>> = HashMap::new();
         for file in new_files {
             match extract_location_path(file.clone()) {
@@ -330,7 +336,7 @@ impl LocalLibrary {
             .await?;
 
         // get this location collection: 
-        let collection = self.db.collection().find_first(vec![collection::locations::])
+        // let collection = self.db.collection().find_first(vec![collection::locations::])
 
         // Step 3: Insert new files
         for location in locations {
@@ -355,7 +361,7 @@ impl LocalLibrary {
                         .create(
                             library::uuid::equals(self.id.to_string()),
                             location::uuid::equals(location.uuid.clone()),
-                            collection::id::equals()
+                            collection::id::equals(1), // Fix
                             vec![
                                 object::uuid::set(Uuid::new_v4().to_string()),
                                 object::obj_name::set(Some(file_name.to_string())),
@@ -480,6 +486,8 @@ impl LocalLibrary {
         //Get all collections belonging to this library: 
         let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::uuid::equals(self.id.to_string())])]).exec().await?;
 
+        //for each collection, get all locations:
+         
         let locations = self
             .db
             .location()
@@ -595,28 +603,26 @@ impl LocalLibrary {
         Ok(locations)
     }
 
-    pub async fn check_collection_for_changes(&self, collection_id: i32) -> Result<(), anyhow::Error> {
+    pub async fn update_collection_objects(&self, collection_id: i32) -> Result<(), anyhow::Error> {
+        //get the collection
         let collection = self.db.collection().find_unique(collection::id::equals(collection_id)).exec().await?;
+            //get the locations for the collection
+        let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection_id)])]).exec().await?;
 
-        if let Some(collection) = collection {
-            let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection_id)])]).exec().await?;
+        for location in locations {
+            let (changed_files, new_files, deleted_files) = self.check_location_for_changes(location).await?;
+            //First we need to compare thje objects in the database with the objects in the file system.
 
-            for location in locations {
-                let objects = self.db.object().find_many(vec![object::locations::is(vec![location::uuid::equals(location.uuid)])]).exec().await?;
+            //Then we need to update the database with the changes.
 
-                for object in objects {
-                    let file_path = PathBuf::from(object.path.unwrap_or("".to_string()));
-                    let metadata = fs::metadata(file_path.clone())?;
-                    let date_modified = metadata
-                        .modified()?
-                        .duration_since(SystemTime::UNIX_EPOCH)?
-                        .as_secs();
+            // If there are no changes, we don't need to do anything.
+            if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
+                return Ok(());
+            
 
-                    if date_modified > object.date_modified.unwrap_or(0) as u64 {
-                        //File has changed, update the database.
-                        self.db.object().update(object::uuid::equals(object.uuid), vec![object::date_modified::set(Some(Utc::now().into()))]).exec().await?;
-                    }
-                }
+
+
+
             }
         }
 
@@ -660,6 +666,57 @@ impl LocalLibrary {
             .iter()
             .map(|fp| Path::new(&fp.path.as_ref().unwrap()).to_path_buf())
             .collect();
+        let fs_file_paths_set: HashSet<PathBuf> =   fs_file_paths.into_iter().collect();
+
+        for new_file in fs_file_paths_set.difference(&db_objects_set) {
+            new_files.push(new_file.clone());
+        }
+
+        for deleted_file in db_objects_set.difference(&fs_file_paths_set) {
+            deleted_files.push(deleted_file.clone());
+        }
+
+        Ok((changed_files, new_files, deleted_files))
+    }
+
+    pub async fn check_location_for_changes(
+        &self,
+        location: location::Data,
+    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), anyhow::Error> {
+        let changed_files = Vec::new();
+        let mut new_files = Vec::new();
+        let mut deleted_files = Vec::new();
+
+        // Fetch all file paths from the library. Those are technically objects.
+        let db_objects = self.db.object().find_many(vec![object::locations::is(vec![location::id::equals(location.id)])]).exec().await?;
+
+        // Collect file paths from the file system
+        let mut fs_file_paths = Vec::new();
+        for location in self.get_locations().await? {
+            // Assuming get_locations() returns a list of directories to scan
+            for entry in fs::read_dir(location)? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_file() {
+                    fs_file_paths.push(path);
+                }
+            }
+        }
+
+        info!(
+            "Found {:?} files in the library",
+            db_objects
+                .iter()
+                .map(|fp| fp.path.as_ref().unwrap())
+                .collect::<Vec<&String>>()
+        );
+        info!("Found {:?} files in the file system", fs_file_paths);
+
+        // Check for new and deleted files
+        let db_objects_set: HashSet<PathBuf> = db_objects
+            .iter()
+            .map(|fp| Path::new(&fp.path.as_ref().unwrap()).to_path_buf())
+            .collect();
         let fs_file_paths_set: HashSet<PathBuf> = fs_file_paths.into_iter().collect();
 
         for new_file in fs_file_paths_set.difference(&db_objects_set) {
@@ -673,6 +730,7 @@ impl LocalLibrary {
         Ok((changed_files, new_files, deleted_files))
     }
 
+
     //This library will check if the files in the library have changed since the last time the library was indexed.
     //If they have, it will update the library.
     //If they haven't, it will do nothing.
@@ -681,7 +739,7 @@ impl LocalLibrary {
         &self,
         notification: CodexNotification,
     ) -> Result<(), anyhow::Error> {
-        self.notificationManager
+        self.notification_manager
             ._internal_emit(notification)
             .await?;
 
