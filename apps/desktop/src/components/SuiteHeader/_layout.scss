@@ -11,6 +11,9 @@ $sipePrefix: "sipe";
 //     background-color: black;
 //   }
 // }
+.cds--side-nav__link-text {
+  width: 100% !important;
+}
 
 .#{$sipePrefix}--header-subtitle {
   border-left: 1px solid theme.$layer-accent-01;

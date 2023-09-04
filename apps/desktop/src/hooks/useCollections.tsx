@@ -1,23 +1,18 @@
-// import { useState } from "react";
-// import rspc from "../lib/query";
+import rspc from "../lib/query";
 
-// const useDocuments = () => {
+const useCollections = () => {
+    
+	const {
+		data: collections,
+		isLoading: isLoadingcollections,
+		error: errorCollections,
+	} = rspc.useQuery(["collections.get_all_collections"]);
 
-//     const [query, setQuery] = useState("teste");
+	return {
+		collections,
+		isLoadingcollections,
+		errorCollections,
+	};
+};
 
-//     const {
-//         data: objects,
-//         isLoading: isLoadingObjects,
-//         error: errorObjects,
-//     } = rspc.useQuery(["library.get_all"]);
-
-
-//     return {
-//         objects,
-//         isLoadingObjects,
-//         errorObjects,
-//         setQuery
-//     }
-// }
-
-// export default useDocuments;
+export default useCollections;

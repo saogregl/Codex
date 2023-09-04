@@ -61,6 +61,7 @@ impl LibraryManager {
 
                 match LocalLibrary::new(
                     uuid_lib,
+                    library.id.clone(),
                     name.clone(),
                     Some(name.clone()),
                     Arc::clone(&db),
@@ -124,7 +125,7 @@ impl LibraryManager {
         let _ = self.searcher.index(&self.libraries).await?;
         Ok(())
     }
-    
+
     pub async fn update_library(&self, lib_uuid: String) -> Result<(), anyhow::Error> {
         if let Some(lib) = self
             .libraries

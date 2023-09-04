@@ -12,7 +12,7 @@ use crate::{
 
 use anyhow::anyhow;
 use chrono::{TimeZone, Utc};
-use codex_prisma::prisma::{self, library, location, PrismaClient};
+use codex_prisma::prisma::{self, library, location, PrismaClient, object::extension, collection};
 use futures::future::try_join_all;
 use log::{error, info};
 use std::collections::HashSet;
@@ -92,7 +92,8 @@ use super::notification::{CodexNotification, NotificationManager};
 
 #[derive(Debug, Clone)]
 pub struct LocalLibrary {
-    pub id: Uuid,
+    pub uuid: Uuid,
+    pub id: i32, 
     pub name: String,
     pub description: Option<String>,
     pub db: Arc<PrismaClient>,
@@ -101,7 +102,8 @@ pub struct LocalLibrary {
 
 impl LocalLibrary {
     pub async fn new(
-        id: Uuid,
+        uuid: Uuid,
+        id: i32, 
         name: String,
         description: Option<String>,
         db: Arc<PrismaClient>,
@@ -116,7 +118,7 @@ impl LocalLibrary {
         // Double check that the library exists in the database.
         let library = db
             .library()
-            .find_unique(prisma::library::uuid::equals(id.to_string()))
+            .find_unique(prisma::library::id::equals(id.to_string()))
             .exec()
             .await?;
 
@@ -127,6 +129,7 @@ impl LocalLibrary {
         }
 
         let library = LocalLibrary {
+            uuid,
             id,
             name,
             description,
@@ -139,8 +142,30 @@ impl LocalLibrary {
         Ok(Arc::new(library))
     }
 
-    pub async fn add_location(&self, path: PathBuf) -> Result<(), anyhow::Error> {
-        let path = path.to_str().unwrap();
+    pub async fn add_collection(&self, name: String) -> Result<(), anyhow::Error> {
+        let this_library_id = self.id.to_string();
+
+        let _collection = self
+            .db
+            .collection()
+            .create(
+                library::uuid::equals(this_library_id.to_string()),
+                vec![
+                    collection::name::set(Some(name.to_string())),
+                ], 
+            )
+            .exec()
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn add_location(&self, path: PathBuf, collection_id: i32) -> Result<(), anyhow::Error> {
+        //TODO: Should check if the location already exists in the database.
+        //TODO: Should check if the location is a file or a directory.
+        //TODO: Add a flag for recursive adding of files in the directory (if it is indeed a directory).
+        let is_dir = path.is_dir();
+        let path = path.to_str().ok_or_else(|| anyhow!("Invalid path"))?;
 
         let this_library_id = self.id.to_string();
 
@@ -149,21 +174,24 @@ impl LocalLibrary {
             .location()
             .create(
                 path.to_string(),
-                vec![location::library::connect(library::uuid::equals(
-                    this_library_id.clone(),
-                ))],
+                vec![location::collection::connect(collection::id::equals(collection_id.clone())),
+                    location::is_dir::set(Some(is_dir))],
             )
             .exec()
             .await?;
 
-        //Add all the files in the location to the library.
+        //Add all the files in the location to the collection.
         let mut files = Vec::new();
-        for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_file() {
-                files.push(path);
+        if(is_dir) {
+            for entry in fs::read_dir(path)? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_file() {
+                    files.push(path);
+                }
             }
+        } else { 
+            files.push(PathBuf::from(path));
         }
 
         for file in files {
@@ -181,6 +209,7 @@ impl LocalLibrary {
                 .create(
                     library::uuid::equals(this_library_id.to_string()),
                     location::uuid::equals(location_db.uuid.clone()),
+                    collection::id::equals(collection_id.clone()),
                     vec![
                         object::uuid::set(Uuid::new_v4().to_string()),
                         object::obj_name::set(Some(file_name.to_string())),
@@ -300,6 +329,9 @@ impl LocalLibrary {
             .exec()
             .await?;
 
+        // get this location collection: 
+        let collection = self.db.collection().find_first(vec![collection::locations::])
+
         // Step 3: Insert new files
         for location in locations {
             if let Some(files) = files_by_location.get(&location.path) {
@@ -311,14 +343,19 @@ impl LocalLibrary {
                         .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs();
-                    let extension = file.extension().unwrap().to_str().unwrap();
 
-                    let _object = self
+                    //Handle extension errors: 
+
+                    let extension = file.extension(); 
+                    if let Some(extension) = extension {
+                        let extension = extension.to_str().unwrap();
+                        let _object = self
                         .db
                         .object()
                         .create(
                             library::uuid::equals(self.id.to_string()),
                             location::uuid::equals(location.uuid.clone()),
+                            collection::id::equals()
                             vec![
                                 object::uuid::set(Uuid::new_v4().to_string()),
                                 object::obj_name::set(Some(file_name.to_string())),
@@ -334,11 +371,19 @@ impl LocalLibrary {
                         )
                         .exec()
                         .await?;
-
                     self.emit_notification(CodexNotification::new(
                         format!("{}{}", "added file:".to_string(), file.to_str().unwrap()),
                         NotificationType::FileAdded,
                     )).await?; 
+                    } else {
+                        self.emit_notification(CodexNotification::new(
+                            format!("{}{}", "Could not add file:".to_string(), file.to_str().unwrap()),
+                            NotificationType::IndexingFailed,
+                        )).await?; 
+    
+                        error!("Failed to get extension for file: {:?}", file);
+                    }
+
 
                 }
             }
@@ -348,12 +393,12 @@ impl LocalLibrary {
     }
 
     pub async fn generate_thumbnails(&self) -> Result<(), anyhow::Error> {
+        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::id::equals(self.id)])]).exec().await?;
+
         let locations = self
             .db
             .location()
-            .find_many(vec![location::library::is(vec![
-                prisma::library::uuid::equals(self.id.to_string()),
-            ])])
+            .find_many(vec![location::collection::is(vec![collection::id::in_vec(collections.iter().map(|collection| collection.id.clone()).collect())])])
             .exec()
             .await?;
 
@@ -430,11 +475,16 @@ impl LocalLibrary {
     }
 
     pub async fn parse_objects(&self) -> Result<(), anyhow::Error> {
+
+
+        //Get all collections belonging to this library: 
+        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::uuid::equals(self.id.to_string())])]).exec().await?;
+
         let locations = self
             .db
             .location()
-            .find_many(vec![location::library::is(vec![
-                prisma::library::uuid::equals(self.id.to_string()),
+            .find_many(vec![location::collection::is(vec![
+                collection::id::in_vec(collections.iter().map(|collection| collection.id.clone()).collect()),
             ])])
             .exec()
             .await?;
@@ -476,16 +526,16 @@ impl LocalLibrary {
                                                 .exec()
                                                 .await
                                             {
-                                                error!("Database update error: {:?} for parsed object {:?}", e, parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
+                                                error!("Database update error: {:?} for parsed object {:?}", e, parsed.clone().into_os_string().to_string_lossy());
                                                 self.emit_notification(CodexNotification::new(
-                                                    format!("{}{}", "parse error".to_string(), parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?),
+                                                    format!("{}{}", "parse error".to_string(), parsed.clone().into_os_string().to_string_lossy()),
                                                     NotificationType::ParsingError,
                                                 ))
                                                 .await?
                                             } else {
-                                                info!("Parsed object: {:?}", parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?);
+                                                info!("Parsed object: {:?}", parsed.clone().into_os_string().to_string_lossy());
                                                 self.emit_notification(CodexNotification::new(
-                                                    format!("{}{}", "parsed object".to_string(), parsed.to_str().ok_or_else(|| anyhow!("Failed to convert path to str"))?),
+                                                    format!("{}{}", "parsed object".to_string(), parsed.clone().into_os_string().to_string_lossy()),
                                                     NotificationType::ObjectParsed,
                                                 ))
                                                 .await?
@@ -543,6 +593,34 @@ impl LocalLibrary {
         }
 
         Ok(locations)
+    }
+
+    pub async fn check_collection_for_changes(&self, collection_id: i32) -> Result<(), anyhow::Error> {
+        let collection = self.db.collection().find_unique(collection::id::equals(collection_id)).exec().await?;
+
+        if let Some(collection) = collection {
+            let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection_id)])]).exec().await?;
+
+            for location in locations {
+                let objects = self.db.object().find_many(vec![object::locations::is(vec![location::uuid::equals(location.uuid)])]).exec().await?;
+
+                for object in objects {
+                    let file_path = PathBuf::from(object.path.unwrap_or("".to_string()));
+                    let metadata = fs::metadata(file_path.clone())?;
+                    let date_modified = metadata
+                        .modified()?
+                        .duration_since(SystemTime::UNIX_EPOCH)?
+                        .as_secs();
+
+                    if date_modified > object.date_modified.unwrap_or(0) as u64 {
+                        //File has changed, update the database.
+                        self.db.object().update(object::uuid::equals(object.uuid), vec![object::date_modified::set(Some(Utc::now().into()))]).exec().await?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub async fn check_for_changes(

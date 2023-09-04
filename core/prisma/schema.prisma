@@ -53,8 +53,8 @@ model Object {
   libraryId    String
   Locations    Location        @relation(fields: [locationId], references: [uuid])
   locationId   String
-  Collection   Collection?     @relation(fields: [collectionId], references: [id])
-  collectionId Int?
+  Collection   Collection     @relation(fields: [collectionId], references: [id])
+  collectionId Int
 
   @@map("Object")
 }
@@ -91,9 +91,9 @@ model Location {
   generate_preview_media Boolean?
   hidden                 Boolean?
   date_created           DateTime?
+  is_dir                 Boolean?
+  recursive              Boolean?
 
-  Library      Library?    @relation(fields: [libraryId], references: [id])
-  libraryId    Int?
   Object       Object[]
   Collection   Collection? @relation(fields: [collectionId], references: [id])
   collectionId Int?
@@ -108,9 +108,6 @@ model Library {
   redundancy_goal Int?
   date_created    DateTime?
   date_modified   DateTime?
-
-  // the library can contain multiple locations. 
-  locations Location[]
 
   Objects    Object[]
   Collection Collection[]
