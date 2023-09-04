@@ -134,7 +134,7 @@ impl LocalLibrary {
             name,
             description,
             db,
-            notification_manager: Arc::clone(&notificationManager),
+            notification_manager: Arc::clone(&notification_manager),
         };
 
         library.index_objects().await?;
@@ -250,25 +250,12 @@ impl LocalLibrary {
 
     pub async fn index_objects(&self) -> Result<(), anyhow::Error> {
         info!("Indexing objects for library: {}", self.name);
-        let (changed_files, new_files, deleted_files) = self.check_for_changes().await?;
-        info!("Changed files: {:?}", changed_files);
-        info!("New files: {:?}", new_files);
-        info!("Deleted files: {:?}", deleted_files);
-
-
-
-        // If there are no changes, we don't need to do anything.
-        if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
-            return Ok(());
-        }
+        let (changed_files, _, deleted_files) = self.check_for_changes().await?;
 
         let library = self.get_library().await?;
         let _library_uuid = &library.uuid;
 
-        // If there are changes, we'll update the library.
-        // We'll start by deleting the deleted files.
 
-        //TODO: Clean this up later:
         for file in deleted_files {
             if let Ok(deleted) = self
                 .db
@@ -302,46 +289,34 @@ impl LocalLibrary {
                 .await?;
         }
 
-        // We'll then add the new files.
-        // Step 1: Group files by location path
-        //TODO: We can't group by location anymore, we need to group by collection.
+
+
+        //Get all collections belonging to this library:
+        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::uuid::equals(self.id.to_string())])]).exec().await?;
+
+        for collection in collections { 
+        let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection.id)])]).exec().await?;
 
         
 
-        let mut files_by_location: HashMap<String, Vec<PathBuf>> = HashMap::new();
-        for file in new_files {
-            match extract_location_path(file.clone()) {
-                Some(location_path) => {
-                    files_by_location
-                        .entry(location_path)
-                        .or_insert_with(Vec::new)
-                        .push(file);
-                }
-                None => {
-                    error!(
-                        "Could not determine location for file: {}",
-                        file.to_str().unwrap_or("Invalid Path")
-                    );
-                }
-            }
-        }
+        // If there are changes, we'll update the library.
+        // We'll start by deleting the deleted files.
 
-        // Step 2: Fetch locations from the database
-        let location_paths: Vec<String> = files_by_location.keys().cloned().collect();
-        let locations = self
-            .db
-            .location()
-            .find_many(vec![location::path::in_vec(location_paths)])
-            .exec()
-            .await?;
+        //TODO: Clean this up later:
 
-        // get this location collection: 
-        // let collection = self.db.collection().find_first(vec![collection::locations::])
 
         // Step 3: Insert new files
         for location in locations {
-            if let Some(files) = files_by_location.get(&location.path) {
-                for file in files {
+            let (new_files) = self.check_location_for_new_files(&location).await?;
+            info!("New files: {:?}", new_files);
+    
+
+            // If there are no new files, we don't need to do anything.
+            if new_files.is_empty(){
+                continue;
+            }
+
+            for file in new_files {
                     let file_name = file.file_name().unwrap().to_str().unwrap();
                     let file_path = file.to_str().unwrap();
                     let metadata = fs::metadata(file_path)?;
@@ -361,7 +336,7 @@ impl LocalLibrary {
                         .create(
                             library::uuid::equals(self.id.to_string()),
                             location::uuid::equals(location.uuid.clone()),
-                            collection::id::equals(1), // Fix
+                            collection::id::equals(collection.id.clone()), 
                             vec![
                                 object::uuid::set(Uuid::new_v4().to_string()),
                                 object::obj_name::set(Some(file_name.to_string())),
@@ -392,8 +367,9 @@ impl LocalLibrary {
 
 
                 }
-            }
         }
+    }
+
 
         Ok(())
     }
@@ -603,31 +579,31 @@ impl LocalLibrary {
         Ok(locations)
     }
 
-    pub async fn update_collection_objects(&self, collection_id: i32) -> Result<(), anyhow::Error> {
-        //get the collection
-        let collection = self.db.collection().find_unique(collection::id::equals(collection_id)).exec().await?;
-            //get the locations for the collection
-        let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection_id)])]).exec().await?;
+    // pub async fn update_collection_objects(&self, collection_id: i32) -> Result<(), anyhow::Error> {
+    //     //get the collection
+    //     let collection = self.db.collection().find_unique(collection::id::equals(collection_id)).exec().await?;
+    //         //get the locations for the collection
+    //     let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection_id)])]).exec().await?;
 
-        for location in locations {
-            let (changed_files, new_files, deleted_files) = self.check_location_for_changes(location).await?;
-            //First we need to compare thje objects in the database with the objects in the file system.
+    //     for location in locations {
+    //         let (changed_files, new_files, deleted_files) = self.check_location_for_changes(location).await?;
+    //         //First we need to compare thje objects in the database with the objects in the file system.
 
-            //Then we need to update the database with the changes.
+    //         //Then we need to update the database with the changes.
 
-            // If there are no changes, we don't need to do anything.
-            if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
-                return Ok(());
+    //         // If there are no changes, we don't need to do anything.
+    //         if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
+    //             return Ok(());
             
 
 
 
 
-            }
-        }
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub async fn check_for_changes(
         &self,
@@ -679,13 +655,11 @@ impl LocalLibrary {
         Ok((changed_files, new_files, deleted_files))
     }
 
-    pub async fn check_location_for_changes(
+    pub async fn check_location_for_new_files(
         &self,
-        location: location::Data,
-    ) -> Result<(Vec<object::Data>, Vec<PathBuf>, Vec<PathBuf>), anyhow::Error> {
-        let changed_files = Vec::new();
+        location: &location::Data,
+    ) -> Result<(Vec<PathBuf>), anyhow::Error> {
         let mut new_files = Vec::new();
-        let mut deleted_files = Vec::new();
 
         // Fetch all file paths from the library. Those are technically objects.
         let db_objects = self.db.object().find_many(vec![object::locations::is(vec![location::id::equals(location.id)])]).exec().await?;
@@ -693,13 +667,16 @@ impl LocalLibrary {
         // Collect file paths from the file system
         let mut fs_file_paths = Vec::new();
         for location in self.get_locations().await? {
-            // Assuming get_locations() returns a list of directories to scan
-            for entry in fs::read_dir(location)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.is_file() {
-                    fs_file_paths.push(path);
+            if location.is_dir() {
+                for entry in fs::read_dir(location)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.is_file() {
+                        fs_file_paths.push(path);
+                    }
                 }
+            } else { 
+                fs_file_paths.push(location);
             }
         }
 
@@ -723,11 +700,8 @@ impl LocalLibrary {
             new_files.push(new_file.clone());
         }
 
-        for deleted_file in db_objects_set.difference(&fs_file_paths_set) {
-            deleted_files.push(deleted_file.clone());
-        }
 
-        Ok((changed_files, new_files, deleted_files))
+        Ok(new_files)
     }
 
 

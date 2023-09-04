@@ -3,6 +3,7 @@ pub use self::library::LocalLibrary;
 pub use self::manager::LibraryManager;
 // Include sub-modules
 mod library;
+mod collection; 
 mod manager;
 mod notification; 
 

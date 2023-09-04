@@ -20,10 +20,43 @@ pub fn mount() -> RouterBuilder<Ctx> {
                 ctx.client.object().find_many(vec![]).exec().await.unwrap()
             })
         })
+        .mutation("add_new_collection", |t| { 
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct AddNewCollection {
+                library_id: i32,
+                name: String,
+                description: Option<String>,
+                date_created: DateTime<Utc>,
+            }
+            t(
+                |ctx: Ctx,
+                 AddNewCollection {
+                     library_id,
+                     name,
+                     description,
+                     date_created,
+                 }: AddNewCollection| async move {
+                    ctx.client
+                        .collection()
+                        .create(
+                            library::id::equals(library_id.clone()),
+                                vec![
+                                    collection::name::set(Some(name)),
+                                    collection::date_created::set(Some(date_created.into())),
+                                    collection::date_modified::set(Some(date_created.into())),
+
+                                    ]
+                        )
+                        .exec()
+                        .await
+                        .unwrap();
+                },
+            )
+        })
         .mutation("add_new_location", |t| {
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
             struct AddNewLocation {
-                collection_id: String,
+                collection_id: i32,
                 name: String,
                 path: String,
                 is_archived: bool,
@@ -45,7 +78,7 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .create(
                             path,
                             vec![
-                                location::collection::connect(collection::uuid::equals(
+                                location::collection::connect(collection::id::equals(
                                     collection_id.clone(),
                                 )),
                                 location::name::set(Some(name)),
@@ -58,10 +91,6 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .await
                         .unwrap();
 
-                    let res = tokio::spawn(async move {
-                        let _ = ctx.manager.update_library(collection_id.clone()).await;
-                    });
-                    res.await.unwrap();
                 },
             )
         })
