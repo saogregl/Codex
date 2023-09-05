@@ -332,7 +332,7 @@ impl LocalLibrary {
 
             // Step 3: Insert new files
             for location in locations {
-                let (new_files) = self.check_location_for_new_files(&location).await?;
+                let new_files = self.check_location_for_new_files(&location).await?;
                 info!("New files: {:?}", new_files);
 
                 // If there are no new files, we don't need to do anything.
@@ -734,18 +734,16 @@ impl LocalLibrary {
 
         // Collect file paths from the file system
         let mut fs_file_paths = Vec::new();
-        for location in self.get_locations().await? {
-            if location.is_dir() {
-                for entry in fs::read_dir(location)? {
-                    let entry = entry?;
-                    let path = entry.path();
-                    if path.is_file() {
-                        fs_file_paths.push(path);
-                    }
+        if location.is_dir.unwrap_or(true) {
+            for entry in fs::read_dir(location.path.clone())? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_file() {
+                    fs_file_paths.push(path);
                 }
-            } else {
-                fs_file_paths.push(location);
             }
+        } else {
+            fs_file_paths.push(location.path.clone().into());
         }
 
         info!(
