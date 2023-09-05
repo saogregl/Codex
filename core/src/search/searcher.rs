@@ -105,14 +105,12 @@ impl Searcher {
                     .await?;
 
                 for object in objects {
-                    if std::env::var("REBUILD_INDEX").unwrap_or("FALSE".to_string()) != "TRUE" {
-                        if object.indexed.unwrap_or(false) {
-                            info!(
-                                "Object already indexed: {:?}",
-                                object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
-                            );
-                            continue;
-                        }
+                    if object.indexed.unwrap_or(false) {
+                        info!(
+                            "Object already indexed: {:?}",
+                            object.obj_name.as_ref().unwrap_or(&"Unnamed".to_string())
+                        );
+                        continue;
                     }
 
                     let text_path = object.parsed_path.clone();

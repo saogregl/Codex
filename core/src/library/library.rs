@@ -447,6 +447,10 @@ impl LocalLibrary {
                 for object in objects {
                     //check if thumbnail already exists for this object
                     if object.thumbnail.unwrap_or(false) {
+                        info!(
+                            "Thumbnail already exists for object: {:?}, skipping current iteration",
+                            object.obj_name
+                        );
                         continue;
                     }
 
@@ -553,8 +557,10 @@ impl LocalLibrary {
 
                                     let capture = object.clone();
                                     if (capture.parsed.unwrap_or(false)) {
-                                        return Ok::<_, anyhow::Error>(());
+                                        info!("object {:?} already parsed", capture);
+                                        return Ok::<_, anyhow::Error>(())
                                     }
+
                                     let parsed_result = task::spawn_blocking(move || parsing::parse_object(&capture)).await?;
                                     match parsed_result {
                                         Ok(parsed) => {
