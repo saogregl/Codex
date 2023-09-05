@@ -44,19 +44,20 @@ const index = () => {
 	const { libraries } = useLibraries();
 
 	const { isLoading, mutateAsync, isError } = rspc.useMutation(
-		"library.add_new_location",
+		"collections.create_collection_with_location",
 	);
 
 	const requestSubmit = async () => {
 		setCreateModalIsOpen(false);
 
+		//CreateCollectionWithLocation
+
 		const lib = await mutateAsync({
-			library_id: libraries[0].uuid,
+			library_id: 1,
 			name: collectionName,
 			path: selectedDirectory,
 			is_archived: false,
 			hidden: false,
-			date_created: new Date().toISOString(),
 		});
 	};
 

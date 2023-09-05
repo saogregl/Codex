@@ -53,7 +53,7 @@ model Object {
   libraryId    Int
   Locations    Location        @relation(fields: [locationId], references: [id])
   locationId   Int
-  Collection   Collection     @relation(fields: [collectionId], references: [id])
+  Collection   Collection      @relation(fields: [collectionId], references: [id])
   collectionId Int
 
   @@map("Object")
@@ -64,8 +64,8 @@ model Collection {
   uuid String @unique @default(uuid())
 
   //Every collection belongs to a library
-  Library   Library @relation(fields: [libraryId], references: [uuid])
-  libraryId String
+  Library   Library @relation(fields: [libraryId], references: [id])
+  libraryId Int
 
   //The collection can contain multiple locations (which can be either files or folders)
   Locations Location[]

@@ -44,7 +44,6 @@ pub fn get_extension(file_path: &str) -> String {
 }
 
 pub fn extension_to_object_type(extension: &str) -> ObjectType {
-
     //always lowercase extension
     let binding = extension.clone().to_lowercase();
     let extension = binding.as_str();

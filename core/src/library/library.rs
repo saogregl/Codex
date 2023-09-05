@@ -12,7 +12,7 @@ use crate::{
 
 use anyhow::anyhow;
 use chrono::{TimeZone, Utc};
-use codex_prisma::prisma::{self, library, location, PrismaClient, object::extension, collection};
+use codex_prisma::prisma::{self, collection, library, location, object::extension, PrismaClient};
 use futures::future::try_join_all;
 use log::{error, info};
 use std::collections::HashSet;
@@ -93,7 +93,7 @@ use super::notification::{CodexNotification, NotificationManager};
 #[derive(Debug, Clone)]
 pub struct LocalLibrary {
     pub uuid: Uuid,
-    pub id: i32, 
+    pub id: i32,
     pub name: String,
     pub description: Option<String>,
     pub db: Arc<PrismaClient>,
@@ -103,7 +103,7 @@ pub struct LocalLibrary {
 impl LocalLibrary {
     pub async fn new(
         uuid: Uuid,
-        id: i32, 
+        id: i32,
         name: String,
         description: Option<String>,
         db: Arc<PrismaClient>,
@@ -116,6 +116,9 @@ impl LocalLibrary {
         //To create new library objects, refer to the libraryManager.
 
         // Double check that the library exists in the database.
+
+        info!("creating new library: {} with id: {}", name, id);
+
         let library = db
             .library()
             .find_unique(prisma::library::id::equals(id.clone()))
@@ -125,6 +128,7 @@ impl LocalLibrary {
         info!("Loaded library: {:?}", library);
 
         if library.is_none() {
+            info!("Library not found: {}", id);
             error!("Library not found");
         }
 
@@ -150,9 +154,7 @@ impl LocalLibrary {
             .collection()
             .create(
                 library::uuid::equals(this_library_id.to_string()),
-                vec![
-                    collection::name::set(Some(name.to_string())),
-                ], 
+                vec![collection::name::set(Some(name.to_string()))],
             )
             .exec()
             .await?;
@@ -160,7 +162,11 @@ impl LocalLibrary {
         Ok(())
     }
 
-    pub async fn add_location(&self, path: PathBuf, collection_id: i32) -> Result<(), anyhow::Error> {
+    pub async fn add_location(
+        &self,
+        path: PathBuf,
+        collection_id: i32,
+    ) -> Result<(), anyhow::Error> {
         //TODO: Should check if the location already exists in the database.
         //TODO: Should check if the location is a file or a directory.
         //TODO: Add a flag for recursive adding of files in the directory (if it is indeed a directory).
@@ -174,15 +180,17 @@ impl LocalLibrary {
             .location()
             .create(
                 path.to_string(),
-                vec![location::collection::connect(collection::id::equals(collection_id.clone())),
-                    location::is_dir::set(Some(is_dir))],
+                vec![
+                    location::collection::connect(collection::id::equals(collection_id.clone())),
+                    location::is_dir::set(Some(is_dir)),
+                ],
             )
             .exec()
             .await?;
 
         //Add all the files in the location to the collection.
         let mut files = Vec::new();
-        if(is_dir) {
+        if (is_dir) {
             for entry in fs::read_dir(path)? {
                 let entry = entry?;
                 let path = entry.path();
@@ -190,7 +198,7 @@ impl LocalLibrary {
                     files.push(path);
                 }
             }
-        } else { 
+        } else {
             files.push(PathBuf::from(path));
         }
 
@@ -237,7 +245,7 @@ impl LocalLibrary {
         let library = self
             .db
             .library()
-            .find_unique(prisma::library::uuid::equals(self.id.to_string()))
+            .find_unique(prisma::library::id::equals(self.id))
             .exec()
             .await?;
 
@@ -254,7 +262,6 @@ impl LocalLibrary {
 
         let library = self.get_library().await?;
         let _library_uuid = &library.uuid;
-
 
         for file in deleted_files {
             if let Ok(deleted) = self
@@ -289,34 +296,51 @@ impl LocalLibrary {
                 .await?;
         }
 
-
-
         //Get all collections belonging to this library:
-        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::uuid::equals(self.id.to_string())])]).exec().await?;
+        let collections = self
+            .db
+            .collection()
+            .find_many(vec![collection::library::is(vec![library::id::equals(
+                self.id,
+            )])])
+            .exec()
+            .await?;
 
-        for collection in collections { 
-        let locations = self.db.location().find_many(vec![location::collection::is(vec![collection::id::equals(collection.id)])]).exec().await?;
+        info!(
+            "Found collections: {:?} belonging to this library",
+            collections
+        );
 
-        
+        for collection in collections {
+            let locations = self
+                .db
+                .location()
+                .find_many(vec![location::collection::is(vec![
+                    collection::id::equals(collection.id),
+                ])])
+                .exec()
+                .await?;
+            info!(
+                "Found locations: {:?} belonging to this collection",
+                locations
+            );
 
-        // If there are changes, we'll update the library.
-        // We'll start by deleting the deleted files.
+            // If there are changes, we'll update the library.
+            // We'll start by deleting the deleted files.
 
-        //TODO: Clean this up later:
+            //TODO: Clean this up later:
 
+            // Step 3: Insert new files
+            for location in locations {
+                let (new_files) = self.check_location_for_new_files(&location).await?;
+                info!("New files: {:?}", new_files);
 
-        // Step 3: Insert new files
-        for location in locations {
-            let (new_files) = self.check_location_for_new_files(&location).await?;
-            info!("New files: {:?}", new_files);
-    
+                // If there are no new files, we don't need to do anything.
+                if new_files.is_empty() {
+                    continue;
+                }
 
-            // If there are no new files, we don't need to do anything.
-            if new_files.is_empty(){
-                continue;
-            }
-
-            for file in new_files {
+                for file in new_files {
                     let file_name = file.file_name().unwrap().to_str().unwrap();
                     let file_path = file.to_str().unwrap();
                     let metadata = fs::metadata(file_path)?;
@@ -325,62 +349,85 @@ impl LocalLibrary {
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs();
 
-                    //Handle extension errors: 
+                    //Handle extension errors:
 
-                    let extension = file.extension(); 
+                    let extension = file.extension();
                     if let Some(extension) = extension {
                         let extension = extension.to_str().unwrap();
-                        let _object = self
-                        .db
-                        .object()
-                        .create(
-                            library::uuid::equals(self.id.to_string()),
-                            location::uuid::equals(location.uuid.clone()),
-                            collection::id::equals(collection.id.clone()), 
-                            vec![
-                                object::uuid::set(Uuid::new_v4().to_string()),
-                                object::obj_name::set(Some(file_name.to_string())),
-                                object::path::set(Some(file_path.to_string())),
-                                object::extension::set(Some(extension.to_string())),
-                                object::indexed::set(Some(false)),
-                                object::date_modified::set(Some(
-                                    Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
-                                        .unwrap()
-                                        .into(),
-                                )),
-                            ],
-                        )
-                        .exec()
+                        if let Ok(_object) = self
+                            .db
+                            .object()
+                            .create(
+                                library::id::equals(self.id),
+                                location::uuid::equals(location.uuid.clone()),
+                                collection::id::equals(collection.id.clone()),
+                                vec![
+                                    object::uuid::set(Uuid::new_v4().to_string()),
+                                    object::obj_name::set(Some(file_name.to_string())),
+                                    object::path::set(Some(file_path.to_string())),
+                                    object::extension::set(Some(extension.to_string())),
+                                    object::indexed::set(Some(false)),
+                                    object::date_modified::set(Some(
+                                        Utc.timestamp_millis_opt(date_modified.try_into().unwrap())
+                                            .unwrap()
+                                            .into(),
+                                    )),
+                                ],
+                            )
+                            .exec()
+                            .await
+                        {
+                            info!("Added file: {:?}", file);
+                        } else {
+                            error!("Failed to add file: {:?} to library id: {}, to location uuid: {} and collection id: {}", file, self.id, location.uuid, collection.id);
+                        };
+
+                        self.emit_notification(CodexNotification::new(
+                            format!("{}{}", "added file:".to_string(), file.to_str().unwrap()),
+                            NotificationType::FileAdded,
+                        ))
                         .await?;
-                    self.emit_notification(CodexNotification::new(
-                        format!("{}{}", "added file:".to_string(), file.to_str().unwrap()),
-                        NotificationType::FileAdded,
-                    )).await?; 
                     } else {
                         self.emit_notification(CodexNotification::new(
-                            format!("{}{}", "Could not add file:".to_string(), file.to_str().unwrap()),
+                            format!(
+                                "{}{}",
+                                "Could not add file:".to_string(),
+                                file.to_str().unwrap()
+                            ),
                             NotificationType::IndexingFailed,
-                        )).await?; 
-    
+                        ))
+                        .await?;
+
                         error!("Failed to get extension for file: {:?}", file);
                     }
-
-
                 }
+            }
         }
-    }
-
 
         Ok(())
     }
 
     pub async fn generate_thumbnails(&self) -> Result<(), anyhow::Error> {
-        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::id::equals(self.id)])]).exec().await?;
+        let collections = self
+            .db
+            .collection()
+            .find_many(vec![collection::library::is(vec![library::id::equals(
+                self.id,
+            )])])
+            .exec()
+            .await?;
 
         let locations = self
             .db
             .location()
-            .find_many(vec![location::collection::is(vec![collection::id::in_vec(collections.iter().map(|collection| collection.id.clone()).collect())])])
+            .find_many(vec![location::collection::is(vec![
+                collection::id::in_vec(
+                    collections
+                        .iter()
+                        .map(|collection| collection.id.clone())
+                        .collect(),
+                ),
+            ])])
             .exec()
             .await?;
 
@@ -398,13 +445,10 @@ impl LocalLibrary {
 
                 // Handle each object asynchronously
                 for object in objects {
-
-
                     //check if thumbnail already exists for this object
                     if object.thumbnail.unwrap_or(false) {
                         continue;
                     }
-
 
                     if let Some(_obj_name) = &object.obj_name {
                         match thumbnail::generate_thumbnail(&object) {
@@ -431,7 +475,11 @@ impl LocalLibrary {
                                     );
                                 } else {
                                     self.emit_notification(CodexNotification::new(
-                                        format!("{}{}", "generated thumbnail".to_string(), thumbnail.clone().to_str().unwrap()),
+                                        format!(
+                                            "{}{}",
+                                            "generated thumbnail".to_string(),
+                                            thumbnail.clone().to_str().unwrap()
+                                        ),
                                         NotificationType::ThumbnailGenerated,
                                     ))
                                     .await?
@@ -457,23 +505,33 @@ impl LocalLibrary {
     }
 
     pub async fn parse_objects(&self) -> Result<(), anyhow::Error> {
-
-
-        //Get all collections belonging to this library: 
-        let collections = self.db.collection().find_many(vec![collection::library::is(vec![library::uuid::equals(self.id.to_string())])]).exec().await?;
+        //Get all collections belonging to this library:
+        let collections = self
+            .db
+            .collection()
+            .find_many(vec![collection::library::is(vec![library::id::equals(
+                self.id,
+            )])])
+            .exec()
+            .await?;
 
         //for each collection, get all locations:
-         
+
         let locations = self
             .db
             .location()
             .find_many(vec![location::collection::is(vec![
-                collection::id::in_vec(collections.iter().map(|collection| collection.id.clone()).collect()),
+                collection::id::in_vec(
+                    collections
+                        .iter()
+                        .map(|collection| collection.id.clone())
+                        .collect(),
+                ),
             ])])
             .exec()
             .await?;
 
-            let tasks = locations.into_iter().map(|location| {
+        let tasks = locations.into_iter().map(|location| {
                 let db = Arc::clone(&self.db);
                 async move {
                     let objects = db
@@ -483,7 +541,6 @@ impl LocalLibrary {
                         )])])
                         .exec()
                         .await?;
-        
                     let object_tasks: Vec<_> = objects
                         .into_iter()
                         .filter(|object| !object.parsed.unwrap_or(false))
@@ -491,9 +548,14 @@ impl LocalLibrary {
                             let db = Arc::clone(&self.db);
                             async move {
                                 if let Some(_obj_name) = &object.obj_name {
+                                    //We should check if the object is already parsed: 
+                                    //If it is, we should skip it.
+
                                     let capture = object.clone();
+                                    if (capture.parsed.unwrap_or(false)) {
+                                        return Ok::<_, anyhow::Error>(());
+                                    }
                                     let parsed_result = task::spawn_blocking(move || parsing::parse_object(&capture)).await?;
-        
                                     match parsed_result {
                                         Ok(parsed) => {
                                             if let Err(e) = db
@@ -532,17 +594,14 @@ impl LocalLibrary {
                                 } else {
                                     error!("Object missing name: {:?}", object);
                                 }
-        
-                                Ok::<_, anyhow::Error>(())
+                        Ok::<_, anyhow::Error>(())
                             }
                         })
                         .collect();
-        
                     let results = try_join_all(object_tasks).await?;
-                    Ok::<_, anyhow::Error>((results, ()))
+                                    Ok::<_, anyhow::Error>((results, ()))
                     }
         });
-
         let _ = try_join_all(tasks).await?;
         Ok(())
     }
@@ -594,10 +653,6 @@ impl LocalLibrary {
     //         // If there are no changes, we don't need to do anything.
     //         if changed_files.is_empty() && new_files.is_empty() && deleted_files.is_empty() {
     //             return Ok(());
-            
-
-
-
 
     //         }
     //     }
@@ -642,7 +697,7 @@ impl LocalLibrary {
             .iter()
             .map(|fp| Path::new(&fp.path.as_ref().unwrap()).to_path_buf())
             .collect();
-        let fs_file_paths_set: HashSet<PathBuf> =   fs_file_paths.into_iter().collect();
+        let fs_file_paths_set: HashSet<PathBuf> = fs_file_paths.into_iter().collect();
 
         for new_file in fs_file_paths_set.difference(&db_objects_set) {
             new_files.push(new_file.clone());
@@ -662,7 +717,14 @@ impl LocalLibrary {
         let mut new_files = Vec::new();
 
         // Fetch all file paths from the library. Those are technically objects.
-        let db_objects = self.db.object().find_many(vec![object::locations::is(vec![location::id::equals(location.id)])]).exec().await?;
+        let db_objects = self
+            .db
+            .object()
+            .find_many(vec![object::locations::is(vec![location::id::equals(
+                location.id,
+            )])])
+            .exec()
+            .await?;
 
         // Collect file paths from the file system
         let mut fs_file_paths = Vec::new();
@@ -675,7 +737,7 @@ impl LocalLibrary {
                         fs_file_paths.push(path);
                     }
                 }
-            } else { 
+            } else {
                 fs_file_paths.push(location);
             }
         }
@@ -700,10 +762,8 @@ impl LocalLibrary {
             new_files.push(new_file.clone());
         }
 
-
         Ok(new_files)
     }
-
 
     //This library will check if the files in the library have changed since the last time the library was indexed.
     //If they have, it will update the library.

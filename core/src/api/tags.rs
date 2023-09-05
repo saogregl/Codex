@@ -108,16 +108,16 @@ pub fn mount() -> RouterBuilder<Ctx> {
         })
         .query("get_object_with_tags", |t| {
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
-            struct AddTagToObjectArgs {
+            struct GetObjectWithTags {
                 tag_uuids: Vec<String>,
                 object_uuid: String,
             }
             t(
                 |ctx: Ctx,
-                 AddTagToObjectArgs {
+                 GetObjectWithTags {
                      tag_uuids,
                      object_uuid,
-                 }: AddTagToObjectArgs| async move {
+                 }: GetObjectWithTags| async move {
                     let (tag, objects) = ctx
                         .client
                         ._batch((

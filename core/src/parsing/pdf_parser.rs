@@ -1,6 +1,6 @@
 use crate::config::CodexConfig;
 use codex_prisma::prisma::object::Data as ObjectData;
-use log::{info, error};
+use log::{error, info};
 
 use std::{path::PathBuf, process::Command};
 

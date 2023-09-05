@@ -15,45 +15,18 @@ pub fn mount() -> RouterBuilder<Ctx> {
                 ctx.client.collection().find_many(vec![]).exec().await.unwrap()
             })
         })
-        .query("get_all_objects", |t| {
-            t(|ctx: Ctx, _: ()| async move {
-                ctx.client.object().find_many(vec![]).exec().await.unwrap()
+        .query("get_all_objects_in_collection", |t| {
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct GetObjectsInCollection {
+                collection_id: i32,
+            }
+            t(|ctx: Ctx, GetObjectsInCollection { collection_id }: GetObjectsInCollection| async move {
+                ctx.client.object().find_many(vec![
+                    object::collection_id::equals(collection_id.clone()),
+                ]).exec().await.unwrap()
             })
         })
-        .mutation("add_new_collection", |t| { 
-            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
-            struct AddNewCollection {
-                library_id: i32,
-                name: String,
-                description: Option<String>,
-                date_created: DateTime<Utc>,
-            }
-            t(
-                |ctx: Ctx,
-                 AddNewCollection {
-                     library_id,
-                     name,
-                     description,
-                     date_created,
-                 }: AddNewCollection| async move {
-                    ctx.client
-                        .collection()
-                        .create(
-                            library::id::equals(library_id.clone()),
-                                vec![
-                                    collection::name::set(Some(name)),
-                                    collection::date_created::set(Some(date_created.into())),
-                                    collection::date_modified::set(Some(date_created.into())),
-
-                                    ]
-                        )
-                        .exec()
-                        .await
-                        .unwrap();
-                },
-            )
-        })
-        .mutation("add_new_location", |t| {
+        .mutation("add_new_location", |t| { 
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
             struct AddNewLocation {
                 collection_id: i32,
@@ -91,17 +64,114 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .await
                         .unwrap();
 
+                    //get the library id from the collection id
+                    let collection = ctx.client.collection().find_first(vec![collection::id::equals(collection_id.clone())]).exec().await.unwrap();
+                    let library_id = collection.unwrap().library_id;
+                    
+                    let _ = ctx.manager.update_library(library_id.clone()).await;
+                
+                
                 },
             )
         })
-        .query("get_collections_for_library", |t| { 
+        .mutation("add_new_collection", |t| { 
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
-            struct GetCollectionsForLibrary {
-                library_id: String,
+            struct AddNewCollection {
+                library_id: i32,
+                name: String,
+                date_created: DateTime<Utc>,
             }
             t(
                 |ctx: Ctx,
-                 GetCollectionsForLibrary { library_id }: GetCollectionsForLibrary| async move {
+                 AddNewCollection {
+                     library_id,
+                     name,
+                     date_created,
+                 }: AddNewCollection| async move {
+                    ctx.client
+                        .collection()
+                        .create(
+                            library::id::equals(library_id.clone()),
+                                vec![
+                                    collection::name::set(Some(name)),
+                                    collection::date_created::set(Some(date_created.into())),
+                                    collection::date_modified::set(Some(date_created.into())),
+                                    ]
+                        )
+                        .exec()
+                        .await
+                        .unwrap();
+                },
+            )
+        })
+        .mutation("create_collection_with_location", |t| {
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct CreateCollectionWithLocation {
+                library_id: i32,
+                name: String,
+                path: String,
+                is_archived: bool,
+                hidden: bool,
+            }
+            t(
+                |ctx: Ctx,
+                 CreateCollectionWithLocation {
+                     library_id,
+                     name,
+                     path,
+                     is_archived,
+                     hidden,
+                 }: CreateCollectionWithLocation| async move {
+                    let date_created = Utc::now();
+                    
+
+                    let collection = ctx.client
+                        .collection()
+                        .create(
+                            library::id::equals(library_id.clone()),
+                                vec![
+                                    collection::name::set(Some(name.clone())),
+                                    collection::date_created::set(Some(date_created.into())),
+                                    collection::date_modified::set(Some(date_created.into())),
+                                    ]
+                        )
+                        .exec()
+                        .await
+                        .unwrap();
+
+                    let collection_id = collection.id;
+
+                    ctx.client
+                        .location()
+                        .create(
+                            path,
+                            vec![
+                                location::collection::connect(collection::id::equals(
+                                    collection_id.clone(),
+                                )),
+                                location::name::set(Some(name)),
+                                location::is_archived::set(Some(is_archived)),
+                                location::hidden::set(Some(hidden)),
+                                location::date_created::set(Some(date_created.into())),
+                            ],
+                        )
+                        .exec()
+                        .await
+                        .unwrap();
+
+                    //get the library id from the collection id
+                    let _ = ctx.manager.update_library(library_id.clone()).await;
+                },
+            )
+        })
+        .query("get_collections_on_library", |t| { 
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct GetCollectionsOnLibrary {
+                library_id: i32,
+            }
+            t(
+                |ctx: Ctx,
+                 GetCollectionsOnLibrary { library_id }: GetCollectionsOnLibrary| async move {
                     ctx.client
                         .collection()
                         .find_many(vec![collection::library_id::equals(library_id)])
@@ -110,20 +180,5 @@ pub fn mount() -> RouterBuilder<Ctx> {
                         .unwrap()
                 },
             )
-        })
-        .query("get_doc_by_id", |t| {
-            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
-            struct GetDocById {
-                id: i32,
-            }
-
-            t(|ctx: Ctx, GetDocById { id }: GetDocById| async move {
-                ctx.client
-                    .object()
-                    .find_first(vec![object::id::equals(id)])
-                    .exec()
-                    .await
-                    .unwrap()
-            })
         })
 }

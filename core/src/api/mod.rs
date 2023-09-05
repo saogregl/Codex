@@ -4,12 +4,12 @@ use crate::{prisma, LibraryManager};
 use rspc::Config;
 pub use rspc::RouterBuilder;
 use std::path::PathBuf;
+mod collections;
 mod library;
 mod notifications;
 mod search;
+mod tags;
 mod tasks;
-mod tags; 
-mod collections;
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
     pub manager: Arc<LibraryManager>,

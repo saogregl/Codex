@@ -17,7 +17,7 @@ pub enum NotificationType {
     LibraryAdded,
     LibraryRemoved,
     LibraryUpdated,
-    ObjectParsed, 
+    ObjectParsed,
     ObjectAdded,
     ObjectRemoved,
     ObjectUpdated,
@@ -54,7 +54,6 @@ pub struct NotificationManager {
 
 impl NotificationManager {
     pub fn new(db: Arc<PrismaClient>) -> Self {
-        
         let (tx, _) = broadcast::channel(100);
         // tokio::spawn(async move {
         //     let mut rx = tx.subscribe();

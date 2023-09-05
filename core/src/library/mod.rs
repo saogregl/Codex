@@ -2,11 +2,10 @@
 pub use self::library::LocalLibrary;
 pub use self::manager::LibraryManager;
 // Include sub-modules
+mod collection;
 mod library;
-mod collection; 
 mod manager;
-mod notification; 
-
+mod notification;
 
 pub trait Library {
     fn new(id: i32, name: String, path: String) -> Result<Self, Box<dyn std::error::Error>>

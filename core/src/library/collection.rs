@@ -42,7 +42,6 @@ impl LocalCollection {
         db: Arc<PrismaClient>,
         notification_manager: Arc<NotificationManager>,
     ) -> anyhow::Result<Self> {
-
         Ok(Self {
             uuid,
             id,
@@ -52,5 +51,4 @@ impl LocalCollection {
             notification_manager,
         })
     }
-
 }

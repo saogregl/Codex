@@ -134,7 +134,9 @@ pub fn generate_thumbnail(object: &ObjectData) -> Result<PathBuf, anyhow::Error>
                 "Thumbnail generation not supported for object type: {:?}, {:?}",
                 obj_type, object.obj_name
             );
-            Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(obj_type)))
+            Err(anyhow::anyhow!(ThumbnailerError::UnsupportedObjectType(
+                obj_type
+            )))
         }
     }
 }

@@ -24,10 +24,10 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     #[cfg(any(windows, target_os = "macos"))]
-    let client = Arc::new(prisma::new_client().await?);  // Propagate error using `?`
+    let client = Arc::new(prisma::new_client().await?); // Propagate error using `?`
 
     let router = api::new();
-    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await?);  // Propagate error using `?`
+    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await?); // Propagate error using `?`
 
     let mut _app = tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {

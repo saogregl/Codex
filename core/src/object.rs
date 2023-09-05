@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
 pub enum ObjectType {
     #[default]
     Unknown,
@@ -23,9 +22,6 @@ impl fmt::Display for ObjectType {
         write!(f, "{:?}", self)
     }
 }
-
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct FilePath {
