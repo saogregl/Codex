@@ -16,6 +16,8 @@ pkg.feature["Datagrid.useNestedRows"] = true;
 pkg.component.Toolbar = true;
 pkg.component.ButtonMenu = true;
 pkg.component.ButtonMenuItem = true;
+pkg.component.EditTearsheet = true; 
+pkg.component.EditTearsheetForm = true; 
 
 pkg.component.ToolbarGroup = true;
 pkg.component.ToolbarButton = true;

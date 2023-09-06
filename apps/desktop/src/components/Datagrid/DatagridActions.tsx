@@ -111,9 +111,6 @@ export const DatagridActions = (datagridState) => {
               <CustomizeColumnsButton />
             </div>
           )}
-          <Button onClick={() => { console.log("clicked") }}>
-            Enviar para fabricação
-          </Button>
         </TableToolbarContent>
       </>
     ))
