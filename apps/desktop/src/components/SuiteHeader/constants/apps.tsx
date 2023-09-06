@@ -23,17 +23,6 @@ interface route {
 
 export const Apps: route[] = [
 	{
-		ItemName: "Projetos",
-		href: "/projects",
-		icon: (params) => <IbmCloudProjects {...params} />,
-		children: [
-			{
-				ItemName: "Ver Todos os projetos",
-				href: "/projects/all",
-			},
-		],
-	},
-	{
 		ItemName: "Coleções",
 		href: "/collections",
 		icon: (params) => <IbmWatsonKnowledgeCatalog {...params} />,

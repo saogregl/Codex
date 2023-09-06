@@ -118,7 +118,7 @@ const index = () => {
 					pageActionsOverflowLabel="Mostrar mais ações da página"
 					showAllTagsLabel="Mostrar todas as tags"
 					title={"Gerencie arquivos"}
-					subtitle={"Prepare coleções com seus documentos para iniciar."}
+					subtitle={"Adicione coleções com seus documentos para iniciar."}
 				/>
 			</Theme>
 			<div
@@ -218,11 +218,11 @@ const index = () => {
 							<div>{renderDocument(0)}</div>
 						</Column>
 					</Row>
-					{tags
+					{/* {tags
 						? tags.map((tag) => (
 								<Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>
 						))
-						: ""}
+						: ""} */}
 				</FlexGrid>
 			</div>
 		</div>

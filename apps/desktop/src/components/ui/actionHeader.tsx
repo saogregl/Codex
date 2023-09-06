@@ -37,7 +37,6 @@ const ActionHeader = (props: ActionHeaderProps) => {
 			{actions.map((action) =>
 				!action.isLoading ? (
 					<Button
-						kind="tertiary"
 						key={action.id}
 						onClick={action.onClick}
 						renderIcon={action.icon ? action.icon : undefined}

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import classnames from "classnames";
 import { settings } from "../../constants/settings";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Apps } from "./constants/apps";
 import {
 	Notification,
@@ -20,34 +20,24 @@ import {
 
 import {
 	// @ts-ignore
-
 	Header,
 	// @ts-ignore
-
 	HeaderMenuButton,
 	// @ts-ignore
-
 	HeaderName,
 	// @ts-ignore
-
 	HeaderGlobalBar,
 	// @ts-ignore
-
 	HeaderGlobalAction,
 	// @ts-ignore
-
 	SkipToContent,
 	// @ts-ignore
-
 	SideNav,
 	// @ts-ignore
-
 	SideNavDivider,
 	// @ts-ignore
-
 	SideNavItems,
 	// @ts-ignore
-
 	SideNavLink,
 	// @ts-ignore
 	SideNavMenu,
@@ -55,20 +45,18 @@ import {
 	SideNavMenuItem,
 	// @ts-ignore
 	HeaderPanel,
-	Search,
-	Dropdown,
 	SkeletonText,
 } from "@carbon/react";
 import { Theme } from "@carbon/react";
 import { NotificationsPanel } from "@carbon/ibm-products";
 import MultiWorkspaceSuiteHeaderAppSwitcher from "./SuiteHeaderAppSwitcher/MultiWorkspaceSuiteHeaderAppSwitcher";
 import { Profile } from "../Profile";
-import useStore from "../../Stores/sessionStore";
 import { workspaces } from "./constants/workspaces";
 import useCustomHeader from "./SuiteHeaderAppSwitcher/hooks/useCustomHeader";
 import useNotifications from "../../hooks/useNotifications";
 import useThemeStore from "../../Stores/themeStore";
 import useCollections from "../../hooks/useCollections";
+import { defaultNotificationProps } from "./constants/defaultNotificationProps";
 
 const layout = () => {
 	//We need to know which menu is currently active
@@ -78,22 +66,11 @@ const layout = () => {
 	const [isNotificationsExpanded, setNotificationsExpand] = useState(false);
 
 	const location = useLocation();
-	const { collections, isLoadingcollections, errorCollections } =
-		useCollections();
-
-	// The route "/" should redirect to login, but since we have no login for this application, we'll redirect to /home
-	useEffect(() => {
-		if (location.pathname === "/") {
-			navigate("/home");
-		}
-	}, []);
-
-	const navigate = useNavigate();
+	const { collections, isLoadingcollections } = useCollections();
 
 	const {
 		notifications,
 		dismissAllNotifications,
-		dismissNotification,
 		removeNotification,
 	} = useNotifications();
 
@@ -111,26 +88,6 @@ const layout = () => {
 	}, [location]);
 
 	const { minimizeRef, maximizeRef, CloseRef } = useCustomHeader();
-
-	// useEffect(() => {
-	//   const getSession = async () => {
-	//     // @ts-ignore-next-line
-	//     if (!userStore.currentSession) {
-	//       await supabase.auth.getSession().then(({ data, error }) => {
-	//         // @ts-ignore-next-line
-
-	//         userStore.setCurrentSession(data);
-	//         if (error) {
-	//           navigate("/");
-	//         }
-	//         if (data.session === null) {
-	//           navigate("/");
-	//         }
-	//       });
-	//     }
-	//   };
-	//   getSession();
-	// }, []);
 
 	const expandSidenav = useCallback(() => {
 		setSideNavExpanded(!isSideNavExpanded);
@@ -173,27 +130,6 @@ const layout = () => {
 					</span>
 				</HeaderName>
 				<HeaderGlobalBar>
-					{/* <div
-            style={{
-              display: "flex",
-              justifyContent: "center", // Horizontally center the items
-              width: "100%", // Adjust the width as needed
-            }}
-          >
-            <div className={classnames(`${settings.sipePrefix}--header-searchBar`)}
-            >
-
-              <Dropdown
-                id="dropdown-1"
-                items={["Option 1", "Option 2", "Option 3"]}
-                label="Projetos"
-                size="lg"
-              />
-
-              <Search labelText={""} size={"lg"} />
-            </div>
-
-          </div> */}
 					<HeaderGlobalAction
 						aria-label="Tema"
 						onClick={switchTheme}
@@ -223,28 +159,7 @@ const layout = () => {
 						onDismissSingleNotification={(notification) => {
 							removeNotification(notification.id);
 						}}
-						dismissAllLabel="Descartar todas"
-						viewAllLabel="Ver todas"
-						previousLabel="Anterior"
-						readLessLabel="Ler menos"
-						readMoreLabel="Ler mais"
-						title="Notificações"
-						todayLabel="Hoje"
-						yesterdayLabel="Ontem"
-						settingsIconDescription="Configurações"
-						nowText="Agora"
-						emptyStateLabel="Você não possui novas notificações"
-						doNotDisturbLabel="Não perturbe"
-						dismissSingleNotificationIconDescription="Marcar como lida"
-						daysAgoText={(daysAgo) => `${daysAgo} dias atrás`}
-						hoursAgoText={(hoursAgo) => `${hoursAgo} horas atrás`}
-						minutesAgoText={(minutesAgo) => `${minutesAgo} minutos atrás`}
-						minuteAgoText={(minutesAgo) => `${minutesAgo} minuto atrás`}
-						monthsAgoText={(monthsAgo) => `${monthsAgo} meses atrás`}
-						monthAgoText={(monthAgo) => `${monthAgo} mês atrás`}
-						yearAgoText={(yearAgo) => `${yearAgo} ano atrás`}
-						yearsAgoText={(yearsAgo) => `${yearsAgo} anos atrás`}
-						yesterdayAtText={(yesterdayAt) => `Ontem às ${yesterdayAt}`}
+						{...defaultNotificationProps}
 					/>
 
 					<HeaderGlobalAction
@@ -313,9 +228,9 @@ const layout = () => {
 				>
 					<SideNavItems>
 						<SideNavLink
-							isActive={activeMenu ? false : location.pathname === "/home"}
+							isActive={activeMenu ? false : location.pathname === "/"}
 							renderIcon={Home}
-							href="/home"
+							href="/"
 							large
 						>
 							Home
@@ -343,6 +258,14 @@ const layout = () => {
 										title={route.ItemName}
 										large
 									>
+										{route.children?.map((child) => {
+											return (
+												<SideNavMenuItem href={child.href} key={child.href}>
+													{child.render ? child.render() : child.ItemName}
+												</SideNavMenuItem>
+											);
+										})}
+
 										{isLoadingcollections ? (
 											<SideNavMenuItem
 												href={"/collections/all"}
@@ -352,7 +275,6 @@ const layout = () => {
 												{/* // if we have a render prop for the child, we render it, otherwise we render the ItemName */}
 												<SkeletonText lineCount={2} width="100%" />
 											</SideNavMenuItem>
-                      
 										) : (
 											collections.map((child) => {
 												return (
@@ -364,20 +286,9 @@ const layout = () => {
 												);
 											})
 										)}
-
-										{route.children?.map((child) => {
-											return (
-												<SideNavMenuItem href={child.href} key={child.href}>
-													{/* {child.icon && child.icon()} */}
-													{/* // if we have a render prop for the child, we render it, otherwise we render the ItemName */}
-													{child.render ? child.render() : child.ItemName}
-												</SideNavMenuItem>
-											);
-										})}
 									</SideNavMenu>
 								);
 							}
-
 							return (
 								// Make menu active when clicked on
 								<SideNavMenu

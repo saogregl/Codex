@@ -29,6 +29,8 @@ const index = () => {
 		{ id: id_number },
 	]);
 
+	console.log(object)
+
 	useEffect(() => {
 		const extend_scope = async () => {
 			if (object?.path) {

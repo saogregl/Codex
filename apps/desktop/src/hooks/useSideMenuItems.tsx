@@ -41,7 +41,7 @@ export const useSideMenuItems = () => {
 				if (app.ItemName === "Coleções") {
 					return {
 						...app,
-						children: [...app.children, newCollection],
+						children: [newCollection, ...app.children],
 					};
 				}
 				return app;

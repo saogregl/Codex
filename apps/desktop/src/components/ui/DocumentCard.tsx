@@ -9,10 +9,11 @@ import parse from "html-react-parser";
 import useThemeStore from "../../Stores/themeStore";
 
 import { useNavigate } from "react-router-dom";
+import { FC, memo, useCallback } from "react";
+
 import dayjs from "dayjs";
 import relative from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br"; // import locale
-import { FC, memo, useCallback } from "react";
 
 dayjs.extend(relative);
 dayjs.locale("pt-br"); // use locale
@@ -61,7 +62,7 @@ const DocumentCard: FC<DocumentCardProps> = ({
 
 	const handleDocumentViewClick = (e) => {
 		e.preventDefault();
-		navigate(`/Data/${document.object.id}`);
+		navigate(`/data/${document.object.id}`);
 	};
 
 	const options = {
