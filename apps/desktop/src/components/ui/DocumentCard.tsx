@@ -14,6 +14,7 @@ import { FC, memo, useCallback } from "react";
 import dayjs from "dayjs";
 import relative from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br"; // import locale
+import { getTagColor } from "./DocumentForm";
 
 dayjs.extend(relative);
 dayjs.locale("pt-br"); // use locale
@@ -118,12 +119,12 @@ const DocumentCard: FC<DocumentCardProps> = ({
 				pictogram={() =>
 					tags
 						? tags.map((tag, index) => (
-								<TagComponent
-									key={tag.color}
-									type={tag.color.toLocaleLowerCase()}
-								>
-									{tag.name}
-								</TagComponent>
+							<TagComponent
+								key={tag.color}
+								type={getTagColor(tag)}
+							>
+								{tag.name}
+							</TagComponent>
 						))
 						: null
 				}

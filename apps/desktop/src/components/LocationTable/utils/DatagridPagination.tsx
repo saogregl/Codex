@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-ignore
 import { Pagination } from '@carbon/react';
 
 export const DatagridPagination = ({ state, setPageSize, gotoPage, rows }) => {

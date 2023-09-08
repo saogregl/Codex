@@ -5,15 +5,47 @@ import { Form, TextInput, TextArea, Checkbox, Theme } from "@carbon/react";
 import { CheckboxGroup, FilterableMultiSelect, Tag } from "@carbon/react";
 
 import { SidePanel } from "@carbon/ibm-products";
-import { SearchResult } from "../../../../../web/src/bindings";
+import { SearchResult, Tag as CodexTag } from "../../../../../web/src/bindings";
 import useThemeStore from "../../Stores/themeStore";
 
 interface DocumentFormProps {
 	selectedObject: SearchResult;
-	docTags: Tag[];
+	docTags: CodexTag[];
 	open: boolean;
 	setOpen: (open: boolean) => void;
 }
+
+export const getTagColor = (tag: CodexTag) => {
+	switch (tag?.color.toLocaleLowerCase()) {
+		case "blue":
+			return "blue";
+		case "green":
+			return "green";
+		case "purple":
+			return "purple";
+		case "magenta":
+			return "magenta";
+		case "teal":
+			return "teal";
+		case "red":
+			return "red";
+		case "gray":
+			return "gray";
+		case "cool-gray":
+			return "cool-gray";
+		case "cyan":
+			return "cyan";
+		case "warm-gray":
+			return "warm-gray";
+		case "high-contrast":
+			return "high-contrast";
+		case "outline":
+			return "outline";
+		default:
+			return "cool-gray";
+	}
+}
+
 
 const DocumentForm = ({
 	selectedObject,
@@ -21,6 +53,9 @@ const DocumentForm = ({
 	open,
 	setOpen,
 }: DocumentFormProps) => {
+
+
+
 	const [newTag, setNewTag] = useState("");
 	const { theme } = useThemeStore();
 
@@ -84,19 +119,18 @@ const DocumentForm = ({
 							titleText="Tags"
 							helperText="Selecione tags para ajudar a identificar o documento"
 							items={docTags}
-							itemToElement={(tag: typeof Tag) =>
+							itemToElement={(tag: CodexTag) =>
 								tag ? (
-									<Tag type={tag?.color.toLocaleLowerCase()}>{tag?.name}</Tag>
+									<Tag type={getTagColor(tag)}>{tag?.name}</Tag>
 								) : (
 									""
 								)
 							}
-							itemToString={(tag: typeof Tag) => (tag ? tag?.name : "")}
+							itemToString={(tag: CodexTag) => (tag ? tag?.name : "")}
 							selectionFeedback="top-after-reopen"
 							onInputValueChange={(e) => setNewTag(e)}
 							onMenuChange={(e) => {
 								if (e) {
-                                    // TODO: create new tag
 									console.log("should create new tag", newTag);
 								}
 							}}

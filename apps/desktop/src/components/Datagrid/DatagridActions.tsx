@@ -1,8 +1,11 @@
+// @ts-nocheck
+
 import React from 'react';
 import {   // @ts-ignore
   Button, DataTable
 } from '@carbon/react';
 import { Download, Filter, Add, Restart } from '@carbon/react/icons';
+
 
 const blockClass = `c4p--datagrid`;
 export const DatagridActions = (datagridState) => {
@@ -78,10 +81,10 @@ export const DatagridActions = (datagridState) => {
         />
         <TableToolbarContent>
           <TableToolbarSearch
-            size="xl"
+            size="lg"
             id="columnSearch"
             persistent
-            placeHolderText={searchForAColumn}
+            // placeHolderText={searchForAColumn}
             onChange={(e) => setGlobalFilter(e.target.value)}
           />
           <RowSizeDropdown {...rowSizeDropdownProps} />

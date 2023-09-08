@@ -29,7 +29,7 @@ import useQueryParamStore from "../../Stores/searchStore";
 import useThemeStore from "../../Stores/themeStore";
 import useTags from "../../hooks/useTags";
 import DocumentCard from "../../components/ui/DocumentCard";
-import DocumentForm from "../../components/ui/DocumentForm";
+import DocumentForm, { getTagColor } from "../../components/ui/DocumentForm";
 import { defaultPageHeaderProps } from "../../constants/defaultPageHeader";
 import { defaultPaginationProps } from "../../constants/defaultPagination";
 import useCollections from "../../hooks/useCollections";
@@ -119,7 +119,7 @@ const index = () => {
 							items={docTags ? docTags : []}
 							itemToElement={(tag: TagObject) =>
 								tag ? (
-									<Tag type={tag?.color.toLocaleLowerCase()}>{tag?.name}</Tag>
+									<Tag type={getTagColor(tag)}>{tag?.name}</Tag>
 								) : (
 									""
 								)

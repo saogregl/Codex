@@ -5,6 +5,8 @@
  * US Government Users Restricted Rights - Use, duplication or disclosure
  * restricted by GSA ADP Schedule Contract with IBM Corp.
  */
+
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
 // @ts-ignore
 import {

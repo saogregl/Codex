@@ -10,46 +10,18 @@ import {
   Button,
 } from "@carbon/react";
 
-import { CreateProject } from "./components/Flow/CreateProject";
-import { useCreateProject } from "./components/Flow/CreateProject";
 
 function App() {
   const client = createClient<Procedures>({
     transport: new TauriTransport(),
   });
 
-  const {
-    register,
-    handleSubmit,
-    errors,
-    open,
-    setOpen,
-    hasSubmitError,
-    setHasSubmitError,
-    reset,
-    clearErrors
-  } = useCreateProject();
-  const [workspaceActivities, setWorkspaceActivities] = useState("");
 
 
   return (
     <div className="container">
-      <Button onClick={() => setOpen(!open)}>
-        {open ? "Close CreateTearsheet" : "Open CreateTearsheet"}
-      </Button>
 
       <div style={{ display: "flex", padding: "64px", margin: "64px" }}>
-        <CreateProject
-          register={register}
-          handleSubmit={handleSubmit}
-          errors={errors}
-          open={open}
-          setOpen={setOpen}
-          hasSubmitError={hasSubmitError}
-          setHasSubmitError={setHasSubmitError}
-          reset={reset}
-          clearErrors={clearErrors}
-        />
       </div>
     </div>
   );

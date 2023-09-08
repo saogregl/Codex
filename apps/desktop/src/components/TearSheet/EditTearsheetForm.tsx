@@ -1,7 +1,7 @@
 import { Column, Grid, FormGroup, Theme } from "@carbon/react";
 import { settings } from "../../constants/settings";
 import cx from "classnames";
-import React, { forwardRef, useContext } from "react";
+import React, { RefObject, forwardRef, useContext } from "react";
 import { FormContext, FormNumberContext } from "./EditTearsheet";
 import useThemeStore from "../../Stores/themeStore";
 
@@ -48,7 +48,7 @@ const EditTearsheetForm = forwardRef(
 					[`${blockClass}__form--visible-form`]:
 						formNumber === formContext?.currentForm,
 				})}
-				ref={ref}
+				ref={ref as RefObject<HTMLDivElement>}
 			>
 				<Grid>
 					<Column xlg={12} lg={12} md={8} sm={4}>
