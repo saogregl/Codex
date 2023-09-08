@@ -27,13 +27,18 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Arc::new(prisma::new_client().await?); // Propagate error using `?`
 
     let router = api::new();
-    let manager = Arc::new(codex_core::LibraryManager::new(Arc::clone(&client)).await?); // Propagate error using `?`
+    let client_clone = Arc::clone(&client);
+    let manager_handle = tokio::task::spawn_blocking(move || {
+        // This closure runs in a dedicated thread where blocking is acceptable.
+        codex_core::LibraryManager::new(client_clone)
+    });
+    let manager_result = Arc::new(manager_handle.await?.await?);
 
     let mut _app = tauri::Builder::default()
         .plugin(rspc::integrations::tauri::plugin(router, move || {
             api::Ctx {
                 client: Arc::clone(&client),
-                manager: Arc::clone(&manager),
+                manager: Arc::clone(&manager_result),
             }
         }))
         .invoke_handler(tauri::generate_handler![extend_scope])

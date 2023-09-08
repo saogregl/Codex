@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useState } from "react";
 import { createClient } from "@rspc/client";
 import { TauriTransport } from "@rspc/tauri";

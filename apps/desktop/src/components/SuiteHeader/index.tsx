@@ -138,7 +138,6 @@ const layout = () => {
 					>
 						{theme === "g10" ? <LightFilled /> : <Light />}
 					</HeaderGlobalAction>
-
 					<HeaderGlobalAction
 						aria-label="Notificações"
 						onClick={expandNotifications}

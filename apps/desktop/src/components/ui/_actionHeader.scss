@@ -16,20 +16,17 @@ $sipePrefix: "sipe";
     align-items: center;
     justify-content: flex-start;
 
-
     border-bottom: 1px;
     border-style: solid;
-    border-color: rgb(206, 206, 206);
+    border-color: theme.$border-subtle;
     position: sticky;
     left: 48px;
     top: 166px;
-
-
 }
 
 .#{$sipePrefix}--header-actions-header {
     @include type.type-style("body-compact-01");
     color: theme.$text-primary;
     padding: 0 spacing.$spacing-08;
-    
+
 }

@@ -29,7 +29,6 @@ export const DatagridActions = (datagridState) => {
   };
   const searchForAColumn = 'Search';
   const isNothingSelected = selectedFlatRows.length === 0;
-  console.log("isNothingSelected", isNothingSelected)
   return (
     isNothingSelected &&
     (useDenseHeader && useDenseHeader ? (

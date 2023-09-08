@@ -21,6 +21,7 @@
 @use "./components/StarRating/StarRating";
 @use "./components/ui/card";
 @use "./components/ui/actionHeader";
+@use "./components/TearSheet/EditTearsheetForm";
 
 
 @import "@carbon/charts/styles.css";
@@ -56,8 +57,23 @@ $sipePrefix: "sipe";
 :root {
   border-radius: 10px !important;
   background: theme.$background;
-
 }
+
+
+.cds--header__global {
+
+  .cds--btn--primary {
+    background-color: rgb(22, 22, 22) !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    border-bottom: 1px solid theme.$border-subtle !important;
+    border-left: 0px !important;
+    border-right: 0px !important;
+
+    
+  }
+}
+
 
 body,
 html {
@@ -74,9 +90,10 @@ html {
   border-radius: 10px !important;
 }
 
-.cds--side-nav { 
+.cds--side-nav {
   border-right: 1px solid #4f4f4f !important;
 }
+
 ::-webkit-scrollbar {
   display: none;
 }

@@ -17,10 +17,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.0.0",
-    "@nighttrax/eslint-config-tsx": "~12.0.0-alpha.2",
-    "doctoc": "~2.2.0",
+    "@nighttrax/eslint-config-tsx": "12.0.0-alpha.3",
+    "doctoc": "~2.2.1",
     "eslint": "~8.45.0",
-    "eslint-plugin-import": "~2.27.0",
-    "typescript": "^5.1.6"
+    "eslint-plugin-import": "~2.27.5",
+    "typescript": "^5.2.2"
   }
 }
