@@ -4,9 +4,10 @@ datasource db {
 }
 
 generator client {
-  provider    = "cargo prisma"
-  output      = "../../crates/prisma/src/prisma.rs"
-  module_path = "codex_prisma::prisma"
+  provider      = "cargo prisma"
+  output        = "../../crates/prisma/src/prisma.rs"
+  module_path   = "codex_prisma::prisma"
+  client_format = "folder"
 }
 
 model User {

@@ -65,16 +65,31 @@ const notificationTypeConverter = (type: NotificationType) => {
 
 const useNotifications = () => {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
+	const [newNotifications, setNewNotifications] = useState(false);
 
 	const addNotification = (notification: Notification) => {
 		setNotifications((prev) => [...prev, notification]);
+		setNewNotifications(true);
 	};
 
 	const removeNotification = (id: string) => {
 		setNotifications((prev) => prev.filter((n) => n.id !== id));
 	};
 
+	//Check if there are any unread notifications and return true if there are
+	const hasUnreadNotifications = () => {
+		console.log(notifications)
+		return notifications.length > 0;
+	};
+
 	const dismissAllNotifications = () => {
+
+		setNotifications((prev) =>
+			prev.map((n) => {
+				n.unread = false;
+				return n;
+			}),
+		);
 		setNotifications([]);
 	};
 
@@ -91,7 +106,6 @@ const useNotifications = () => {
 
 	rspc.useSubscription(["notifications.listen"], {
 		onData: (payload) => {
-			console.log("Notification received", payload);
 			const id = uuidv4();
 			addNotification({
 				id: id,
@@ -101,7 +115,6 @@ const useNotifications = () => {
 				timestamp: new Date(),
 				unread: true,
 				onNotificationClick: () => {
-					console.log("Notification clicked", payload);
 					removeNotification(id);
 				},
 			});
@@ -113,6 +126,8 @@ const useNotifications = () => {
 		dismissAllNotifications,
 		dismissNotification,
 		removeNotification,
+		hasUnreadNotifications,
+		newNotifications,
 	};
 };
 

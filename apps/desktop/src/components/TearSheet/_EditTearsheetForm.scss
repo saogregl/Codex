@@ -5,7 +5,10 @@
 // LICENSE file in the root directory of this source tree.
 //
 
-@use '@carbon/styles/scss/theme' as *;
+@use "@carbon/react/scss/theme";
+@use "@carbon/react/scss/themes";
+
+
 @use '@carbon/styles/scss/spacing' as *;
 @use '@carbon/react/scss/components/button/tokens' as *;
 @use '@carbon/styles/scss/type';
@@ -37,6 +40,15 @@ $form-block-class: #{$pkg-prefix}--tearsheet-edit__form;
 $section-block-class: #{pkg-prefix}--tearsheet-edit__section;
 $tearsheet-divider-class: #{pkg-prefix}--tearsheet-edit__section--divider;
 $tearsheet-fieldset-class: #{pkg-prefix}--tearsheet-edit__form--fieldset;
+
+.theme-g100 {
+  @include theme.theme(themes.$g90);
+}
+
+.theme-g10 {
+  @include theme.theme(themes.$g10);
+}
+
 
 
 .#{$block-class} .#{$form-block-class}__form--hidden-form {

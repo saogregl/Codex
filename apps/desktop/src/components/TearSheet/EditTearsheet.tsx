@@ -1,9 +1,10 @@
 import React, { forwardRef, useState, useRef, createContext } from "react";
-import { Form, SideNav, SideNavItems, SideNavMenuItem } from "@carbon/react";
+import { Form, SideNav, SideNavItems, SideNavMenuItem, Theme } from "@carbon/react";
 import { Tearsheet } from "@carbon/ibm-products";
 import cx from "classnames";
 import { settings } from "../../constants/settings";
 import { useClickOutside } from "../../hooks/useClickOutside";
+import useThemeStore from "../../Stores/themeStore";
 
 interface MyComponentProps {
 	cancelButtonText?: string;
@@ -14,8 +15,8 @@ interface MyComponentProps {
 	influencerWidth?: "narrow" | "wide";
 	label?: React.ReactNode;
 	onClose?(...args: unknown[]): unknown;
-    onHandleModalConfirm?(...args: unknown[]): unknown;
-    onHandleModalCancel?(...args: unknown[]): unknown;
+	onHandleModalConfirm?(...args: unknown[]): unknown;
+	onHandleModalCancel?(...args: unknown[]): unknown;
 	open?: boolean;
 	submitButtonText?: string;
 	title?: React.ReactNode;
@@ -53,14 +54,15 @@ const EditTearsheet = forwardRef(
 			title,
 			verticalPosition = "normal",
 			onHandleModalConfirm,
-            onHandleModalCancel,
+			onHandleModalCancel,
 
 			// Collect any other property values passed in.
 			...rest
 		}: MyComponentProps,
 		ref,
 	) => {
-        
+		const { theme } = useThemeStore();
+
 		const [currentForm, setCurrentForm] = useState(0);
 		const contentRef = useRef();
 
@@ -73,8 +75,9 @@ const EditTearsheet = forwardRef(
 			{ label: "Pastas e Arquivos" },
 		];
 
+		const themeClassname = theme === "g10" ? "theme-g100" : "theme-g10";
 		const influencer = (
-			<div className="tearsheet-stories__dummy-influencer-block">
+			<div>
 				<SideNav
 					aria-label="Side navigation"
 					className={`${blockClass}__side-nav`}
@@ -100,51 +103,51 @@ const EditTearsheet = forwardRef(
 		);
 
 		return (
-			<Tearsheet
-				{...rest}
-				actions={[
-					{
-						label: "Confirmar",
-						onClick: onHandleModalConfirm,
-						kind: "primary",
-					},
-					{
-						label: "Cancelar",
-						onClick: onHandleModalCancel,
-						kind: "secondary",
-					},
-				]}
-				
-				className={cx(blockClass, className)}
-				description={description}
-				hasCloseIcon={true}
-				influencer={influencer}
-				influencerPosition="left"
-				influencerWidth={influencerWidth}
-				label={label}
-				onClose={onClose}
-				open={open} 
-				size="wide"
-				title={title}
-				verticalPosition={verticalPosition}
-				ref={ref}
-			>
-				<div className={`${blockClass}__content`} ref={contentRef} role="main">
-					<Form>
-						<FormContext.Provider
-							value={{
-								currentForm,
-							}}
-						>
-							{React.Children.map(children, (child, index) => (
-								<FormNumberContext.Provider value={index}>
-									{child}
-								</FormNumberContext.Provider>
-							))}
-						</FormContext.Provider>
-					</Form>
-				</div>
-			</Tearsheet>
+				<Tearsheet
+					{...rest}
+					actions={[
+						{
+							label: "Confirmar",
+							onClick: onHandleModalConfirm,
+							kind: "primary",
+						},
+						{
+							label: "Cancelar",
+							onClick: onHandleModalCancel,
+							kind: "secondary",
+						},
+					]}
+
+					className={cx(blockClass, className, themeClassname)}
+					description={description}
+					hasCloseIcon={true}
+					influencer={influencer}
+					influencerPosition="left"
+					influencerWidth={influencerWidth}
+					label={label}
+					onClose={onClose}
+					open={open}
+					size="wide"
+					title={title}
+					verticalPosition={verticalPosition}
+					ref={ref}
+				>
+					<div className={`${blockClass}__content`} ref={contentRef} role="main">
+						<Form>
+							<FormContext.Provider
+								value={{
+									currentForm,
+								}}
+							>
+								{React.Children.map(children, (child, index) => (
+									<FormNumberContext.Provider value={index}>
+										{child}
+									</FormNumberContext.Provider>
+								))}
+							</FormContext.Provider>
+						</Form>
+					</div>
+				</Tearsheet>
 		);
 	},
 );

@@ -56,6 +56,9 @@ importers:
       '@carbon/styles':
         specifier: 1.37.0
         version: 1.37.0(sass@1.63.6)
+      '@carbon/themes':
+        specifier: ^11.24.0
+        version: 11.24.0
       '@carbon/type':
         specifier: 11.23.0
         version: 11.23.0
@@ -702,7 +705,7 @@ packages:
   /@carbon/grid@11.16.1:
     resolution: {integrity: sha512-xrnySc/9jRebcVyATn6ArO9kQsgUcUDwrUrWPH5yt4AU7lDvzfpsxbO5NehRekURxPJjplr0DOhPAwC4qbuaaw==}
     dependencies:
-      '@carbon/layout': 11.16.1
+      '@carbon/layout': 11.19.0
     dev: false
 
   /@carbon/grid@11.19.0:
@@ -920,7 +923,7 @@ packages:
       '@carbon/grid': 11.16.1
       '@carbon/layout': 11.16.1
       '@carbon/motion': 11.15.0
-      '@carbon/themes': 11.21.1
+      '@carbon/themes': 11.24.0
       '@carbon/type': 11.20.1
       '@ibm/plex': 6.0.0-next.6
       sass: 1.66.1
@@ -948,15 +951,6 @@ packages:
   /@carbon/telemetry@0.1.0:
     resolution: {integrity: sha512-kNWt0bkgPwGW0i5h7HFuljbKRXPvIhsKbB+1tEURAYLXoJg9iJLF1eGvWN5iVoFCS2zje4GR3OGOsvvKVe7Hlg==}
     hasBin: true
-    dev: false
-
-  /@carbon/themes@11.21.1:
-    resolution: {integrity: sha512-WMcx+RSXTSGxuqSG+6WHCCTeZ8mSaDWDOJsdp6p+bandc6OsvmrqbJDDgjE6YRucDThQYspLxRQF8i8/5mJ0sg==}
-    dependencies:
-      '@carbon/colors': 11.17.1
-      '@carbon/layout': 11.16.1
-      '@carbon/type': 11.20.1
-      color: 4.2.3
     dev: false
 
   /@carbon/themes@11.24.0:

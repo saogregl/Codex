@@ -36,6 +36,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DatagridActions } from "../../components/Datagrid/DatagridActions";
 import { EditTearsheetForm, EditTearsheet } from "../../components/TearSheet";
+import LocationTable from "../../components/LocationTable";
 
 const index = () => {
 	const { theme } = useThemeStore();
@@ -45,6 +46,8 @@ const index = () => {
 	const handleModalClick = () => {
 		setOpen(!open);
 	};
+
+	const [selectedCollection, setSelectedCollection] = useState(0);
 
 	const DatagridBatchActions = (datagridState) => {
 		const { selectedFlatRows, toggleAllRowsSelected } = datagridState;
@@ -70,76 +73,68 @@ const index = () => {
 
 	const DocumentEditTearsheet = () => {
 		return (
-			<Theme theme={theme === "g10" ? "g100" : "g10"}>
-				<EditTearsheet
-					className="c4p--tearsheet-edit-multi-form test-class-name"
-					description="Edite as informações da coleção."
-					influencerWidth="narrow"
-					label=""
-					open={open}
-					onClose={() => setOpen(false)}
-					submitButtonText="Confirmar"
-					title="Editar coleção"
-					onHandleModalConfirm={() => console.log("action")}
-					onHandleModalCancel={() => setOpen(false)}
+			<EditTearsheet
+				className="c4p--tearsheet-edit-multi-form test-class-name"
+				description="Edite as informações da coleção."
+				influencerWidth="narrow"
+				label=""
+				open={open}
+				onClose={() => setOpen(false)}
+				submitButtonText="Confirmar"
+				title="Editar coleção"
+				onHandleModalConfirm={() => console.log("action")}
+				onHandleModalCancel={() => setOpen(false)}
+			>
+				<EditTearsheetForm
+					description="Essas informações são usadas para identificar sua coleção."
+					fieldsetLegendText="Informações da coleção"
+					subtitle="Aqui você pode editar as informações da coleção."
+					title="Descrição da coleção"
 				>
-					<EditTearsheetForm
-						description="Essas informações são usadas para identificar sua coleção."
-						fieldsetLegendText="Informações da coleção"
-						subtitle="Aqui você pode editar as informações da coleção."
-						title="Descrição da coleção"
-					>
-						<Column lg={8} md={8} sm={8} xlg={8}>
-							<TextInput
-								id="tearsheet-multi-form-story-text-input-multi-form-1"
-								invalidText="This is a required field"
-								labelText="Topic name"
-								onBlur={() => console.log("action")}
-								onChange={() => console.log("action")}
-								placeholder="Enter topic name"
-								value="Topic name here"
-							/>
-							<TextInput
-								id="tearsheet-multi-form-story-text-input-multi-form-1-input-2"
-								labelText="Topic description (optional)"
-								onChange={() => console.log("action")}
-								placeholder="Enter topic description"
-								value="Topic description here"
-							/>
-							<TextInput
-								id="tearsheet-multi-form-story-text-input-multi-form-1-input-3"
-								labelText="Topic version (optional)"
-								onChange={() => console.log("action")}
-								placeholder="Enter topic version"
-								value="Topic value here"
-							/>
-							<Toggle
-								className="c4p--tearsheet-edit-multi-form__error--toggle"
-								id="simulated-error-toggle"
-								labelText="Simulate error"
-								onToggle={() => console.log("action")}
-								size="sm"
-							/>
-						</Column>
-					</EditTearsheetForm>
-					<EditTearsheetForm
-						description="Custom form description (see storybook implementation for new custom form capability)"
-						fieldsetLegendText=""
-						subtitle="Custom form subtitle"
-						title="Location"
-					>
-						<Column lg={8} md={8} sm={8} xlg={8}>
-							<TextInput
-								id="custom-form-input"
-								labelText="Location"
-								onChange={() => console.log("action")}
-								placeholder="Enter location"
-								value="Location here"
-							/>
-						</Column>
-					</EditTearsheetForm>
-				</EditTearsheet>
-			</Theme>
+					<Column lg={8} md={8} sm={8} xlg={8}>
+						<TextInput
+							id="tearsheet-multi-form-story-text-input-multi-form-1"
+							invalidText="This is a required field"
+							labelText="Topic name"
+							onBlur={() => console.log("action")}
+							onChange={() => console.log("action")}
+							placeholder="Enter topic name"
+							value="Topic name here"
+						/>
+						<TextInput
+							id="tearsheet-multi-form-story-text-input-multi-form-1-input-2"
+							labelText="Topic description (optional)"
+							onChange={() => console.log("action")}
+							placeholder="Enter topic description"
+							value="Topic description here"
+						/>
+						<TextInput
+							id="tearsheet-multi-form-story-text-input-multi-form-1-input-3"
+							labelText="Topic version (optional)"
+							onChange={() => console.log("action")}
+							placeholder="Enter topic version"
+							value="Topic value here"
+						/>
+						<Toggle
+							className="c4p--tearsheet-edit-multi-form__error--toggle"
+							id="simulated-error-toggle"
+							labelText="Simulate error"
+							onToggle={() => console.log("action")}
+							size="sm"
+						/>
+					</Column>
+				</EditTearsheetForm>
+				<EditTearsheetForm
+					description="Adicione pastas e arquivos a coleção."
+					fieldsetLegendText=""
+					subtitle="Aqui você pode editar as pastas e arquivos da coleção."
+					title="Pastas e arquivos"
+				>
+					<Column lg={16} md={8} sm={8} xlg={16}>
+						<LocationTable collectionId={selectedCollection}/>
+					</Column>
+				</EditTearsheetForm>
+			</EditTearsheet>
 		);
 	};
 
@@ -208,13 +203,18 @@ const index = () => {
 		[],
 	);
 
+	const handleEditClick = (collectionId) => {
+		setSelectedCollection(collectionId);
+		setOpen(true);
+	};
+
 	const getRowActions = () => {
 		return [
 			{
 				id: "edit",
 				itemText: "Edit",
 				icon: Edit,
-				onClick: () => setOpen(true),
+				onClick: (actionId: string, row: any, event: any) => handleEditClick(row.original.id),
 			},
 			{
 				id: "delete",

@@ -1,8 +1,9 @@
-import { Column, Grid, FormGroup } from "@carbon/react";
+import { Column, Grid, FormGroup, Theme } from "@carbon/react";
 import { settings } from "../../constants/settings";
 import cx from "classnames";
 import React, { forwardRef, useContext } from "react";
 import { FormContext, FormNumberContext } from "./EditTearsheet";
+import useThemeStore from "../../Stores/themeStore";
 
 interface EditTearsheetFormProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
@@ -38,8 +39,8 @@ const EditTearsheetForm = forwardRef(
 		return formContext ? (
 			<div
 				{
-					...// Pass through any other property values as HTML attributes.
-					rest
+				...// Pass through any other property values as HTML attributes.
+				rest
 				}
 				className={cx(blockClass, className, {
 					[`${blockClass}__form--hidden-form`]:
