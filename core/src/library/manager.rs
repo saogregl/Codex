@@ -127,15 +127,13 @@ impl LibraryManager {
     }
 
     pub async fn update_library(&self, lib_id: i32) -> Result<(), anyhow::Error> {
+        info!("Updating library {}", lib_id);
+        info!(
+            "Searching for library {} in libraries {:?}",
+            lib_id, self.libraries
+        );
 
-        info!("Updating library {}", lib_id); 
-        info!("Searching for library {} in libraries {:?}", lib_id, self.libraries);
-
-        if let Some(lib) = self
-            .libraries
-            .iter()
-            .find(|lib| lib.id == lib_id)
-        {
+        if let Some(lib) = self.libraries.iter().find(|lib| lib.id == lib_id) {
             info!("Found library {}", lib.name);
             let _ = lib.index_objects().await.unwrap();
             let _ = lib.parse_objects().await.unwrap();

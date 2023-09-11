@@ -12,14 +12,22 @@ pub struct SearchResult {
     pub snippet: String,
     pub score: f32,
     pub object: Data,
+    pub tags: Vec<codex_prisma::prisma::tag_on_object::Data>,
 }
 impl SearchResult {
-    pub fn new(title: String, snippet: String, score: f32, object: Data) -> Self {
+    pub fn new(
+        title: String,
+        snippet: String,
+        score: f32,
+        object: Data,
+        tags: Vec<codex_prisma::prisma::tag_on_object::Data>,
+    ) -> Self {
         Self {
             title,
             snippet,
             score,
             object,
+            tags,
         }
     }
 }

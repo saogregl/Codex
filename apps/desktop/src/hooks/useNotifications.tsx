@@ -1,8 +1,10 @@
 import { useState } from "react";
 import rspc from "../lib/query";
 import { v4 as uuidv4 } from "uuid";
+import toast from 'react-hot-toast';
 
 import { NotificationType } from "../../../../web/src/bindings";
+import { message } from "@tauri-apps/api/dialog";
 
 export interface Notification {
 	id: string | number;
@@ -63,9 +65,65 @@ const notificationTypeConverter = (type: NotificationType) => {
 	}
 };
 
+//We also need to convert the types to toast types which are 'success' | 'error' | 'loading' | 'blank' | 'custom';
+const toastTypeConverter = (type: NotificationType) => {
+	switch (type) {
+		case "Info":
+			return "blank";
+		case "Warning":
+			return "blank";
+		case "Error":
+			return "error";
+		case "FileAdded":
+			return "success";
+		case "FileRemoved":
+			return "blank";
+		case "FileUpdated":
+			return "blank";
+		case "LibraryAdded":
+			return "success";
+		case "LibraryRemoved":
+			return "blank";
+		case "LibraryUpdated":
+			return "blank";
+		case "ObjectParsed":
+			return "blank";
+		case "ObjectAdded":
+			return "success";
+		case "ObjectRemoved":
+			return "blank";
+		case "ObjectUpdated":
+			return "blank";
+		case "ThumbnailGenerated":
+			return "blank";
+		case "IndexingStarted":
+			return "blank";
+		case "IndexingFinished":
+			return "blank";
+		case "IndexingFailed":
+			return "error";
+		case "SearchStarted":
+			return "blank";
+		case "SearchFinished":
+			return "blank";
+		case "SearchFailed":
+			return "error";
+		case "ParsingError":
+			return "error";
+		default:
+			return "blank";
+	}
+};
+
+
+interface useNotificationsProps {
+	notificationCallback?: (notification: Notification) => void;
+}
+
 const useNotifications = () => {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [newNotifications, setNewNotifications] = useState(false);
+	const notify = (title) => toast(title.title);
 
 	const addNotification = (notification: Notification) => {
 		setNotifications((prev) => [...prev, notification]);
@@ -78,7 +136,6 @@ const useNotifications = () => {
 
 	//Check if there are any unread notifications and return true if there are
 	const hasUnreadNotifications = () => {
-		console.log(notifications)
 		return notifications.length > 0;
 	};
 
@@ -107,12 +164,13 @@ const useNotifications = () => {
 	rspc.useSubscription(["notifications.listen"], {
 		onData: (payload) => {
 			const id = uuidv4();
+			notify({ title: payload.message, type: toastTypeConverter(payload.notification_type)});
 			addNotification({
 				id: id,
 				type: notificationTypeConverter(payload.notification_type),
 				title: payload.message,
 				description: payload.message,
-				timestamp: new Date(),
+				timestamp: new Date(Date.now()),
 				unread: true,
 				onNotificationClick: () => {
 					removeNotification(id);

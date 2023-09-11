@@ -6,10 +6,13 @@ pub use rspc::RouterBuilder;
 use std::path::PathBuf;
 mod collections;
 mod library;
+mod locations;
 mod notifications;
+mod objects;
 mod search;
 mod tags;
 mod tasks;
+
 pub struct Ctx {
     pub client: Arc<prisma::PrismaClient>,
     pub manager: Arc<LibraryManager>,
@@ -29,6 +32,8 @@ pub fn new() -> Arc<Router> {
         .merge("notifications.", notifications::mount())
         .merge("tags.", tags::mount())
         .merge("collections.", collections::mount())
+        .merge("locations.", locations::mount())
+        .merge("objects.", objects::mount())
         .build()
         .arced()
 }

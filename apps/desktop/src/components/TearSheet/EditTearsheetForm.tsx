@@ -4,6 +4,7 @@ import cx from "classnames";
 import React, { RefObject, forwardRef, useContext } from "react";
 import { FormContext, FormNumberContext } from "./EditTearsheet";
 import useThemeStore from "../../Stores/themeStore";
+import useModalStore from "../../Stores/modalStore";
 
 interface EditTearsheetFormProps extends React.HTMLAttributes<HTMLDivElement> {
 	children: React.ReactNode;
@@ -17,8 +18,6 @@ interface EditTearsheetFormProps extends React.HTMLAttributes<HTMLDivElement> {
 const EditTearsheetForm = forwardRef(
 	(
 		{
-			// The component props, in alphabetical order (for consistency).
-
 			children,
 			className,
 			description,
@@ -26,12 +25,12 @@ const EditTearsheetForm = forwardRef(
 			hasFieldset = true,
 			subtitle,
 			title,
-
-			// Collect any other property values passed in.
 			...rest
 		}: EditTearsheetFormProps,
 		ref,
 	) => {
+		const { currentState } = useModalStore();
+
 		const blockClass = `${settings.sipePrefix}--tearsheet-edit__form`;
 		const formContext = useContext(FormContext);
 		const formNumber = useContext(FormNumberContext);
@@ -39,14 +38,12 @@ const EditTearsheetForm = forwardRef(
 		return formContext ? (
 			<div
 				{
-				...// Pass through any other property values as HTML attributes.
-				rest
+					...// Pass through any other property values as HTML attributes.
+					rest
 				}
 				className={cx(blockClass, className, {
-					[`${blockClass}__form--hidden-form`]:
-						formNumber !== formContext?.currentForm,
-					[`${blockClass}__form--visible-form`]:
-						formNumber === formContext?.currentForm,
+					[`${blockClass}__form--hidden-form`]: formNumber !== currentState,
+					[`${blockClass}__form--visible-form`]: formNumber === currentState,
 				})}
 				ref={ref as RefObject<HTMLDivElement>}
 			>

@@ -9,7 +9,7 @@ import {
 	NotificationNew,
 	Switcher as SwitcherIcon,
 	Home,
-	Db2Database,
+	IbmWatsonDiscovery,
 	LightFilled,
 	Light,
 } from "@carbon/icons-react";
@@ -18,6 +18,7 @@ import {
 	ChromeMinimizeIcon,
 	ChromeRestoreIcon,
 } from "@fluentui/react-icons-mdl2";
+import { Toaster, resolveValue } from "react-hot-toast";
 
 import {
 	// @ts-ignore
@@ -67,8 +68,6 @@ const layout = () => {
 	const [isSwitcherExpanded, setSwitcherExpand] = useState(false);
 	const [isNotificationsExpanded, setNotificationsExpand] = useState(false);
 
-
-
 	const location = useLocation();
 	const { collections, isLoadingcollections } = useCollections();
 
@@ -78,7 +77,6 @@ const layout = () => {
 		removeNotification,
 		hasUnreadNotifications,
 	} = useNotifications();
-
 
 	const appSwitcherRef = useRef(null);
 
@@ -99,9 +97,9 @@ const layout = () => {
 		setSideNavExpanded(!isSideNavExpanded);
 	}, [isSideNavExpanded]);
 
-	const expandSwitcher = useCallback(() => {
-		setSwitcherExpand(!isSwitcherExpanded);
-	}, [isSwitcherExpanded]);
+	// const expandSwitcher = useCallback(() => {
+	// 	setSwitcherExpand(!isSwitcherExpanded);
+	// }, [isSwitcherExpanded]);
 
 	const expandNotifications = useCallback(() => {
 		setNotificationsExpand(!isNotificationsExpanded);
@@ -150,22 +148,26 @@ const layout = () => {
 						id="notification-button"
 						className="notification-button"
 					>
-						{!hasUnreadNotifications() ? <Notification size={20} /> : <NotificationNew size={20} />}
+						{!hasUnreadNotifications() ? (
+							<Notification size={20} />
+						) : (
+							<NotificationNew size={20} />
+						)}
 					</HeaderGlobalAction>
 
 					<Profile />
 
-						<NotificationsPanel
-							open={isNotificationsExpanded}
-							onClickOutside={() => setNotificationsExpand(false)}
-							data={notifications}
-							onSettingsClick={() => console.log("Settings clicked")}
-							onDismissAllNotifications={() => dismissAllNotifications()}
-							onDismissSingleNotification={(notification) => {
-								removeNotification(notification.id);
-							}}
-							{...defaultNotificationProps}
-						/>
+					<NotificationsPanel
+						open={isNotificationsExpanded}
+						onClickOutside={() => setNotificationsExpand(false)}
+						data={notifications}
+						onSettingsClick={() => console.log("Settings clicked")}
+						onDismissAllNotifications={() => dismissAllNotifications()}
+						onDismissSingleNotification={(notification) => {
+							removeNotification(notification.id);
+						}}
+						{...defaultNotificationProps}
+					/>
 
 					<HeaderGlobalAction aria-label="Minimizar" tooltipAlignment="end">
 						<div
@@ -220,7 +222,7 @@ const layout = () => {
 					isRail
 					expanded={isSideNavExpanded}
 					onOverlayClick={expandSidenav}
-				// isPersistent={false}
+					// isPersistent={false}
 				>
 					<SideNavItems>
 						<SideNavLink
@@ -234,11 +236,11 @@ const layout = () => {
 						<SideNavDivider />
 						<SideNavLink
 							isActive={activeMenu ? false : location.pathname === "/data"}
-							renderIcon={Db2Database}
+							renderIcon={IbmWatsonDiscovery}
 							href="/data"
 							large
 						>
-							Dados
+							Busca
 						</SideNavLink>
 
 						{Apps.map((route) => {
@@ -297,7 +299,6 @@ const layout = () => {
 									title={route.ItemName}
 									large
 								>
-
 									{route.children?.map((child) => {
 										return (
 											<SideNavMenuItem href={child.href} key={child.href}>
@@ -321,11 +322,24 @@ const layout = () => {
 							!isSideNavExpanded
 								? classnames(`${settings.sipePrefix}--content`)
 								: classnames(
-									`${settings.sipePrefix}--content`,
-									`${settings.sipePrefix}--side-nav--expanded`,
+										`${settings.sipePrefix}--content`,
+										`${settings.sipePrefix}--side-nav--expanded`,
 								)
 						}
 					>
+						<Toaster position="top-right">
+							{(t) => (
+								<ToastNotification
+									aria-label="closes notification"
+									caption={new Date(Date.now()).toLocaleTimeString()}
+									kind="info"
+									role="alert"
+									statusIconDescription="notification"
+									subtitle="Notificação"
+									title={t.message as string}
+								/>
+							)}
+						</Toaster>
 						{/* <div style={{ display: "flex", position: "absolute", right: "240px", top: "48px", zIndex: "9999999" }}>
 							{showNotificationToast &&
 								<ToastNotification

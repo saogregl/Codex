@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { PageHeader } from "@carbon/ibm-products";
-
+import { PageHeader, getAutoSizedColumnWidth } from "@carbon/ibm-products";
+import { Row } from "@tanstack/react-table";
 import { Theme } from "@carbon/react";
 import useThemeStore from "../../Stores/themeStore";
 import { defaultPageHeaderProps } from "../../constants/defaultPageHeader";
@@ -14,6 +14,7 @@ import {
 	NumberInput,
 	RadioButton,
 	RadioButtonGroup,
+	Button,
 } from "@carbon/react";
 import { Add, Activity, Edit, TrashCan } from "@carbon/icons-react";
 import { useClickOutside } from "../../hooks/useClickOutside";
@@ -37,6 +38,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DatagridActions } from "../../components/Datagrid/DatagridActions";
 import { EditTearsheetForm, EditTearsheet } from "../../components/TearSheet";
 import LocationTable from "../../components/LocationTable";
+import useCollectionsForm from "../../hooks/useCollectionsForm";
+import { Collection } from "../../../../../web/src/bindings";
+import { CreateCollection } from "../../components/CreateCollection";
+import useModalStore from "../../Stores/modalStore";
 
 const index = () => {
 	const { theme } = useThemeStore();
@@ -47,12 +52,14 @@ const index = () => {
 		setOpen(!open);
 	};
 
-	const [selectedCollection, setSelectedCollection] = useState(0);
+	const [selectedCollection, setSelectedCollection] =
+		useState<Collection | null>(null);
+	const [selectedCollectionID, setSelectedCollectionID] = useState<number>(0);
+	const [CreateCollectionIsOpen, SetCreateCollectionIsOpen] = useState(false);
 
 	const DatagridBatchActions = (datagridState) => {
 		const { selectedFlatRows, toggleAllRowsSelected } = datagridState;
 		const totalSelected = selectedFlatRows?.length;
-		const onBatchAction = () => alert("Batch action");
 		const actionName = "Action";
 
 		return (
@@ -63,7 +70,7 @@ const index = () => {
 			>
 				<TableBatchAction
 					renderIcon={(props) => <Activity size={16} {...props} />}
-					onClick={onBatchAction}
+					// onClick={onBatchAction}
 				>
 					{actionName}
 				</TableBatchAction>
@@ -72,85 +79,107 @@ const index = () => {
 	};
 
 	const DocumentEditTearsheet = () => {
+		const closeTearsheet = () => {
+			setOpen(false);
+		};
+
+		const {
+			errors,
+			handleEditCollection,
+			handleSubmit,
+			isLoading,
+			register,
+			successfullEdit,
+		} = useCollectionsForm({
+			collection_id: selectedCollectionID,
+			closeTearsheet,
+		});
+
+		const onRequestClose = () => {
+			SetCreateCollectionIsOpen(false);
+		};
+
+
 		return (
-			<EditTearsheet
-				className="c4p--tearsheet-edit-multi-form test-class-name"
-				description="Edite as informações da coleção."
-				influencerWidth="narrow"
-				label=""
-				open={open}
-				onClose={() => setOpen(false)}
-				submitButtonText="Confirmar"
-				title="Editar coleção"
-				onHandleModalConfirm={() => console.log("action")}
-				onHandleModalCancel={() => setOpen(false)}
-			>
-				<EditTearsheetForm
-					description="Essas informações são usadas para identificar sua coleção."
-					fieldsetLegendText="Informações da coleção"
-					subtitle="Aqui você pode editar as informações da coleção."
-					title="Descrição da coleção"
+			<>
+				<EditTearsheet
+					className="c4p--tearsheet-edit-multi-form test-class-name"
+					description="Edite as informações da coleção."
+					influencerWidth="narrow"
+					label="Coleção"
+					open={open}
+					onClose={() => setOpen(false)}
+					submitButtonText="Confirmar"
+					title="Editar coleção"
+					onHandleModalConfirm={handleSubmit(handleEditCollection)}
+					onHandleFormSubmit={handleSubmit(handleEditCollection)}
+					onHandleModalCancel={() => setOpen(false)}
+					createModalProps={{
+						collectionId: selectedCollectionID,
+						open: CreateCollectionIsOpen,
+						onClose: onRequestClose,
+					}}
 				>
-					<Column lg={8} md={8} sm={8} xlg={8}>
-						<TextInput
-							id="tearsheet-multi-form-story-text-input-multi-form-1"
-							invalidText="This is a required field"
-							labelText="Topic name"
-							onBlur={() => console.log("action")}
-							onChange={() => console.log("action")}
-							placeholder="Enter topic name"
-							value="Topic name here"
-						/>
-						<TextInput
-							id="tearsheet-multi-form-story-text-input-multi-form-1-input-2"
-							labelText="Topic description (optional)"
-							onChange={() => console.log("action")}
-							placeholder="Enter topic description"
-							value="Topic description here"
-						/>
-						<TextInput
-							id="tearsheet-multi-form-story-text-input-multi-form-1-input-3"
-							labelText="Topic version (optional)"
-							onChange={() => console.log("action")}
-							placeholder="Enter topic version"
-							value="Topic value here"
-						/>
-						<Toggle
-							className="c4p--tearsheet-edit-multi-form__error--toggle"
-							id="simulated-error-toggle"
-							labelText="Simulate error"
-							onToggle={() => console.log("action")}
-							size="sm"
-						/>
-					</Column>
-				</EditTearsheetForm>
-				<EditTearsheetForm
-					description="Adicione pastas e arquivos a coleção."
-					fieldsetLegendText=""
-					subtitle="Aqui você pode editar as pastas e arquivos da coleção."
-					title="Pastas e arquivos"
-				>
-					<Column lg={16} md={8} sm={8} xlg={16}>
-						<LocationTable collectionId={selectedCollection}/>
-					</Column>
-				</EditTearsheetForm>
-			</EditTearsheet>
+					<EditTearsheetForm
+						description="Essas informações são usadas para identificar sua coleção."
+						fieldsetLegendText="Informações da coleção"
+						subtitle="Aqui você pode editar as informações da coleção."
+						title="Descrição da coleção"
+					>
+						<Column lg={16} md={8} sm={8} xlg={16}>
+							<TextInput
+								id="name"
+								labelText="Nome da coleção"
+								helperText="Digite um nome para ajudar a identificar a coleção."
+								{...register("name")}
+								invalid={errors.name ? true : false}
+								// @ts-ignore
+								invalidText={errors.name?.message}
+								defaultValue={selectedCollection ? selectedCollection.name : ""}
+								disabled={isLoading}
+							/>
+							<TextInput
+								id="description"
+								labelText="Descrição da coleção"
+								helperText="Digite uma descrição para ajudar a identificar a coleção."
+								{...register("description")}
+								invalid={errors.description ? true : false}
+								// @ts-ignore
+								invalidText={errors.description?.message}
+								defaultValue={
+									selectedCollection ? selectedCollection.description : ""
+								}
+								disabled={isLoading}
+							/>
+						</Column>
+					</EditTearsheetForm>
+					<EditTearsheetForm
+						description="Adicione pastas e arquivos a coleção."
+						fieldsetLegendText=""
+						subtitle="Aqui você pode editar as pastas e arquivos da coleção."
+						title="Pastas e arquivos"
+					>
+						<Column lg={16} md={8} sm={8} xlg={16}>
+							<LocationTable collectionId={selectedCollectionID} />
+							<Button onClick={() => SetCreateCollectionIsOpen(true)}>
+								{" "}
+								Adicionar pasta{" "}
+							</Button>
+						</Column>
+					</EditTearsheetForm>
+				</EditTearsheet>
+			</>
 		);
 	};
 
 	const getBatchActions = () => {
 		return [
 			{
-				label: "Duplicate",
-				renderIcon: (props) => <Add size={16} {...props} />,
-				onClick: console.log("Clicked batch action button"),
-			},
-			{
 				label: "Delete",
-				renderIcon: (props) => <Add size={16} {...props} />,
-				onClick: console.log("Clicked batch action button"),
+				renderIcon: (props) => <TrashCan size={16} {...props} />,
+				// onClick: console.log("Clicked batch action button"),
 				hasDivider: true,
-				kind: "tertiary",
+				kind: "danger",
 			},
 		];
 	};
@@ -163,33 +192,31 @@ const index = () => {
 		} else {
 			setData(collections);
 		}
-	}, [isLoadingcollections]);
+	}, [isLoadingcollections, collections]);
 
 	const columns = useMemo(
 		() => [
 			{
-				Header: "id",
+				Header: "ID",
 				accessor: "id",
-			},
-			{
-				Header: "UUID",
-				accessor: "uuid",
-			},
-			{
-				Header: "ID da biblioteca",
-				accessor: "libraryId",
 			},
 			{
 				Header: "Nome",
 				accessor: "name",
+				width: 200,
 			},
 			{
-				Header: "Criado em",
+				Header: "Descrição",
+				accessor: "description",
+				width: 600,
+			},
+			{
+				Header: "Criado",
 				accessor: "date_created",
 				Cell: ({ cell: { value } }) => <span>{dayjs(value).fromNow()}</span>,
 			},
 			{
-				Header: "Modificado em",
+				Header: "Modificado",
 				accessor: "date_modified",
 				Cell: ({ cell: { value } }) => <span>{dayjs(value).fromNow()}</span>,
 			},
@@ -200,11 +227,12 @@ const index = () => {
 				isAction: true,
 			},
 		],
-		[],
+		[isLoadingcollections],
 	);
 
-	const handleEditClick = (collectionId) => {
-		setSelectedCollection(collectionId);
+	const handleEditClick = (collection: Collection) => {
+		setSelectedCollectionID(collection.id);
+		setSelectedCollection({ ...collection });
 		setOpen(true);
 	};
 
@@ -212,16 +240,22 @@ const index = () => {
 		return [
 			{
 				id: "edit",
-				itemText: "Edit",
+				itemText: "Editar",
 				icon: Edit,
-				onClick: (actionId: string, row: any, event: any) => handleEditClick(row.original.id),
+				onClick: (
+					actionId: string,
+					// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+					row: any,
+					// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+					event: any,
+				) => handleEditClick(row.original),
 			},
 			{
 				id: "delete",
-				itemText: "Delete",
+				itemText: "Deletar",
 				icon: TrashCan,
 				isDelete: true,
-				onClick: console.log("Clicked row action: delete"),
+				// onClick: console.log("Clicked row action: delete"),
 			},
 		];
 	};
@@ -240,7 +274,7 @@ const index = () => {
 			DatagridActions,
 			DatagridBatchActions,
 			rowActions: getRowActions(),
-			onSelectAllRows: () => console.log("onSelectAll batch action callback"),
+			// onSelectAllRows: () => console.log("onSelectAll batch action callback"),
 		},
 		useSelectRows,
 		useSelectAllWithToggle,

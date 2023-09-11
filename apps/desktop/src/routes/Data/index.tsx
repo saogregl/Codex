@@ -242,7 +242,7 @@ const index = () => {
 											setSelectedObject={setSelectedObject}
 											setOpen={setOpen}
 											open={open}
-											tags={docTags}
+											tags={document.tags}
 										/>
 									))}
 								</div>

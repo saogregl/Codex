@@ -1,5 +1,9 @@
 import { ProductiveCard } from "@carbon/ibm-products";
-import { SearchResult, Tag } from "../../../../../web/src/bindings";
+import {
+	SearchResult,
+	Tag,
+	TagOnObject,
+} from "../../../../../web/src/bindings";
 import { settings } from "../../constants/settings";
 import { Edit, ArrowRight } from "@carbon/icons-react";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -15,11 +19,12 @@ import dayjs from "dayjs";
 import relative from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br"; // import locale
 import { getTagColor } from "./DocumentForm";
+import useTags from "../../hooks/useTags";
 
 dayjs.extend(relative);
 dayjs.locale("pt-br"); // use locale
 
-const CardHeader = ({ title }) => {
+const CardHeader = ({ title, tags }) => {
 	return (
 		<div
 			style={{
@@ -28,10 +33,30 @@ const CardHeader = ({ title }) => {
 				alignItems: "center",
 			}}
 		>
-			<div style={{ display: "flex", width: "100%" }}>
+			<div style={{ display: "flex", width: "100%", flexDirection: "column", alignContent: "space-between" }}>
 				<span className={`${settings.sipePrefix}--data-title-link`}>
 					{title}
 				</span>
+				<div
+					style={{
+						padding: "0",
+						marginTop: "5px",
+						display: "flex",
+						gap: "5px",
+						alignContent: "flex-start",
+						alignItems: "center"
+					}}
+				>
+					{tags?.map((tag) => (
+						<TagComponent
+							key={tag.color}
+							type={getTagColor(tag)}
+							style={{ padding: "0 5px 0 5px", margin: "0" }}
+						>
+							{tag.name}
+						</TagComponent>
+					))}
+				</div>
 			</div>
 			<div style={{ display: "flex", alignContent: "center", gap: "2px" }} />
 		</div>
@@ -43,7 +68,7 @@ interface DocumentCardProps extends React.HTMLAttributes<HTMLDivElement> {
 	setSelectedObject: (document: SearchResult) => void;
 	setOpen: (open: boolean) => void;
 	open: boolean;
-	tags?: Tag[];
+	tags: TagOnObject[];
 }
 
 const DocumentCard: FC<DocumentCardProps> = ({
@@ -54,6 +79,16 @@ const DocumentCard: FC<DocumentCardProps> = ({
 	tags,
 	...rest
 }) => {
+	const { tags: allTags } = useTags();
+
+	const getThisDocumentTags = useCallback(() => {
+		const thisDocumentTags = tags.map((tag) => {
+			const tagObject = allTags.find((t) => t.id === tag.tag_id);
+			return { ...tagObject, ...tag };
+		});
+		return thisDocumentTags;
+	}, [tags, allTags]);
+
 	const { theme } = useThemeStore();
 	const navigate = useNavigate();
 	const handleDocumentEditClick = (document) => {
@@ -115,20 +150,17 @@ const DocumentCard: FC<DocumentCardProps> = ({
 					},
 				]}
 				mediaRatio={null}
-				title={<CardHeader title={document?.title} />}
-				pictogram={() =>
-					tags
-						? tags.map((tag, index) => (
-							<TagComponent
-								key={tag.color}
-								type={getTagColor(tag)}
-							>
-								{tag.name}
-							</TagComponent>
-						))
-						: null
+				title={
+					<CardHeader tags={getThisDocumentTags()} title={document?.title} />
 				}
 			>
+				{/* {document.tags
+					? getThisDocumentTags().map((tag, index) => (
+							<TagComponent key={tag.color} type={getTagColor(tag)}>
+								{tag.name}
+							</TagComponent>
+					  ))
+					: null} */}
 				{parse(`"${document.snippet}"`, options)}
 			</ProductiveCard>
 		</div>

@@ -26,6 +26,37 @@ pub fn mount() -> RouterBuilder<Ctx> {
                 ]).exec().await.unwrap()
             })
         })
+        .mutation("edit_collection_by_id", |t| { 
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct EditCollectionByID {
+                id: i32,
+                name: String,
+                description: String,
+            }
+            t(
+                |ctx: Ctx,
+                 EditCollectionByID {
+                     id,
+                     name,
+                     description,
+                 }: EditCollectionByID| async move {
+                    ctx.client
+                        .collection()
+                        .update(
+                            collection::id::equals(id.clone()),
+                            vec![
+                                collection::name::set(Some(name)),
+                                collection::description::set(Some(description)),
+                                collection::date_modified::set(Some(Utc::now().into())),
+                            ],
+                        )
+                        .exec()
+                        .await
+                        .unwrap();
+                },
+            )
+
+        })
         .mutation("add_new_location", |t| { 
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
             struct AddNewLocation {
@@ -67,10 +98,7 @@ pub fn mount() -> RouterBuilder<Ctx> {
                     //get the library id from the collection id
                     let collection = ctx.client.collection().find_first(vec![collection::id::equals(collection_id.clone())]).exec().await.unwrap();
                     let library_id = collection.unwrap().library_id;
-                    
                     let _ = ctx.manager.update_library(library_id.clone()).await;
-                
-                
                 },
             )
         })
@@ -123,8 +151,6 @@ pub fn mount() -> RouterBuilder<Ctx> {
                      hidden,
                  }: CreateCollectionWithLocation| async move {
                     let date_created = Utc::now();
-                    
-
                     let collection = ctx.client
                         .collection()
                         .create(

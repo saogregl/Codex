@@ -45,64 +45,140 @@ pub fn mount() -> RouterBuilder<Ctx> {
 
             t(
                 |ctx: Ctx, CreateNewTagArgs { name, color }: CreateNewTagArgs| async move {
-                    ctx.client
+
+                    let tag = ctx
+                        .client
                         .tag()
-                        .create(vec![
-                            tag::name::set(Some(name)),
-                            tag::color::set(Some(color)),
-                            tag::date_created::set(Some(Utc::now().into())),
-                            tag::date_modified::set(Some(Utc::now().into())),
-                        ])
+                        .find_many(vec![tag::name::equals(Some(name.clone())), tag::color::equals(Some(color.clone()))])
                         .exec()
-                        .await
-                        .unwrap();
-                },
+                        .await?;
+
+
+                    if tag.len() > 0 {
+                        return Err(rspc::Error::new(
+                            ErrorCode::NotFound,
+                            "Tag already exists".to_string(),
+                        ));
+                    } else {
+                        let tag = ctx
+                            .client
+                            .tag()
+                            .create(vec![
+                                tag::name::set(Some(name.clone())),
+                                tag::color::set(Some(color.clone())),
+                                tag::date_created::set(Some(Utc::now().into())),
+                                tag::date_modified::set(Some(Utc::now().into())),
+                            ])
+                            .exec()
+                            .await?;
+
+                        Ok(tag)
+                    }
+
+
+                    },
             )
+
+
+        })
+        .mutation("add_tag_unchecked" , |t| { 
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct CreateNewTagUncheckdArgs {
+                name: String,
+                color: String,
+            }
+            t(
+                |ctx: Ctx, CreateNewTagUncheckdArgs { name, color }: CreateNewTagUncheckdArgs| async move {
+
+                        let tag = ctx
+                            .client
+                            .tag()
+                            .create(vec![
+                                tag::name::set(Some(name.clone())),
+                                tag::color::set(Some(color.clone())),
+                                tag::date_created::set(Some(Utc::now().into())),
+                                tag::date_modified::set(Some(Utc::now().into())),
+                            ])
+                            .exec()
+                            .await?;
+
+                        Ok(tag)
+
+
+                    },
+            )
+
         })
         .mutation("add_tag_to_object", |t| {
             #[derive(Debug, Clone, Deserialize, Serialize, Type)]
             struct AddTagToObjectArgs {
-                tag_uuid: String,
-                object_uuid: String,
+                tag_id: i32,
+                object_id: i32,
+                remove_tag: bool,
             }
             t(
                 |ctx: Ctx,
                  AddTagToObjectArgs {
-                     tag_uuid,
-                     object_uuid,
+                    remove_tag,
+                    tag_id,
+                    object_id,
                  }: AddTagToObjectArgs| async move {
+                    //First we'll check if the tag exists
                     let (tag, objects) = ctx
-                        .client
-                        ._batch((
-                            ctx.client
-                                .tag()
-                                .find_unique(tag::uuid::equals(tag_uuid.clone())),
-                            ctx.client
-                                .object()
-                                .find_many(vec![object::uuid::equals(object_uuid.clone())]),
+                    .client
+                    ._batch((
+                        ctx.client
+                            .tag()
+                            .find_many(vec![tag::id::equals(tag_id)]),
+                        ctx.client
+                            .object()
+                            .find_unique(object::id::equals(object_id)),
+                    ))
+                    .await?;
+
+                    if tag.len() > 0 {
+                        if let Some(_) = objects {
+                            if remove_tag { 
+                                ctx.client
+                                .tag_on_object()
+                                .delete_many(vec![
+                                    tag_on_object::tag_id::equals(tag_id.clone()),
+                                    tag_on_object::object_id::equals(object_id.clone()),
+                                ])
+                                .exec()
+                                .await
+                                .unwrap();
+                            } else { 
+                                ctx.client
+                                .tag_on_object()
+                                .create_unchecked(
+                                    tag_id.clone(), 
+                                    object_id.clone(),
+                                    vec![
+                                    ],
+                                )
+                                .exec()
+                                .await
+                                .unwrap();
+                            }
+        
+                            return Ok(());
+                        } else {
+                            return Err(rspc::Error::new(
+                                ErrorCode::NotFound,
+                                "Object not found".to_string(),
+                            ));
+                        }
+                    } else {
+                        Err(rspc::Error::new(
+                            ErrorCode::NotFound,
+                            "Tag not found".to_string(),
                         ))
-                        .await
-                        .unwrap();
+                    }
 
-                    let tag = tag
-                        .ok_or_else(|| {
-                            rspc::Error::new(ErrorCode::NotFound, "Tag not found".to_string())
-                        })
-                        .unwrap();
 
-                    ctx.client
-                        .tag_on_object()
-                        .create(
-                            tag::uuid::equals(tag_uuid.clone()),
-                            object::uuid::equals(object_uuid.clone()),
-                            vec![
-                                tag_on_object::tag_id::set(tag_uuid.clone()),
-                                tag_on_object::object_id::set(object_uuid.clone()),
-                            ],
-                        )
-                        .exec()
-                        .await
-                        .unwrap();
+
+
                 },
             )
         })
@@ -147,6 +223,35 @@ pub fn mount() -> RouterBuilder<Ctx> {
                     }
                 },
             )
+        })
+        .query("get_tag", |t| { 
+            #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+            struct GetTag {
+                tag_id: i32,
+            }
+            t(
+                |ctx: Ctx,
+                 GetTag {
+                     tag_id,
+                 }: GetTag| async move {
+                    let tag = ctx
+                        .client
+                        .tag()
+                        .find_unique(tag::id::equals(tag_id.clone()))
+                        .exec()
+                        .await?;
+
+                    if let Some(tag) = tag {
+                        return Ok(tag);
+                    } else {
+                        return Err(rspc::Error::new(
+                            ErrorCode::NotFound,
+                            "Tag not found".to_string(),
+                        ));
+                    }
+                },
+            )
+
         })
         .query("get_tags", |t| {
             t(|ctx: Ctx, _: ()| async move {

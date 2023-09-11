@@ -6,7 +6,7 @@ use std::{
 use codex_prisma::prisma::{
     location::{self, Data as locationData},
     object::{self, Data as objectData},
-    PrismaClient,
+    tag_on_object, PrismaClient,
 };
 use log::info;
 
@@ -226,8 +226,11 @@ impl Searcher {
                 .db
                 .object()
                 .find_first(vec![object::obj_name::equals(Some(title.to_string()))])
+                .with(object::tags::fetch(vec![]))
                 .exec()
-                .await?;
+                .await
+                .unwrap();
+
 
             if obj.is_none() {
                 return Err(anyhow::anyhow!(std::io::Error::new(
@@ -235,6 +238,9 @@ impl Searcher {
                     "object not found in the database",
                 )));
             }
+
+            let tags = obj.clone().unwrap().tags.unwrap_or(vec![]);
+
 
             // Generate a snippet from the document
             let snippet = snippet_generator.snippet_from_doc(&retrieved_doc);
@@ -245,6 +251,7 @@ impl Searcher {
                 snippet_html,
                 score,
                 obj.unwrap(),
+                tags,
             ));
         }
 
