@@ -34,6 +34,7 @@ import { defaultPageHeaderProps } from "../../constants/defaultPageHeader";
 import { defaultPaginationProps } from "../../constants/defaultPagination";
 import useCollections from "../../hooks/useCollections";
 import { Collection, Tag as TagObject } from "../../../../../web/src/bindings";
+import useFilters from "../../hooks/useFilters";
 
 const index = () => {
 	const { theme } = useThemeStore();
@@ -51,24 +52,67 @@ const index = () => {
 	const [selectedObject, setSelectedObject] =
 		useState<typeof SearchResult[number]>(null);
 
-	const documentTypes = [
-		"Document Type 1",
-		"Document Type 2",
-		"Document Type 3",
-	];
-	const authors = ["Author 1", "Author 2", "Author 3"];
+	const {
+		tags,
+		collections: collectionsFilter,
+		dateRange,
+		onlyFavorites,
+		getFilteredData,
+		setCollections,
+		setDateRange,
+		setOnlyFavorites,
+		setTags,
+	} = useFilters();
 
 	const { data: SearchResult } = rspc.useQuery(["search.search", { query }]);
 	const { tags: docTags } = useTags();
 	const { collections } = useCollections();
 
 	useEffect(() => {
-		setTotalItems(SearchResult?.length);
-	}, [SearchResult]);
+		setTotalItems(
+			getFilteredData({ data: SearchResult ? SearchResult : [] }).length,
+		);
+	}, [
+		SearchResult,
+		tags,
+		collectionsFilter,
+		dateRange,
+		onlyFavorites,
+		currentPage,
+		pageSize,
+	]);
 
 	useEffect(() => {
-		setPaginatedSearchResult(SearchResult?.slice(0, pageSize));
-	}, [SearchResult]);
+		setPaginatedSearchResult(
+			SearchResult
+				? getFilteredData({ data: SearchResult }).slice(
+						(currentPage - 1) * pageSize,
+						currentPage * pageSize,
+				)
+				: [],
+		);
+	}, [
+		SearchResult,
+		tags,
+		collectionsFilter,
+		dateRange,
+		onlyFavorites,
+		currentPage,
+		pageSize,
+	]);
+
+	const handlePaginateChange = (e: { page: number; pageSize: number }) => {
+		setCurrentPage(e.page);
+		setPageSize(e.pageSize);
+		setPaginatedSearchResult(
+			SearchResult
+				? getFilteredData({ data: SearchResult }).slice(
+						(e.page - 1) * e.pageSize,
+						e.page * e.pageSize,
+				)
+				: [],
+		);
+	};
 
 	// On first render we should check if the query is not empty and search:
 	useEffect(() => {
@@ -94,40 +138,28 @@ const index = () => {
 		}, 300); // 300ms is the delay after which setQuery will be called
 	};
 
-	const handlePaginateChange = (e: { page: number; pageSize: number }) => {
-		setCurrentPage(e.page);
-		setPageSize(e.pageSize);
-		setPaginatedSearchResult(
-			SearchResult?.slice((e.page - 1) * e.pageSize, e.page * e.pageSize),
-		);
-	};
-
-	const handleFavoritesChange = (e) => {
-		console.log(e);
-	};
-
 	const FilterMenu = () => {
 		return (
 			<SearchPanel>
 				<Accordion>
-					<AccordionItem title="Tags">
+					<AccordionItem open title="Tags">
 						<MultiSelect
-							label="tags"
 							id="tags-dropdown"
+							selectionFeedback="top"
 							titleText="Selecione as Tags"
 							helperText="Filtre os documentos por tags"
 							items={docTags ? docTags : []}
 							itemToElement={(tag: TagObject) =>
-								tag ? (
-									<Tag type={getTagColor(tag)}>{tag?.name}</Tag>
-								) : (
-									""
-								)
+								tag ? <Tag type={getTagColor(tag)}>{tag?.name}</Tag> : ""
 							}
 							itemToString={(tag: TagObject) => (tag ? tag.name : "")}
+							onChange={(e) => {
+								setTags(e.selectedItems);
+							}}
+							selectedItems={tags}
 						/>
 					</AccordionItem>
-					<AccordionItem title="Coleções">
+					<AccordionItem open title="Coleções">
 						<MultiSelect
 							label="Selecione as coleções"
 							id="collections-multiselect"
@@ -135,11 +167,24 @@ const index = () => {
 							helperText="Filtre os documentos por coleções"
 							items={collections ? collections : []}
 							itemToString={(item: Collection) => (item ? item.name : "")}
-							selectionFeedback="top-after-reopen"
+							selectionFeedback="top"
+							onChange={(e) => {
+								setCollections(e.selectedItems);
+							}}
+							selectedItems={collectionsFilter}
 						/>
 					</AccordionItem>
 					<AccordionItem title="Data">
-						<DatePicker datePickerType="range">
+						<DatePicker
+							datePickerType="range"
+							onChange={(e) => {
+								setDateRange({
+									start: e[0] ? e[0] : null,
+									end: e[1] ? e[1] : null,
+								});
+							}}
+							value={[dateRange.start, dateRange.end]}
+						>
 							<DatePickerInput
 								id="date-picker-input-id-start"
 								placeholder="dd/mm/aaaa"
@@ -154,31 +199,14 @@ const index = () => {
 							/>
 						</DatePicker>
 					</AccordionItem>
-					<AccordionItem title="Tipo de Documento">
-						<Dropdown
-							label="tags"
-							id="doctype-dropdown"
-							titleText="Selecione o Tipo de Documento"
-							helperText="Filtre os documentos por tipo"
-							items={documentTypes}
-							itemToString={(item) => (item ? item : "")}
-						/>
-					</AccordionItem>
-					<AccordionItem title="Autor">
-						<Dropdown
-							label="tags"
-							id="author-dropdown"
-							titleText="Selecione o Autor"
-							helperText="Filtre os documentos por autor"
-							items={authors}
-							itemToString={(item) => (item ? item : "")}
-						/>
-					</AccordionItem>
 					<AccordionItem title="Favoritos">
 						<Checkbox
 							labelText="Mostrar apenas favoritos"
 							id="favorites-checkbox"
-							onChange={handleFavoritesChange}
+							checked={onlyFavorites}
+							onChange={(_, { checked, id }) => {
+								setOnlyFavorites(checked ? true : false);
+							}}
 						/>
 					</AccordionItem>
 				</Accordion>

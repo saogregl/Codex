@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { Collection, Tag } from "../../../../web/src/bindings";
+
+
 
 type QueryParamState = {
   persistentQuery: string;

@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useState } from "react";
-import { ProductiveCard, PageHeader } from "@carbon/ibm-products";
+import {
+	ProductiveCard,
+	PageHeader,
+	NoDataEmptyState,
+} from "@carbon/ibm-products";
 import { FlexGrid, Row, Column, Button } from "@carbon/react";
 // @ts-ignore
 import {
@@ -180,15 +184,15 @@ const index = () => {
 							isLoading: isLoading,
 							hasError: isError,
 						},
-						{
-							id: "2",
-							title: "Conectar fonte de dados",
-							icon: Db2Database,
-							onClick: () => setCreateModalIsOpen(!open),
-							disabled: true,
-							isLoading: false,
-							hasError: false,
-						},
+						// {
+						// 	id: "2",
+						// 	title: "Conectar fonte de dados",
+						// 	icon: Db2Database,
+						// 	onClick: () => setCreateModalIsOpen(!open),
+						// 	disabled: true,
+						// 	isLoading: false,
+						// 	hasError: false,
+						// },
 					]}
 				/>
 				<FlexGrid fullWidth>
@@ -198,31 +202,21 @@ const index = () => {
 								`${settings.sipePrefix}--home-header-container`,
 							)}
 						>
-							<ContentSwitcher onChange={(e) => console.log(e)}>
+							{/* <ContentSwitcher onChange={(e) => console.log(e)}>
 								<Switch name="favorites" text="Favoritos" />
 								<Switch name="reccomended" text="Recomendados" />
-							</ContentSwitcher>
+							</ContentSwitcher> */}
 						</div>
 					</Row>
 					<Row>
-						<Column lg={4} md={8}>
-							<div>{renderDocument(0)}</div>
-						</Column>
-						<Column lg={4} md={8}>
-							<div>{renderDocument(0)}</div>
-						</Column>
-						<Column lg={4} md={8}>
-							<div>{renderDocument(0)}</div>
-						</Column>
-						<Column lg={4} md={8}>
-							<div>{renderDocument(0)}</div>
-						</Column>
+						<div style={{width: "100%", alignContent: "center", alignItems: "center", display: "flex", justifyContent: "center"}}>
+
+						<NoDataEmptyState
+							subtitle="Comece adicionando uma coleção de documentos."
+							title="Nenhuma coleção encontrada"
+							/>
+							</div>
 					</Row>
-					{/* {tags
-						? tags.map((tag) => (
-								<Tag type={tag.color.toLocaleLowerCase()}>{tag.name}</Tag>
-						))
-						: ""} */}
 				</FlexGrid>
 			</div>
 		</div>

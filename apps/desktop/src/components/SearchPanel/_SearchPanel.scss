@@ -27,14 +27,15 @@ $sipePrefix: "sipe";
             display: flex;
             justify-content: space-between;
             align-items: center;
+            
+
             // padding: 0 0 spacing.$spacing-03 0;
         }
 
         .#{$sipePrefix}--search-panel-header-text {
-            @include type.type-style("productive-heading-03");
+            @include type.type-style("productive-heading-02");
             color: theme.$text-primary;
             padding-bottom: spacing.$spacing-02;
-
         }
 
 

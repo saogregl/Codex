@@ -16,7 +16,18 @@ use tauri::Manager;
 fn extend_scope(handle: tauri::AppHandle, path: std::path::PathBuf) {
     let asset_scope = handle.asset_protocol_scope();
     // ideally you don't apply a path sent from the frontend or at least not without some validation
+
+    //get parent directory of the path
+    let parent = path.parent().unwrap();
+    //Allow directory
+    let _ = asset_scope.allow_directory(&parent, false);
     let _ = asset_scope.allow_file(&path);
+
+    println!(
+        "is allowed {:?}, for path: {:?}",
+        asset_scope.is_allowed(&path),
+        path
+    );
 }
 
 #[tokio::main]

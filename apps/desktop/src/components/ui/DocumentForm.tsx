@@ -197,7 +197,7 @@ const DocumentForm = ({
 							<Checkbox
 								labelText="Favorito"
 								title="Favorito"
-								checked={selectedObject?.object.favorite}
+								defaultChecked={selectedObject?.object.favorite}
 								id="favorite"
 								{...register("favorite")}
 								invalid={errors.favorite ? true : false}
@@ -231,7 +231,6 @@ const DocumentForm = ({
 										selectionFeedback="top-after-reopen"
 										onInputValueChange={(e) => {
 											setNewTag(e);
-											console.log(e);
 										}}
 										onChange={onChange}
 										onBlur={onBlur}

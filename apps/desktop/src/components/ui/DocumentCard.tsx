@@ -20,6 +20,7 @@ import relative from "dayjs/plugin/relativeTime";
 import "dayjs/locale/pt-br"; // import locale
 import { getTagColor } from "./DocumentForm";
 import useTags from "../../hooks/useTags";
+import { invoke } from "@tauri-apps/api";
 
 dayjs.extend(relative);
 dayjs.locale("pt-br"); // use locale
@@ -33,7 +34,14 @@ const CardHeader = ({ title, tags }) => {
 				alignItems: "center",
 			}}
 		>
-			<div style={{ display: "flex", width: "100%", flexDirection: "column", alignContent: "space-between" }}>
+			<div
+				style={{
+					display: "flex",
+					width: "100%",
+					flexDirection: "column",
+					alignContent: "space-between",
+				}}
+			>
 				<span className={`${settings.sipePrefix}--data-title-link`}>
 					{title}
 				</span>
@@ -44,7 +52,7 @@ const CardHeader = ({ title, tags }) => {
 						display: "flex",
 						gap: "5px",
 						alignContent: "flex-start",
-						alignItems: "center"
+						alignItems: "center",
 					}}
 				>
 					{tags?.map((tag) => (
@@ -96,9 +104,21 @@ const DocumentCard: FC<DocumentCardProps> = ({
 		setOpen(!open);
 	};
 
-	const handleDocumentViewClick = (e) => {
+	const extend_scope = async () => {
+		try {
+			if (document?.object.path !== undefined) {
+				await invoke("extend_scope", { path: document?.object.path });
+			}
+		} catch (error) {
+			console.error("Failed to extend scope:", error);
+		}
+	};
+
+	const handleDocumentViewClick = async (e) => {
 		e.preventDefault();
-		navigate(`/data/${document.object.id}`);
+		await extend_scope().then(() => {
+			navigate(`/data/${document.object.id}`);
+		});
 	};
 
 	const options = {

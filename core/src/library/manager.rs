@@ -111,12 +111,12 @@ impl LibraryManager {
 
     pub async fn search(&self, query: &str) -> Result<Vec<SearchResult>, anyhow::Error> {
         let search_result: Vec<SearchResult> = self.searcher.search(query).await?;
-        self.notification_manager
-            ._internal_emit(CodexNotification::new(
-                "Search Finished".to_string(),
-                NotificationType::SearchFinished,
-            ))
-            .await?;
+        // self.notification_manager
+        //     ._internal_emit(CodexNotification::new(
+        //         "Search Finished".to_string(),
+        //         NotificationType::SearchFinished,
+        //     ))
+        //     .await?;
         Ok(search_result)
     }
 

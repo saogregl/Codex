@@ -28,7 +28,7 @@ $sipePrefix: "sipe";
 }
 
 .#{$sipePrefix}--search-panel-header-text {
-  @include type.type-style("productive-heading-03");
+  @include type.type-style("productive-heading-02");
   color: theme.$text-primary;
   padding-bottom: spacing.$spacing-02;
 }
@@ -103,8 +103,8 @@ $sipePrefix: "sipe";
 
 .left-panel {
   height: calc(100% - 60px - spacing.$spacing-06);
-  width: 40%;
-  max-width: 420px;
+  width: 45%;
+  max-width: 520px;
 }
 
 .right-panel {

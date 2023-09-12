@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@carbon/ibm-products";
 // @ts-ignore
 import { Theme } from "@carbon/react";
@@ -23,22 +23,26 @@ const index = () => {
 	const { id } = useParams();
 	const id_number = parseInt(id);
 	const { theme } = useThemeStore();
+	const [Mounted, setMounted] = useState(true);
 
-	const { data: object } = rspc.useQuery([
+	const { data: object, isFetched } = rspc.useQuery([
 		"library.get_doc_by_id",
 		{ id: id_number },
 	]);
 
-	console.log(object)
-
 	useEffect(() => {
 		const extend_scope = async () => {
-			if (object?.path) {
-				await invoke("extend_scope", { path: object.path });
+			try {
+				if (object?.path !== undefined) {
+					await invoke("extend_scope", { path: object.path });
+				}
+			} catch (error) {
+				console.error("Failed to extend scope:", error);
 			}
 		};
+
 		extend_scope();
-	}, [object?.path]);
+	}, [object, isFetched]);
 
 	return (
 		<div>
@@ -65,7 +69,7 @@ const index = () => {
 				className={classnames(`${settings.sipePrefix}--main-content-wrapper`)}
 			>
 				<div style={{ height: "100%", width: "100%" }}>
-					<PDFViewer src={convertFileSrc(object?.path)} />
+					{object?.path && <PDFViewer src={convertFileSrc(object?.path)} />}
 				</div>
 			</div>
 		</div>
