@@ -31,12 +31,6 @@ jobs:
         working-directory: core
         shell: bash
         run: cargo update && cargo prisma generate
-
-      # - name: install webkit2gtk (ubuntu only)
-        # if: matrix.platform == 'ubuntu-latest'
-        # run: |
-        #   sudo apt-get update
-        #   sudo apt-get install -y webkit2gtk-4.0
       - name: install app dependencies and build it
         run: pnpm install && pnpm desktop tauri build
         working-directory: ${{env.working-directory}}
