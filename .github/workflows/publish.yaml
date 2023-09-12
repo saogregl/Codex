@@ -20,17 +20,20 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 18
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: install webkit2gtk (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.0
+      # - name: install webkit2gtk (ubuntu only)
+        # if: matrix.platform == 'ubuntu-latest'
+        # run: |
+        #   sudo apt-get update
+        #   sudo apt-get install -y webkit2gtk-4.0
       - name: install app dependencies and build it
-        run: yarn install && yarn desktop tauri build
+        run: pnpm install && pnpm desktop tauri build
         working-directory: ${{env.working-directory}}
       - uses: tauri-apps/tauri-action@v0
         env:
