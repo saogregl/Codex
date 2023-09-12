@@ -30,7 +30,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y webkit2gtk-4.0
       - name: install app dependencies and build it
-        run: pnpm install && pnpm desktop tauri build
+        run: yarn install && yarn desktop tauri build
         working-directory: ${{env.working-directory}}
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -41,4 +41,4 @@ jobs:
           releaseBody: "See the assets to download this version and install."
           releaseDraft: true
           prerelease: false
-          projectPath: ${{env.working-directory}}
+          projectPath: ./apps/desktop/
