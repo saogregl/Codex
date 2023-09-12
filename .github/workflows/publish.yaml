@@ -28,9 +28,9 @@ jobs:
         with:
           toolchain: stable
       - name: Generate Prisma client
-          working-directory: core
-          shell: bash
-          run: cargo prisma generate
+        working-directory: core
+        shell: bash
+        run: cargo update && cargo prisma generate
 
       # - name: install webkit2gtk (ubuntu only)
         # if: matrix.platform == 'ubuntu-latest'
