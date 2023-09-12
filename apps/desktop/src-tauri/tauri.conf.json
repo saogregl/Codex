@@ -1,16 +1,29 @@
 {
   "build": {
-    "beforeDevCommand": "yarn dev",
-    "beforeBuildCommand": "yarn build",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
     "devPath": "http://localhost:8080",
     "distDir": "../dist"
   },
   "package": {
     "productName": "codex",
-    "version": "0.0.1"
+    "version": "0.0.4"
   },
   "tauri": {
     "allowlist": {
+      "shell": {
+        "sidecar": true,
+        "scope": [
+          {
+            "name": "binaries/pdftoppm",
+            "sidecar": true
+          },
+          {
+            "name": "binaries/pdftotext",
+            "sidecar": true
+          }
+        ]
+      },
       "fs": {
         "scope": [
           "$RESOURCE/*"
@@ -25,7 +38,10 @@
       "deb": {
         "depends": []
       },
-      "externalBin": [],
+      "externalBin": [
+        "binaries/pdftoppm",
+        "binaries/pdftotext"
+      ],
       "icon": [
         "icons/128x128@2x.png",
         "icons/icon.icns",
@@ -40,7 +56,9 @@
         "providerShortName": null,
         "signingIdentity": null
       },
-      "resources": [],
+      "resources": [
+        "dev.db"
+      ],
       "shortDescription": "",
       "targets": "all"
     },
@@ -57,7 +75,7 @@
         "width": 1280,
         "height": 720,
         "resizable": true,
-        "title": "Sistema de Integração",
+        "title": "Gerenciador de conhecimento",
         "decorations": false
       }
     ]

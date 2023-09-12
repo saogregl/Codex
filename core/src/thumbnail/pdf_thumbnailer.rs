@@ -3,7 +3,7 @@ use codex_prisma::prisma::object::Data as ObjectData;
 use log::info;
 
 use crate::{config, object::Object as CodexObject, thumbnail::Thumbnailer};
-use std::{path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command, os::windows::process::CommandExt};
 
 use super::ThumbnailerError;
 
@@ -23,12 +23,17 @@ impl Thumbnailer for PdfThumbnailer {
         let mut thumbnail_path_prefix = PathBuf::from(&config.data_dir).join(object.uuid.clone());
         thumbnail_path_prefix.set_extension("");
 
-        let output = Command::new("pdftoppm")
+        //get target triple suffix for pdftoppm
+        let target_triple = std::env::consts::ARCH.to_string() + "-" + &std::env::consts::OS;
+        let target_triple = "x86_64-pc-windows-msvc".to_string();
+
+        let output = Command::new(format!("./{}.exe", "pdftoppm"))
             .args([
                 "-singlefile",
                 "-f",
                 "1",
                 "-r",
+                "-q",
                 "72",
                 "-jpeg",
                 "-jpegopt",
@@ -36,10 +41,12 @@ impl Thumbnailer for PdfThumbnailer {
                 file_path.to_str().unwrap(),
                 thumbnail_path_prefix.to_str().unwrap(),
             ])
-            .output()?;
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .spawn()?
+            .wait()?;
 
-        if !output.status.success() {
-            return Err(anyhow!(ThumbnailerError::CommandFailed(output.status)));
+        if !output.success() {
+            return Err(anyhow!(ThumbnailerError::CommandFailed(output)));
         }
 
         let thumbnail_path = thumbnail_path_prefix.with_extension("jpg");
