@@ -265,7 +265,7 @@ const index = () => {
 								<div className="scrollable-area">
 									{paginatedSearchResult?.map((document) => (
 										<DocumentCard
-											key={document.object.uuid}
+											key={document.object.collectionId + document.object.id}
 											document={document}
 											setSelectedObject={setSelectedObject}
 											setOpen={setOpen}

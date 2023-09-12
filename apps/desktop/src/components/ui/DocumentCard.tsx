@@ -25,7 +25,12 @@ import { invoke } from "@tauri-apps/api";
 dayjs.extend(relative);
 dayjs.locale("pt-br"); // use locale
 
-const CardHeader = ({ title, tags }) => {
+interface ICardHeaderProps {
+	title: string;
+	tags: Tag[];
+}
+
+const CardHeader = ({ title, tags }: ICardHeaderProps) => {
 	return (
 		<div
 			style={{
@@ -57,7 +62,7 @@ const CardHeader = ({ title, tags }) => {
 				>
 					{tags?.map((tag) => (
 						<TagComponent
-							key={tag.color}
+							key={tag.id + title}
 							type={getTagColor(tag)}
 							style={{ padding: "0 5px 0 5px", margin: "0" }}
 						>
@@ -91,7 +96,7 @@ const DocumentCard: FC<DocumentCardProps> = ({
 
 	const getThisDocumentTags = useCallback(() => {
 		const thisDocumentTags = tags.map((tag) => {
-			const tagObject = allTags.find((t) => t.id === tag.tag_id);
+			const tagObject = allTags.find((t) => t.id === tag.tag_id && document.object.id === tag.Object_id);
 			return { ...tagObject, ...tag };
 		});
 		return thisDocumentTags;
