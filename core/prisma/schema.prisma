@@ -1,6 +1,6 @@
 datasource db {
   provider = "sqlite"
-  url      = "file:C:/Development/teste/dev.db?connection_limit=1&socket_timeout=20&connect_timeout=1800&pool_timeout=10"
+  url      = "file:dev.db?connection_limit=1&socket_timeout=20&connect_timeout=1800&pool_timeout=10"
 }
 
 generator client {

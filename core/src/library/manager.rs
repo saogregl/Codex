@@ -3,11 +3,11 @@ use log::{error, warn};
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::config;
 use crate::library::notification::NotificationManager;
 use crate::search::Searcher;
+use crate::{config, library};
 use crate::{library::LocalLibrary, search::SearchResult};
-use codex_prisma::prisma::PrismaClient;
+use codex_prisma::prisma::{library as prisma_library, PrismaClient};
 use log::info;
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use uuid::Uuid;
@@ -42,6 +42,31 @@ impl LibraryManager {
                 });
             }
         };
+
+        //If we don't have a library, create one:
+        if loaded_libs.len() == 0 {
+            let new_lib = db
+                .library()
+                .create(vec![
+                    prisma_library::name::set(Some("Default Library".to_string())),
+                    prisma_library::date_created::set(Some(chrono::Utc::now().into())),
+                    prisma_library::date_modified::set(Some(chrono::Utc::now().into())),
+                ])
+                .exec()
+                .await?;
+
+            let new_lib = LocalLibrary::new(
+                Uuid::new_v4(),
+                new_lib.id,
+                "Default Library".to_string(),
+                Some("Default Library".to_string()),
+                Arc::clone(&db),
+                Arc::clone(&notification_manager),
+            )
+            .await?;
+
+            libraries.push(new_lib);
+        }
 
         env_logger::builder()
             .target(env_logger::Target::Stdout)

@@ -9,9 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-latest, windows-latest]
+        platform: [windows-latest]
     env:
-      working-directory: ./tauri-app
+      working-directory: .
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -19,18 +19,20 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 18
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: install webkit2gtk (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.0
+      - name: Generate Prisma client
+        working-directory: core
+        shell: bash
+        run: cargo update && cargo prisma generate
       - name: install app dependencies and build it
-        run: yarn && yarn build
+        run: pnpm install && pnpm desktop tauri build
         working-directory: ${{env.working-directory}}
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -41,4 +43,4 @@ jobs:
           releaseBody: "See the assets to download this version and install."
           releaseDraft: true
           prerelease: false
-          projectPath: ${{env.working-directory}}
+          projectPath: ./apps/desktop/

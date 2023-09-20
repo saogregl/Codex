@@ -34,6 +34,15 @@ fn extend_scope(handle: tauri::AppHandle, path: std::path::PathBuf) {
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
+    //we expect a dev.db file to exist in the root of the project
+    //this is a sqlite database that is used to store the library
+    //Check if it exists and, if not, create it: 
+    let db_path = std::path::Path::new("dev.db");
+    if !db_path.exists() {
+        let _ = std::fs::File::create(db_path);
+    }
+
+
     #[cfg(any(windows, target_os = "macos"))]
     let client = Arc::new(prisma::new_client().await?); // Propagate error using `?`
 

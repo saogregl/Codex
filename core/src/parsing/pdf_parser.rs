@@ -2,7 +2,7 @@ use crate::config::CodexConfig;
 use codex_prisma::prisma::object::Data as ObjectData;
 use log::{error, info};
 
-use std::{path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command, os::windows::process::CommandExt};
 
 use super::{Parser, ParsingError};
 
@@ -18,25 +18,32 @@ impl Parser for PdfParser {
         let mut text_path = PathBuf::from(&config.data_dir).join(&file.uuid);
         text_path.set_extension("txt");
 
-        //Call pdfToText executable (assume it is in path) to generate text file
-        let output = Command::new("pdftotext")
+        let target_triple = std::env::consts::ARCH.to_string() + "-" + &std::env::consts::OS;
+        let target_triple = "x86_64-pc-windows-msvc".to_string();
+
+
+
+        let output = Command::new(format!("./{}.exe", "pdftotext"))
             .args(&[
                 "-enc",
                 "UTF-8",
+                "-q",
                 pdf_path.as_str(),
                 text_path
                     .to_str()
                     .expect("We need a valid path to text file"),
             ])
-            .output()?;
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .spawn()?
+            .wait()?;
 
-        if !output.status.success() {
+        if !output.success() {
             error!(
                 "pdftotext failed to parse file {:?} with status: {}",
                 pdf_path.as_str(),
-                output.status
+                output
             );
-            return Err(ParsingError::CommandFailed(output.status));
+            return Err(ParsingError::CommandFailed(output));
         }
 
         Ok(text_path)

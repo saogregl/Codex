@@ -467,7 +467,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6798148dccfbff0fae41c7574d2fa8f1ef3492fba0face179de5d8d447d67b05"
 dependencies = [
  "memchr",
- "regex-automata 0.3.7",
  "serde",
 ]
 
@@ -479,7 +478,7 @@ dependencies = [
  "connection-string",
  "either",
  "enumflags2",
- "indoc 1.0.9",
+ "indoc",
  "lsp-types",
  "once_cell",
  "psl-core",
@@ -660,7 +659,6 @@ dependencies = [
  "codex-prisma",
  "dotenv",
  "http",
- "opener",
  "percent-encoding",
  "prisma-client-rust",
  "rspc",
@@ -669,7 +667,6 @@ dependencies = [
  "specta",
  "tauri",
  "tauri-build",
- "tauri-specta",
  "tokio",
  "uuid",
  "whoami",
@@ -690,13 +687,11 @@ dependencies = [
  "log",
  "notify",
  "prisma-client-rust",
- "rayon",
  "rspc",
  "serde",
  "serde_json",
  "specta",
  "tantivy",
- "tempfile",
  "thiserror",
  "tokio",
  "uuid",
@@ -706,10 +701,6 @@ dependencies = [
 [[package]]
 name = "codex-discovery"
 version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "codex-prisma"
@@ -1044,17 +1035,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dbus"
-version = "0.9.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bb21987b9fb1613058ba3843121dd18b163b254d8a6e797e144cbac14d96d1b"
-dependencies = [
- "libc",
- "libdbus-sys",
- "winapi",
-]
-
-[[package]]
 name = "deranged"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1093,7 +1073,7 @@ version = "0.1.0"
 source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.5#7cc20cc54a7ab0b5e38c81901826939a91a17ba0"
 dependencies = [
  "colored",
- "indoc 1.0.9",
+ "indoc",
  "pest",
 ]
 
@@ -1194,7 +1174,7 @@ dependencies = [
  "cuid",
  "either",
  "enumflags2",
- "indoc 1.0.9",
+ "indoc",
  "prisma-value",
  "psl-core",
  "schema-ast",
@@ -2293,12 +2273,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa799dd5ed20a7e349f3b4639aa80d74549c81716d9ec4f994c9b5815598306"
 
 [[package]]
-name = "indoc"
-version = "2.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c785eefb63ebd0e33416dfcb8d6da0bf27ce752843a45632a67bf10d4d4b5c4"
-
-[[package]]
 name = "infer"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2569,16 +2543,6 @@ name = "libc"
 version = "0.2.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
-
-[[package]]
-name = "libdbus-sys"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06085512b750d640299b79be4bad3d2fa90a9c00b1fd9e1b46364f66f0485c72"
-dependencies = [
- "cc",
- "pkg-config",
-]
 
 [[package]]
 name = "libsqlite3-sys"
@@ -3099,15 +3063,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "normpath"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec60c60a693226186f5d6edf073232bfb6464ed97eb22cf3b01c1e8198fd97f5"
-dependencies = [
- "windows-sys 0.48.0",
-]
-
-[[package]]
 name = "notify"
 version = "6.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3333,19 +3288,6 @@ checksum = "2078c0039e6a54a0c42c28faa984e115fb4c2d5bf2208f77d1961002df8576f8"
 dependencies = [
  "pathdiff",
  "windows-sys 0.42.0",
-]
-
-[[package]]
-name = "opener"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c62dcb6174f9cb326eac248f07e955d5d559c272730b6c03e396b443b562788"
-dependencies = [
- "bstr",
- "dbus",
- "normpath",
- "url",
- "winapi",
 ]
 
 [[package]]
@@ -4089,7 +4031,7 @@ dependencies = [
  "chrono",
  "diagnostics",
  "enumflags2",
- "indoc 1.0.9",
+ "indoc",
  "itertools 0.10.5",
  "lsp-types",
  "once_cell",
@@ -5143,13 +5085,12 @@ dependencies = [
  "chrono",
  "document-features",
  "indexmap 1.9.3",
- "indoc 1.0.9",
+ "indoc",
  "once_cell",
  "paste",
  "serde",
  "serde_json",
  "specta-macros",
- "tauri",
  "thiserror",
  "uuid",
 ]
@@ -5206,7 +5147,7 @@ dependencies = [
  "connection-string",
  "either",
  "enumflags2",
- "indoc 1.0.9",
+ "indoc",
  "migration-connector",
  "once_cell",
  "psl",
@@ -5264,7 +5205,7 @@ dependencies = [
  "bigdecimal",
  "enumflags2",
  "indexmap 1.9.3",
- "indoc 1.0.9",
+ "indoc",
  "once_cell",
  "psl",
  "quaint",
@@ -5797,21 +5738,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri-specta"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa034c38b7bdfeccc606eca0b030a1e67a20b78e7642edef09816b7e1ff9a9de"
-dependencies = [
- "heck 0.4.1",
- "indoc 2.0.3",
- "serde",
- "serde_json",
- "specta",
- "tauri",
- "thiserror",
-]
-
-[[package]]
 name = "tauri-utils"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6328,7 +6254,7 @@ version = "0.1.0"
 source = "git+https://github.com/Brendonovich/prisma-engines?tag=pcr-0.6.5#7cc20cc54a7ab0b5e38c81901826939a91a17ba0"
 dependencies = [
  "backtrace",
- "indoc 1.0.9",
+ "indoc",
  "quaint",
  "serde",
  "serde_json",

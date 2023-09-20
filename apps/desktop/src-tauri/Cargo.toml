@@ -20,9 +20,7 @@ rspc = { workspace = true, features = ["tauri"] }
 tokio = { workspace = true, features = ["sync"] }
 percent-encoding = "2.2.0"
 http = "0.2.9"
-opener = { version = "0.6.1", features = ["reveal"] }
 specta = { workspace = true }
-tauri-specta = { workspace = true, features = ["typescript"] }
 uuid = { version = "1.3.3", features = ["serde"] }
 prisma-client-rust = { workspace = true }
 dotenv = "0.15.0"
